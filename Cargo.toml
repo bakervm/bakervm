@@ -1,7 +1,11 @@
 [package]
 name = "bakervm"
-version = "0.1.0"
+version = "0.0.1"
 authors = ["Julian Laubstein <contact@julianlaubstein.de>"]
+description = "A virtual machine for classic point-and-click adventure games"
+repository = "https://github.com/bakervm/bakervm"
+readme = "README.md"
+license = "MIT"
 
 [dependencies]
 clap = "2.19.1"
