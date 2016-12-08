@@ -5,6 +5,7 @@ mod program;
 mod instruction;
 
 use clap::{Arg, App};
+use program::Program;
 
 fn main() {
     let matches = App::new("bakerVM")
@@ -13,10 +14,18 @@ fn main() {
         .about("A virtual machine for classic point-and-click adventure games")
         .arg(Arg::with_name("input")
             .index(1)
-            .help("Sets the input file to use"))
-        .arg(Arg::with_name("verbose")
-            .short("v")
-            .multiple(true)
-            .help("Sets the level of verbosity"))
+            .help("Sets the image file to use. Uses a standard image if not specified."))
         .get_matches();
+
+    let input = matches.value_of("input").unwrap_or("").to_string();
+
+    let program = if input.is_empty() {
+        Program::new()
+    } else {
+        program::decode(input)
+    };
+
+    let mut vm = vm::VM::new(program, 0);
+
+    vm.exec();
 }

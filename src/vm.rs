@@ -3,17 +3,17 @@ use program::Program;
 
 pub struct VM {
     ip: usize,
-    sp: i64,
+    sp: usize,
     code: Program,
-    globals: Vec<i64>,
-    stack: Vec<i64>,
+    globals: Vec<u64>,
+    stack: Vec<u64>,
 }
 
 impl VM {
     pub fn new(code: Program, startip: usize) -> VM {
         VM {
             ip: startip,
-            sp: -1,
+            sp: 0,
             code: code,
             globals: Vec::new(),
             stack: Vec::new(),
@@ -21,29 +21,36 @@ impl VM {
     }
 
     pub fn exec(&mut self) {
-        let mut bytecode = self.code[self.ip].clone();
-        while (bytecode != Instruction::HALT) && self.ip < self.code.len() {
-            self.ip += 1;
+        while self.ip < self.code.len() {
+            let bytecode = self.code[self.ip].clone();
             match bytecode {
                 Instruction::PUSH(num) => self.push(num),
                 Instruction::IADD => self.iadd(),
                 Instruction::ISUB => self.isub(),
                 Instruction::PRINT => self.print(),
+                Instruction::HALT => break,
                 _ => panic!("Unknown instruction: {:#?}", bytecode),
             }
-            bytecode = self.code[self.ip].clone();
+
+            self.ip += 1;
         }
     }
 
-    fn push(&mut self, value: i64) {
+    fn push(&mut self, value: u64) {
+        if !self.stack.is_empty() {
+            self.sp += 1;
+        }
+
         self.stack.push(value);
-        self.sp += 1;
     }
 
-    fn pop(&mut self) -> i64 {
-        assert!(self.sp >= 0, "Unable to pop value off an empty Stack");
-        let res = self.stack.remove(self.sp as usize);
-        self.sp -= 1;
+    fn pop(&mut self) -> u64 {
+        assert!(!self.stack.is_empty(),
+                "Unable to pop value off an empty Stack");
+        let res = self.stack.remove(self.sp);
+        if !self.stack.is_empty() {
+            self.sp -= 1;
+        }
         res
     }
 
@@ -60,6 +67,38 @@ impl VM {
     }
 
     fn print(&mut self) {
-        println!("{:?}", self.stack[self.sp as usize]);
+        print!("{:?}", self.stack[self.sp]);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use instruction::Instruction;
+    use program::Program;
+
+    #[test]
+    fn stack_size() {
+        let prog: Program = vec![Instruction::PUSH(234),
+                                 Instruction::PUSH(234),
+                                 Instruction::PUSH(234),
+                                 Instruction::PUSH(234),
+                                 Instruction::PUSH(234)];
+
+        let mut vm = VM::new(prog, 0);
+
+        vm.exec();
+
+        assert_eq!(vm.stack.len(), 5);
+        assert_eq!(vm.sp, 4);
+    }
+
+    #[test]
+    fn printer() {
+        let prog: Program = vec![Instruction::PUSH(321), Instruction::PUSH(123), Instruction::IADD];
+
+        let mut vm = VM::new(prog, 0);
+
+        vm.exec();
     }
 }

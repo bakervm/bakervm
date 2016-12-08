@@ -23,13 +23,12 @@ pub fn decode<P: AsRef<Path>>(path: P) -> Program {
                     3 => Instruction::ISUB,
                     4 => Instruction::PRINT,
                     5 => {
-                        let mut res: i64 = byte_iter.next().unwrap() as i64;
-                        res << 8;
-                        res = res & byte_iter.next().unwrap() as i64;
-                        res << 8;
-                        res = res & byte_iter.next().unwrap() as i64;
-                        res << 8;
-                        res = res & byte_iter.next().unwrap() as i64;
+                        // Build a u64 from single bytes
+                        let mut res: u64 = 0;
+                        for _ in 0..8 {
+                            res <<= 8;
+                            res |= byte_iter.next().unwrap() as u64;
+                        }
 
                         Instruction::PUSH(res)
                     }
