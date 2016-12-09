@@ -1,47 +1,64 @@
-use instruction::Instruction;
-use program::Program;
+use std::io::prelude::*;
+use std::fs::File;
+use std::path::Path;
+use error::*;
+use bytecode;
 
 pub struct VM {
     ip: usize,
     sp: usize,
-    code: Program,
     globals: Vec<u64>,
     stack: Vec<u64>,
 }
 
 impl VM {
-    pub fn new(code: Program, startip: usize) -> VM {
+    pub fn new(startip: usize) -> VM {
         VM {
             ip: startip,
             sp: 0,
-            code: code,
             globals: Vec::new(),
             stack: Vec::new(),
         }
     }
 
-    pub fn exec(&mut self) {
-        while self.ip < self.code.len() {
-            let bytecode = self.code[self.ip].clone();
-            match bytecode {
-                Instruction::PUSH(num) => self.push(num),
-                Instruction::IADD => self.iadd(),
-                Instruction::ISUB => self.isub(),
-                Instruction::PRINT => self.print(),
-                Instruction::HALT => break,
-                _ => panic!("Unknown instruction: {:#?}", bytecode),
+    pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> ExecResult<()> {
+        let mut image_file = File::open(path).chain_err(|| "unable to open game image")?;
+        let mut image_string = String::new();
+        image_file.read_to_string(&mut image_string).chain_err(|| "unable to read image")?;
+
+        let mut byte_iter = image_string.bytes();
+        let mut outer_byte = byte_iter.next();
+        while let Some(byte) = outer_byte {
+            match byte {
+                bytecode::HALT => break,
+                bytecode::ADD => self.add(),
+                bytecode::SUB => self.sub(),
+                bytecode::PRINT => self.print(),
+                bytecode::PUSH => {
+                    // Build a u32 from single bytes
+                    let mut res: u32 = 0;
+                    for _ in 0..4 {
+                        res <<= 8;
+                        res |= byte_iter.next().unwrap() as u32;
+                    }
+
+                    self.push(res);
+                }
+                _ => panic!("Unexpected opcode: {:08x}", byte),
             }
 
-            self.ip += 1;
+            outer_byte = byte_iter.next();
         }
+
+        Ok(())
     }
 
-    fn push(&mut self, value: u64) {
+    fn push(&mut self, value: u32) {
         if !self.stack.is_empty() {
             self.sp += 1;
         }
 
-        self.stack.push(value);
+        self.stack.push(value as u64);
     }
 
     fn pop(&mut self) -> u64 {
@@ -54,51 +71,19 @@ impl VM {
         res
     }
 
-    fn iadd(&mut self) {
+    fn add(&mut self) {
         let b = self.pop();
         let a = self.pop();
-        self.push(a + b);
+        self.push((a + b) as u32);
     }
 
-    fn isub(&mut self) {
+    fn sub(&mut self) {
         let b = self.pop();
         let a = self.pop();
-        self.push(a - b);
+        self.push((a - b) as u32);
     }
 
     fn print(&mut self) {
-        print!("{:?}", self.stack[self.sp]);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use instruction::Instruction;
-    use program::Program;
-
-    #[test]
-    fn stack_size() {
-        let prog: Program = vec![Instruction::PUSH(234),
-                                 Instruction::PUSH(234),
-                                 Instruction::PUSH(234),
-                                 Instruction::PUSH(234),
-                                 Instruction::PUSH(234)];
-
-        let mut vm = VM::new(prog, 0);
-
-        vm.exec();
-
-        assert_eq!(vm.stack.len(), 5);
-        assert_eq!(vm.sp, 4);
-    }
-
-    #[test]
-    fn printer() {
-        let prog: Program = vec![Instruction::PUSH(321), Instruction::PUSH(123), Instruction::IADD];
-
-        let mut vm = VM::new(prog, 0);
-
-        vm.exec();
+        println!("{:?}", self.stack[self.sp]);
     }
 }

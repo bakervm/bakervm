@@ -8,4 +8,7 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-clap = "2.19.1"
+bakervm-bytecodes = { git = "https://github.com/bakervm/bytecodes" }
+clap = "2.19.2"
+error-chain = "0.7.1"
+sdl2 = "0.26.0"
