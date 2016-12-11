@@ -33,6 +33,8 @@ impl VM {
                 bytecode::HALT => break,
                 bytecode::ADD => self.add().chain_err(|| "unable to execute 'add' instruction")?,
                 bytecode::SUB => self.sub().chain_err(|| "unable to execute 'sub' instruction")?,
+                bytecode::MUL => self.mul().chain_err(|| "unable to execute 'mul' instruction")?,
+                bytecode::DIV => self.div().chain_err(|| "unable to execute 'div' instruction")?,
                 bytecode::PRINT => {
                     self.print().chain_err(|| "unable to execute 'print' instruction")?
                 }
@@ -91,6 +93,24 @@ impl VM {
         self.push((a - b) as u32).chain_err(|| "unable to push to stack")?;
         Ok(())
     }
+
+
+    fn mul(&mut self) -> VMResult<()> {
+        let b = self.pop().chain_err(|| "unable to pop value off the stack")?;
+        let a = self.pop().chain_err(|| "unable to pop value off the stack")?;
+        self.push((a * b) as u32).chain_err(|| "unable to push to stack")?;
+        Ok(())
+    }
+
+
+    fn div(&mut self) -> VMResult<()> {
+        let b = self.pop().chain_err(|| "unable to pop value off the stack")?;
+        let a = self.pop().chain_err(|| "unable to pop value off the stack")?;
+        self.push((a / b) as u32).chain_err(|| "unable to push to stack")?;
+        Ok(())
+    }
+
+
 
     fn print(&mut self) -> VMResult<()> {
         println!("{:?}", self.stack[self.sp]);
