@@ -52,16 +52,14 @@ fn run() -> VMResult<()> {
     let video_ctx = ctx.video().unwrap();
 
     // Create a window
-    let window = match video_ctx.window("bakerVM", 640, 480).position_centered().opengl().build() {
-        Ok(window) => window,
-        Err(err) => bail!("failed to create window: {}", err),
-    };
+    let window = video_ctx.window("bakerVM", 640, 480)
+        .position_centered()
+        .opengl()
+        .build()
+        .chain_err(|| "unable to create window")?;
 
     // Create a rendering context
-    let mut renderer = match window.renderer().build() {
-        Ok(renderer) => renderer,
-        Err(err) => bail!("failed to create renderer: {}", err),
-    };
+    let mut renderer = window.renderer().build().chain_err(|| "unable to create renderer")?;
 
     // Set the drawing color to a light blue.
     let _ = renderer.set_draw_color(sdl2::pixels::Color::RGB(101, 208, 246));
