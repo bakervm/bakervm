@@ -1,5 +1,5 @@
 error_chain! {
     types {
-        ExecError, ExecErrorKind, ExecResultExt, ExecResult;
+        VMError, VMErrorKind, VMResultExt, VMResult;
     }
 }

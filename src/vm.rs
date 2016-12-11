@@ -12,16 +12,16 @@ pub struct VM {
 }
 
 impl VM {
-    pub fn new(startip: usize) -> VM {
+    pub fn new() -> VM {
         VM {
-            ip: startip,
+            ip: 0,
             sp: 0,
             globals: Vec::new(),
             stack: Vec::new(),
         }
     }
 
-    pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> ExecResult<()> {
+    pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
         let mut image_file = File::open(path).chain_err(|| "unable to open game image")?;
         let mut image_string = String::new();
         image_file.read_to_string(&mut image_string).chain_err(|| "unable to read image")?;
@@ -31,9 +31,11 @@ impl VM {
         while let Some(byte) = outer_byte {
             match byte {
                 bytecode::HALT => break,
-                bytecode::ADD => self.add(),
-                bytecode::SUB => self.sub(),
-                bytecode::PRINT => self.print(),
+                bytecode::ADD => self.add().chain_err(|| "unable to execute 'add' instruction")?,
+                bytecode::SUB => self.sub().chain_err(|| "unable to execute 'sub' instruction")?,
+                bytecode::PRINT => {
+                    self.print().chain_err(|| "unable to execute 'print' instruction")?
+                }
                 bytecode::PUSH => {
                     // Build a u32 from single bytes
                     let mut res: u32 = 0;
@@ -42,9 +44,9 @@ impl VM {
                         res |= byte_iter.next().unwrap() as u32;
                     }
 
-                    self.push(res);
+                    self.push(res).chain_err(|| "unable to push value to the stack")?;
                 }
-                _ => panic!("Unexpected opcode: {:08x}", byte),
+                _ => bail!("unexpected opcode: {:08x}", byte),
             }
 
             outer_byte = byte_iter.next();
@@ -53,37 +55,45 @@ impl VM {
         Ok(())
     }
 
-    fn push(&mut self, value: u32) {
+    fn push(&mut self, value: u32) -> VMResult<()> {
         if !self.stack.is_empty() {
             self.sp += 1;
         }
 
         self.stack.push(value as u64);
+
+        Ok(())
     }
 
-    fn pop(&mut self) -> u64 {
-        assert!(!self.stack.is_empty(),
-                "Unable to pop value off an empty Stack");
+    fn pop(&mut self) -> VMResult<u64> {
+        if self.stack.is_empty() {
+            bail!("unable to pop value off an empty Stack");
+        }
+
         let res = self.stack.remove(self.sp);
         if !self.stack.is_empty() {
             self.sp -= 1;
         }
-        res
+
+        Ok(res)
     }
 
-    fn add(&mut self) {
-        let b = self.pop();
-        let a = self.pop();
-        self.push((a + b) as u32);
+    fn add(&mut self) -> VMResult<()> {
+        let b = self.pop().chain_err(|| "unable to pop value off the stack")?;
+        let a = self.pop().chain_err(|| "unable to pop value off the stack")?;
+        self.push((a + b) as u32).chain_err(|| "unable to push value to the stack")?;
+        Ok(())
     }
 
-    fn sub(&mut self) {
-        let b = self.pop();
-        let a = self.pop();
-        self.push((a - b) as u32);
+    fn sub(&mut self) -> VMResult<()> {
+        let b = self.pop().chain_err(|| "unable to pop value off the stack")?;
+        let a = self.pop().chain_err(|| "unable to pop value off the stack")?;
+        self.push((a - b) as u32).chain_err(|| "unable to push to stack")?;
+        Ok(())
     }
 
-    fn print(&mut self) {
+    fn print(&mut self) -> VMResult<()> {
         println!("{:?}", self.stack[self.sp]);
+        Ok(())
     }
 }

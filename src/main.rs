@@ -10,8 +10,28 @@ mod error;
 use clap::{Arg, App};
 use sdl2::event::Event;
 use sdl2::rect::Rect;
+use vm::VM;
+use error::*;
 
 fn main() {
+    if let Err(ref e) = run() {
+        println!("error: {}", e);
+
+        for e in e.iter().skip(1) {
+            println!("caused by: {}", e);
+        }
+
+        // The backtrace is not always generated. Try to run this example
+        // with `RUST_BACKTRACE=1`.
+        if let Some(backtrace) = e.backtrace() {
+            println!("backtrace: {:?}", backtrace);
+        }
+
+        ::std::process::exit(1);
+    }
+}
+
+fn run() -> VMResult<()> {
     let matches = App::new("bakerVM")
         .version("0.0.1")
         .author("Julian Laubstein <contact@julianlaubstein.de>")
@@ -23,9 +43,9 @@ fn main() {
 
     let input = matches.value_of("input").unwrap_or("").to_string();
 
-    let mut vm = vm::VM::new(0);
+    let mut vm = VM::new();
 
-    vm.exec(input).unwrap();
+    vm.exec(input).chain_err(|| "unable to exec file")?;
 
     // start sdl2 with everything
     let ctx = sdl2::init().unwrap();
@@ -34,13 +54,13 @@ fn main() {
     // Create a window
     let window = match video_ctx.window("bakerVM", 640, 480).position_centered().opengl().build() {
         Ok(window) => window,
-        Err(err) => panic!("failed to create window: {}", err),
+        Err(err) => bail!("failed to create window: {}", err),
     };
 
     // Create a rendering context
     let mut renderer = match window.renderer().build() {
         Ok(renderer) => renderer,
-        Err(err) => panic!("failed to create renderer: {}", err),
+        Err(err) => bail!("failed to create renderer: {}", err),
     };
 
     // Set the drawing color to a light blue.
@@ -74,4 +94,6 @@ fn main() {
             }
         }
     }
+
+    Ok(())
 }
