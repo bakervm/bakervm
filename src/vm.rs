@@ -5,8 +5,8 @@ use error::*;
 use bytecode;
 
 pub struct VM {
-    ip: usize,
-    sp: usize,
+    instruction_ptr: usize,
+    stack_ptr: usize,
     globals: Vec<u64>,
     stack: Vec<u64>,
 }
@@ -14,8 +14,8 @@ pub struct VM {
 impl VM {
     pub fn new() -> VM {
         VM {
-            ip: 0,
-            sp: 0,
+            instruction_ptr: 0,
+            stack_ptr: 0,
             globals: Vec::new(),
             stack: Vec::new(),
         }
@@ -27,7 +27,7 @@ impl VM {
         image_file.read_to_string(&mut image_string).chain_err(|| "unable to read image")?;
 
         let byte_iter: Vec<u8> = image_string.bytes().collect();
-        while self.ip < byte_iter.len() {
+        while self.instruction_ptr < byte_iter.len() {
             let byte = self.current_byte(&byte_iter)
                 .chain_err(|| "unable to read current byte")?;
 
@@ -76,7 +76,7 @@ impl VM {
                 _ => bail!("unexpected opcode: {:08x}", byte),
             }
 
-            self.advance_ip().chain_err(|| "unable to advance instruction pointer")?;
+            self.advance_instruction_ptr().chain_err(|| "unable to advance instruction pointer")?;
         }
 
         Ok(())
@@ -84,7 +84,7 @@ impl VM {
 
     fn push(&mut self, value: u32) -> VMResult<()> {
         if !self.stack.is_empty() {
-            self.sp += 1;
+            self.stack_ptr += 1;
         }
 
         self.stack.push(value as u64);
@@ -97,9 +97,9 @@ impl VM {
             bail!("unable to pop value off an empty Stack");
         }
 
-        let res = self.stack.remove(self.sp);
+        let res = self.stack.remove(self.stack_ptr);
         if !self.stack.is_empty() {
-            self.sp -= 1;
+            self.stack_ptr -= 1;
         }
 
         Ok(res)
@@ -136,7 +136,7 @@ impl VM {
     }
 
     fn jmp(&mut self, addr: u32) -> VMResult<()> {
-        self.ip = addr as usize;
+        self.instruction_ptr = addr as usize;
         Ok(())
     }
 
@@ -145,7 +145,7 @@ impl VM {
         let mut res: u32 = 0;
         for _ in 0..4 {
             res <<= 8;
-            self.advance_ip().chain_err(|| "unable to advance instruction pointer")?;
+            self.advance_instruction_ptr().chain_err(|| "unable to advance instruction pointer")?;
             let current_byte = self.current_byte(&bytes)
                 .chain_err(|| "unable to read current byte")?;
             res |= current_byte as u32;
@@ -154,22 +154,22 @@ impl VM {
         Ok(res)
     }
 
-    fn advance_ip(&mut self) -> VMResult<()> {
-        self.ip += 1;
+    fn advance_instruction_ptr(&mut self) -> VMResult<()> {
+        self.instruction_ptr += 1;
         Ok(())
     }
 
     fn current_byte(&mut self, bytes: &Vec<u8>) -> VMResult<u8> {
-        if self.ip < bytes.len() {
-            Ok(bytes[self.ip])
+        if self.instruction_ptr < bytes.len() {
+            Ok(bytes[self.instruction_ptr])
         } else {
             bail!("instruction pointer out of bounds");
         }
     }
 
     fn peek(&mut self) -> VMResult<u64> {
-        if self.sp < self.stack.len() {
-            Ok(self.stack[self.sp])
+        if self.stack_ptr < self.stack.len() {
+            Ok(self.stack[self.stack_ptr])
         } else {
             bail!("stack pointer out of bounds");
         }
