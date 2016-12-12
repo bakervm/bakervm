@@ -39,7 +39,7 @@ dependencies = [
 [[package]]
 name = "bakervm-bytecodes"
 version = "0.1.0"
-source = "git+https://github.com/bakervm/bytecodes#cefe4e306f014c86f07f4673797351c002446623"
+source = "git+https://github.com/bakervm/bytecodes#5f5e27f01ddfd07495a6f136db6e2aa134e77d5d"
 
 [[package]]
 name = "bitflags"
