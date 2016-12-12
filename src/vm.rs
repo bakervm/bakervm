@@ -27,8 +27,10 @@ impl VM {
         image_file.read_to_string(&mut image_string).chain_err(|| "unable to read image")?;
 
         let byte_iter: Vec<u8> = image_string.bytes().collect();
-        let mut byte = byte_iter[self.ip];
         while self.ip < byte_iter.len() {
+            let byte = self.current_byte(&byte_iter)
+                .chain_err(|| "unable to read current byte")?;
+
             match byte {
                 bytecode::HALT => break,
                 bytecode::ADD => self.add().chain_err(|| "unable to execute 'add' instruction")?,
@@ -39,35 +41,42 @@ impl VM {
                     self.print().chain_err(|| "unable to execute 'print' instruction")?
                 }
                 bytecode::PUSH => {
-                    // Build a u32 from single bytes
-                    let mut res: u32 = 0;
-                    for _ in 0..4 {
-                        res <<= 8;
-                        self.ip += 1;
-                        res |= byte_iter[self.ip] as u32;
-                    }
+                    let res = self.read_word(&byte_iter).chain_err(|| "unable to read word")?;
 
                     self.push(res).chain_err(|| "unable to push value to the stack")?;
                 }
                 bytecode::JMP => {
-                    // Build a u32 from single bytes
-                    let mut res: u32 = 0;
-                    for _ in 0..4 {
-                        res <<= 8;
-                        self.ip += 1;
-                        res |= byte_iter[self.ip] as u32;
-                    }
+                    let res = self.read_word(&byte_iter).chain_err(|| "unable to read word")?;
 
                     self.jmp(res).chain_err(|| "unable to jump")?;
-                    byte = byte_iter[self.ip];
                     continue;
+                }
+                bytecode::JZ => {
+                    let res = self.read_word(&byte_iter).chain_err(|| "unable to read word")?;
+
+                    let top_of_stack = self.peek()
+                        .chain_err(|| "unable to get current top of stack")?;
+
+                    if top_of_stack == 0 {
+                        self.jmp(res).chain_err(|| "unable to jump")?;
+                        continue;
+                    }
+                }
+                bytecode::JNZ => {
+                    let res = self.read_word(&byte_iter).chain_err(|| "unable to read word")?;
+
+                    let top_of_stack = self.peek()
+                        .chain_err(|| "unable to get current top of stack")?;
+
+                    if top_of_stack != 0 {
+                        self.jmp(res).chain_err(|| "unable to jump")?;
+                        continue;
+                    }
                 }
                 _ => bail!("unexpected opcode: {:08x}", byte),
             }
 
-            self.ip += 1;
-
-            byte = byte_iter[self.ip];
+            self.advance_ip().chain_err(|| "unable to advance instruction pointer")?;
         }
 
         Ok(())
@@ -131,8 +140,44 @@ impl VM {
         Ok(())
     }
 
+    fn read_word(&mut self, bytes: &Vec<u8>) -> VMResult<u32> {
+        // Build a u32 from single bytes
+        let mut res: u32 = 0;
+        for _ in 0..4 {
+            res <<= 8;
+            self.advance_ip().chain_err(|| "unable to advance instruction pointer")?;
+            let current_byte = self.current_byte(&bytes)
+                .chain_err(|| "unable to read current byte")?;
+            res |= current_byte as u32;
+        }
+
+        Ok(res)
+    }
+
+    fn advance_ip(&mut self) -> VMResult<()> {
+        self.ip += 1;
+        Ok(())
+    }
+
+    fn current_byte(&mut self, bytes: &Vec<u8>) -> VMResult<u8> {
+        if self.ip < bytes.len() {
+            Ok(bytes[self.ip])
+        } else {
+            bail!("instruction pointer out of bounds");
+        }
+    }
+
+    fn peek(&mut self) -> VMResult<u64> {
+        if self.sp < self.stack.len() {
+            Ok(self.stack[self.sp])
+        } else {
+            bail!("stack pointer out of bounds");
+        }
+    }
+
     fn print(&mut self) -> VMResult<()> {
-        println!("{:?}", self.stack[self.sp]);
+        let top = self.peek().chain_err(|| "unable to get current top of stack")?;
+        println!("{:?}", top);
         Ok(())
     }
 }
