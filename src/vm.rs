@@ -73,7 +73,7 @@ impl VM {
                         continue;
                     }
                 }
-                _ => bail!("unexpected opcode: {:08x}", byte),
+                _ => bail!("unexpected opcode: {:02x}", byte),
             }
 
             self.advance_instruction_ptr().chain_err(|| "unable to advance instruction pointer")?;
