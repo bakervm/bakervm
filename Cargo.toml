@@ -1,6 +1,6 @@
 [package]
 name = "bakervm"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Julian Laubstein <contact@julianlaubstein.de>"]
 description = "A virtual machine for classic point-and-click adventure games"
 repository = "https://github.com/bakervm/bakervm"
@@ -12,3 +12,4 @@ bakervm-bytecodes = { git = "https://github.com/bakervm/bytecodes" }
 clap = "2.19.2"
 error-chain = "0.7.1"
 sdl2 = "0.26.0"
+ieee754 = "0.2.1"

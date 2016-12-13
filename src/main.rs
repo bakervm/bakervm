@@ -3,6 +3,7 @@ extern crate clap;
 extern crate error_chain;
 extern crate bakervm_bytecodes as bytecode;
 // extern crate sdl2;
+extern crate ieee754;
 
 mod vm;
 mod error;
@@ -33,7 +34,7 @@ fn main() {
 
 fn run() -> VMResult<()> {
     let matches = App::new("bakerVM")
-        .version("0.0.1")
+        .version(env!("CARGO_PKG_VERSION"))
         .author("Julian Laubstein <contact@julianlaubstein.de>")
         .about("A virtual machine for classic point-and-click adventure games")
         .arg(Arg::with_name("input")
