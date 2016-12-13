@@ -3,12 +3,16 @@ use std::fs::File;
 use std::path::Path;
 use error::*;
 use bytecode;
+use ieee754::Ieee754;
+
+pub type Word = u64;
+pub type Number = f64;
+pub type Address = usize;
 
 pub struct VM {
-    instruction_ptr: usize,
-    stack_ptr: usize,
-    globals: Vec<u64>,
-    stack: Vec<u64>,
+    instruction_ptr: Address,
+    stack_ptr: Address,
+    stack: Vec<Word>,
 }
 
 impl VM {
@@ -16,19 +20,17 @@ impl VM {
         VM {
             instruction_ptr: 0,
             stack_ptr: 0,
-            globals: Vec::new(),
             stack: Vec::new(),
         }
     }
 
     pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
         let mut image_file = File::open(path).chain_err(|| "unable to open game image")?;
-        let mut image_string = String::new();
-        image_file.read_to_string(&mut image_string).chain_err(|| "unable to read image")?;
+        let mut image_bytes: Vec<u8> = Vec::new();
+        image_file.read_to_end(&mut image_bytes).chain_err(|| "unable to read image")?;
 
-        let byte_iter: Vec<u8> = image_string.bytes().collect();
-        while self.instruction_ptr < byte_iter.len() {
-            let byte = self.current_byte(&byte_iter)
+        while self.instruction_ptr < image_bytes.len() {
+            let byte = self.current_byte(&image_bytes)
                 .chain_err(|| "unable to read current byte")?;
 
             match byte {
@@ -41,40 +43,40 @@ impl VM {
                     self.print().chain_err(|| "unable to execute 'print' instruction")?
                 }
                 bytecode::PUSH => {
-                    let res = self.read_word(&byte_iter).chain_err(|| "unable to read word")?;
+                    let res = self.read_word(&image_bytes).chain_err(|| "unable to read word")?;
 
-                    self.push(res).chain_err(|| "unable to push value to the stack")?;
+                    self.push_word(res).chain_err(|| "unable to push value to the stack")?;
                 }
                 bytecode::JMP => {
-                    let res = self.read_word(&byte_iter).chain_err(|| "unable to read word")?;
+                    let addr = self.read_word(&image_bytes).chain_err(|| "unable to read word")?;
 
-                    self.jmp(res).chain_err(|| "unable to jump")?;
+                    self.jmp(addr as Address).chain_err(|| "unable to jump")?;
                     continue;
                 }
                 bytecode::JZ => {
-                    let res = self.read_word(&byte_iter).chain_err(|| "unable to read word")?;
+                    let addr = self.read_word(&image_bytes).chain_err(|| "unable to read word")?;
 
-                    let top_of_stack = self.peek()
+                    let top_of_stack = self.peek_number()
                         .chain_err(|| "unable to get current top of stack")?;
 
-                    if top_of_stack == 0 {
-                        self.jmp(res).chain_err(|| "unable to jump")?;
+                    if top_of_stack == 0.0 {
+                        self.jmp(addr as Address).chain_err(|| "unable to jump")?;
                         continue;
                     }
                 }
                 bytecode::JNZ => {
-                    let res = self.read_word(&byte_iter).chain_err(|| "unable to read word")?;
+                    let addr = self.read_word(&image_bytes).chain_err(|| "unable to read word")?;
 
-                    let top_of_stack = self.peek()
+                    let top_of_stack = self.peek_number()
                         .chain_err(|| "unable to get current top of stack")?;
 
-                    if top_of_stack != 0 {
-                        self.jmp(res).chain_err(|| "unable to jump")?;
+                    if top_of_stack != 0.0 {
+                        self.jmp(addr as Address).chain_err(|| "unable to jump")?;
                         continue;
                     }
                 }
                 _ => {
-                    bail!("unexpected opcode {:02x} at address {:08x}",
+                    bail!("unexpected opcode {:02x} at address {:?}",
                           byte,
                           self.instruction_ptr)
                 }
@@ -86,19 +88,23 @@ impl VM {
         Ok(())
     }
 
-    fn push(&mut self, value: u32) -> VMResult<()> {
+    fn push_word(&mut self, value: Word) -> VMResult<()> {
         if !self.stack.is_empty() {
             self.stack_ptr += 1;
         }
 
-        self.stack.push(value as u64);
+        self.stack.push(value);
 
         Ok(())
     }
 
-    fn pop(&mut self) -> VMResult<u64> {
+    fn push_number(&mut self, value: Number) -> VMResult<()> {
+        self.push_word(value.bits())
+    }
+
+    fn pop_word(&mut self) -> VMResult<Word> {
         if self.stack.is_empty() {
-            bail!("unable to pop value off an empty Stack");
+            bail!("unable to pop word off an empty Stack");
         }
 
         let res = self.stack.remove(self.stack_ptr);
@@ -109,50 +115,55 @@ impl VM {
         Ok(res)
     }
 
+    fn pop_number(&mut self) -> VMResult<Number> {
+        let top = self.pop_word().chain_err(|| "unable to pop word off the stack")?;
+        Ok(Number::from_bits(top))
+    }
+
     fn add(&mut self) -> VMResult<()> {
-        let b = self.pop().chain_err(|| "unable to pop value off the stack")?;
-        let a = self.pop().chain_err(|| "unable to pop value off the stack")?;
-        self.push((a + b) as u32).chain_err(|| "unable to push value to the stack")?;
+        let b = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
+        let a = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
+        self.push_number(a + b).chain_err(|| "unable to push value to the stack")?;
         Ok(())
     }
 
     fn sub(&mut self) -> VMResult<()> {
-        let b = self.pop().chain_err(|| "unable to pop value off the stack")?;
-        let a = self.pop().chain_err(|| "unable to pop value off the stack")?;
-        self.push((a - b) as u32).chain_err(|| "unable to push to stack")?;
+        let b = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
+        let a = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
+        self.push_number(a - b).chain_err(|| "unable to push to stack")?;
         Ok(())
     }
 
 
     fn mul(&mut self) -> VMResult<()> {
-        let b = self.pop().chain_err(|| "unable to pop value off the stack")?;
-        let a = self.pop().chain_err(|| "unable to pop value off the stack")?;
-        self.push((a * b) as u32).chain_err(|| "unable to push to stack")?;
+        let b = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
+        let a = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
+        self.push_number(a * b).chain_err(|| "unable to push to stack")?;
         Ok(())
     }
 
 
     fn div(&mut self) -> VMResult<()> {
-        let b = self.pop().chain_err(|| "unable to pop value off the stack")?;
-        let a = self.pop().chain_err(|| "unable to pop value off the stack")?;
-        self.push((a / b) as u32).chain_err(|| "unable to push to stack")?;
+        let b = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
+        let a = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
+        self.push_number(a / b).chain_err(|| "unable to push to stack")?;
         Ok(())
     }
 
-    fn jmp(&mut self, addr: u32) -> VMResult<()> {
-        self.instruction_ptr = addr as usize;
+    fn jmp(&mut self, addr: Address) -> VMResult<()> {
+        self.instruction_ptr = addr;
         Ok(())
     }
 
-    fn read_word(&mut self, bytes: &Vec<u8>) -> VMResult<u32> {
-        // Build a u32 from single bytes
-        let mut res: u32 = 0;
-        for _ in 0..4 {
+    fn read_word(&mut self, bytes: &Vec<u8>) -> VMResult<Word> {
+        // Build a Word from single bytes
+        let mut res: Word = 0;
+        for _ in 0..8 {
             res <<= 8;
             self.advance_instruction_ptr().chain_err(|| "unable to advance instruction pointer")?;
             let current_byte = self.current_byte(&bytes)
                 .chain_err(|| "unable to read current byte")?;
-            res |= current_byte as u32;
+            res |= current_byte as Word;
         }
 
         Ok(res)
@@ -171,7 +182,7 @@ impl VM {
         }
     }
 
-    fn peek(&mut self) -> VMResult<u64> {
+    fn peek_word(&mut self) -> VMResult<Word> {
         if self.stack_ptr < self.stack.len() {
             Ok(self.stack[self.stack_ptr])
         } else {
@@ -179,8 +190,13 @@ impl VM {
         }
     }
 
+    fn peek_number(&mut self) -> VMResult<Number> {
+        let top = self.peek_word().chain_err(|| "unable to peek for word")?;
+        Ok(Number::from_bits(top))
+    }
+
     fn print(&mut self) -> VMResult<()> {
-        let top = self.peek().chain_err(|| "unable to get current top of stack")?;
+        let top = self.peek_number().chain_err(|| "unable to get current top of stack")?;
         println!("{:?}", top);
         Ok(())
     }
