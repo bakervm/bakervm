@@ -5,13 +5,26 @@ use error::*;
 use bytecode;
 use ieee754::Ieee754;
 
-pub type Word = u64;
-pub type Number = f64;
-pub type Address = usize;
+struct DisplayRegister {
+    width: TinyWord,
+    height: TinyWord,
+    color_mode: ColorMode,
+}
+
+enum ColorMode {
+    _1Bit,
+    _8Bit,
+    _16Bit,
+    _32Bit,
+}
+
+pub const BUF_REG_COUNT: usize = 8;
 
 pub struct VM {
     instruction_ptr: Address,
     stack_ptr: Address,
+    buf_regs: [Word; BUF_REG_COUNT],
+    display_reg: DisplayRegister,
     stack: Vec<Word>,
 }
 
@@ -20,13 +33,19 @@ impl VM {
         VM {
             instruction_ptr: 0,
             stack_ptr: 0,
+            buf_regs: [0; BUF_REG_COUNT],
+            display_reg: DisplayRegister {
+                width: 0,
+                height: 0,
+                color_mode: ColorMode::_8Bit,
+            },
             stack: Vec::new(),
         }
     }
 
     pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
         let mut image_file = File::open(path).chain_err(|| "unable to open game image")?;
-        let mut image_bytes: Vec<u8> = Vec::new();
+        let mut image_bytes: Vec<Byte> = Vec::new();
         image_file.read_to_end(&mut image_bytes).chain_err(|| "unable to read image")?;
 
         while self.instruction_ptr < image_bytes.len() {
@@ -155,7 +174,7 @@ impl VM {
         Ok(())
     }
 
-    fn read_word(&mut self, bytes: &Vec<u8>) -> VMResult<Word> {
+    fn read_word(&mut self, bytes: &Vec<Byte>) -> VMResult<Word> {
         // Build a Word from single bytes
         let mut res: Word = 0;
         for _ in 0..8 {
@@ -174,7 +193,7 @@ impl VM {
         Ok(())
     }
 
-    fn current_byte(&mut self, bytes: &Vec<u8>) -> VMResult<u8> {
+    fn current_byte(&mut self, bytes: &Vec<Byte>) -> VMResult<Byte> {
         if self.instruction_ptr < bytes.len() {
             Ok(bytes[self.instruction_ptr])
         } else {
