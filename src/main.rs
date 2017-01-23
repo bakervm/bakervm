@@ -1,7 +1,7 @@
 extern crate clap;
 #[macro_use]
 extern crate error_chain;
-extern crate bakervm_bytecodes as bytecode;
+extern crate bakervm_definitions as definitions;
 // extern crate sdl2;
 extern crate ieee754;
 

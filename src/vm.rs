@@ -2,7 +2,8 @@ use std::io::prelude::*;
 use std::fs::File;
 use std::path::Path;
 use error::*;
-use bytecode;
+use definitions::bytecode;
+use definitions::typedef::*;
 use ieee754::Ieee754;
 
 struct DisplayRegister {
@@ -14,8 +15,7 @@ struct DisplayRegister {
 enum ColorMode {
     _1Bit,
     _8Bit,
-    _16Bit,
-    _32Bit,
+    _24Bit,
 }
 
 pub const BUF_REG_COUNT: usize = 8;
@@ -35,9 +35,9 @@ impl VM {
             stack_ptr: 0,
             buf_regs: [0; BUF_REG_COUNT],
             display_reg: DisplayRegister {
-                width: 0,
-                height: 0,
-                color_mode: ColorMode::_8Bit,
+                width: 256,
+                height: 512,
+                color_mode: ColorMode::_24Bit,
             },
             stack: Vec::new(),
         }
@@ -187,6 +187,38 @@ impl VM {
 
         Ok(res)
     }
+
+
+    fn read_small_word(&mut self, bytes: &Vec<Byte>) -> VMResult<SmallWord> {
+        // Build a Word from single bytes
+        let mut res: SmallWord = 0;
+        for _ in 0..4 {
+            res <<= 8;
+            self.advance_instruction_ptr().chain_err(|| "unable to advance instruction pointer")?;
+            let current_byte = self.current_byte(&bytes)
+                .chain_err(|| "unable to read current byte")?;
+            res |= current_byte as SmallWord;
+        }
+
+        Ok(res)
+    }
+
+
+    fn read_tiny_word(&mut self, bytes: &Vec<Byte>) -> VMResult<TinyWord> {
+        // Build a Word from single bytes
+        let mut res: TinyWord = 0;
+        for _ in 0..2 {
+            res <<= 8;
+            self.advance_instruction_ptr().chain_err(|| "unable to advance instruction pointer")?;
+            let current_byte = self.current_byte(&bytes)
+                .chain_err(|| "unable to read current byte")?;
+            res |= current_byte as TinyWord;
+        }
+
+        Ok(res)
+    }
+
+
 
     fn advance_instruction_ptr(&mut self) -> VMResult<()> {
         self.instruction_ptr += 1;
