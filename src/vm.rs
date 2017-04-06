@@ -1,10 +1,10 @@
-use std::io::prelude::*;
-use std::fs::File;
-use std::path::Path;
-use error::*;
 use definitions::bytecode;
 use definitions::typedef::*;
+use error::*;
 use ieee754::Ieee754;
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
 
 struct DisplayRegister {
     width: TinyWord,
@@ -18,7 +18,7 @@ enum ColorMode {
     _24Bit,
 }
 
-pub const BUF_REG_COUNT: usize = 8;
+pub const BUF_REG_COUNT: usize = 32;
 
 pub struct VM {
     instruction_ptr: Address,
@@ -49,8 +49,7 @@ impl VM {
         image_file.read_to_end(&mut image_bytes).chain_err(|| "unable to read image")?;
 
         while self.instruction_ptr < image_bytes.len() {
-            let byte = self.current_byte(&image_bytes)
-                .chain_err(|| "unable to read current byte")?;
+            let byte = self.current_byte(&image_bytes).chain_err(|| "unable to read current byte")?;
 
             match byte {
                 bytecode::HALT => break,

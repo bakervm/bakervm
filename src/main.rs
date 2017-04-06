@@ -8,11 +8,11 @@ extern crate ieee754;
 mod vm;
 mod error;
 
-use clap::{Arg, App};
+use clap::{App, Arg};
+use error::*;
 // use sdl2::event::Event;
 // use sdl2::rect::Rect;
 use vm::VM;
-use error::*;
 
 fn main() {
     if let Err(ref e) = run() {
@@ -38,8 +38,8 @@ fn run() -> VMResult<()> {
         .author("Julian Laubstein <contact@julianlaubstein.de>")
         .about("A virtual machine for classic point-and-click adventure games")
         .arg(Arg::with_name("input")
-            .index(1)
-            .help("Sets the image file to use. Uses a standard image if not specified."))
+                 .index(1)
+                 .help("Sets the image file to use. Uses a standard image if not specified."))
         .get_matches();
 
     let input = matches.value_of("input").unwrap_or("").to_string();
