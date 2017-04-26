@@ -6,25 +6,39 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
+// We use CGA for the display resolution
+const DISPLAY_WIDTH: usize = 320;
+const DISPLAY_HEIGHT: usize = 200;
+
+/// We can adjust the buffer register count here
+pub const BUF_REG_COUNT: usize = 32;
+
+/// A register for displaying color data on a virtual display
 struct DisplayRegister {
-    width: TinyWord,
-    height: TinyWord,
     color_mode: ColorMode,
+    data: [[SmallWord; DISPLAY_WIDTH]; DISPLAY_HEIGHT]
 }
 
+/// A register type for comparing two values
+struct CompareRegister {
+    cmp1: Word,
+    cmp2: Word
+}
+
+/// The mode for *interpreting* the color data in the framebuffer
 enum ColorMode {
     _1Bit,
     _8Bit,
     _24Bit,
 }
 
-pub const BUF_REG_COUNT: usize = 32;
-
+/// The whole state of the VM
 pub struct VM {
     instruction_ptr: Address,
     stack_ptr: Address,
     buf_regs: [Word; BUF_REG_COUNT],
     display_reg: DisplayRegister,
+    cmp_reg: CompareRegister,
     stack: Vec<Word>,
 }
 
@@ -35,9 +49,12 @@ impl VM {
             stack_ptr: 0,
             buf_regs: [0; BUF_REG_COUNT],
             display_reg: DisplayRegister {
-                width: 256,
-                height: 512,
                 color_mode: ColorMode::_24Bit,
+                data: [[0; DISPLAY_WIDTH]; DISPLAY_HEIGHT]
+            },
+            cmp_reg: CompareRegister {
+                cmp1: 0,
+                cmp2: 0,
             },
             stack: Vec::new(),
         }
