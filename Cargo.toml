@@ -9,7 +9,7 @@ license = "MIT"
 
 [dependencies]
 bakervm-definitions = { git = "https://github.com/bakervm/definitions" }
-clap = "2.19.2"
-error-chain = "0.7.1"
-sdl2 = "0.26.0"
+clap = "2.23.3"
+error-chain = "0.10.0"
+sdl2 = "0.29.1"
 ieee754 = "0.2.1"

@@ -44,9 +44,7 @@ fn run() -> VMResult<()> {
 
     let input = matches.value_of("input").unwrap_or("").to_string();
 
-    let mut vm = VM::new();
-
-    vm.exec(input).chain_err(|| "unable to exec file")?;
+    VM::new().exec(input).chain_err(|| "unable to exec file")?;
 
     // // start sdl2 with everything
     // let ctx = sdl2::init().unwrap();
