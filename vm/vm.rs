@@ -16,13 +16,13 @@ pub const BUF_REG_COUNT: usize = 32;
 /// A register for displaying color data on a virtual display
 struct DisplayRegister {
     color_mode: ColorMode,
-    data: [[SmallWord; DISPLAY_WIDTH]; DISPLAY_HEIGHT]
+    data: [[SmallWord; DISPLAY_HEIGHT]; DISPLAY_WIDTH],
 }
 
 /// A register type for comparing two values
 struct CompareRegister {
     cmp1: Word,
-    cmp2: Word
+    cmp2: Word,
 }
 
 /// The mode for *interpreting* the color data in the framebuffer
@@ -50,12 +50,9 @@ impl VM {
             buf_regs: [0; BUF_REG_COUNT],
             display_reg: DisplayRegister {
                 color_mode: ColorMode::_24Bit,
-                data: [[0; DISPLAY_WIDTH]; DISPLAY_HEIGHT]
+                data: [[0; DISPLAY_HEIGHT]; DISPLAY_WIDTH],
             },
-            cmp_reg: CompareRegister {
-                cmp1: 0,
-                cmp2: 0,
-            },
+            cmp_reg: CompareRegister { cmp1: 0, cmp2: 0 },
             stack: Vec::new(),
         }
     }
@@ -204,7 +201,6 @@ impl VM {
         Ok(res)
     }
 
-
     fn read_small_word(&mut self, bytes: &Vec<Byte>) -> VMResult<SmallWord> {
         // Build a Word from single bytes
         let mut res: SmallWord = 0;
@@ -219,7 +215,6 @@ impl VM {
         Ok(res)
     }
 
-
     fn read_tiny_word(&mut self, bytes: &Vec<Byte>) -> VMResult<TinyWord> {
         // Build a Word from single bytes
         let mut res: TinyWord = 0;
@@ -233,8 +228,6 @@ impl VM {
 
         Ok(res)
     }
-
-
 
     fn advance_instruction_ptr(&mut self) -> VMResult<()> {
         self.instruction_ptr += 1;
