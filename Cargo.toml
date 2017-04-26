@@ -8,8 +8,16 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-bakervm-definitions = { git = "https://github.com/bakervm/definitions" }
+bakervm-definitions = { path = "definitions" }
 clap = "2.23.3"
 error-chain = "0.10.0"
 sdl2 = "0.29.1"
 ieee754 = "0.2.1"
+
+[[bin]]
+name = "bakervm"
+path = "vm/main.rs"
+
+[[bin]]
+name = "basm"
+path = "asm/main.rs"

@@ -2,7 +2,7 @@
 name = "bakervm"
 version = "0.1.0"
 dependencies = [
- "bakervm-definitions 0.1.2 (git+https://github.com/bakervm/definitions)",
+ "bakervm-definitions 0.1.2",
  "clap 2.23.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ieee754 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -50,7 +50,6 @@ dependencies = [
 [[package]]
 name = "bakervm-definitions"
 version = "0.1.2"
-source = "git+https://github.com/bakervm/definitions#5efbe1d355f4567ebd80fa14c1e01dc16a0ba783"
 
 [[package]]
 name = "bitflags"
@@ -239,7 +238,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum atty 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)" = "d912da0db7fa85514874458ca3651fe2cddace8d0b0505571dbdcd41ab490159"
 "checksum backtrace 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "f551bc2ddd53aea015d453ef0b635af89444afa5ed2405dd0b2062ad5d600d80"
 "checksum backtrace-sys 0.1.10 (registry+https://github.com/rust-lang/crates.io-index)" = "d192fd129132fbc97497c1f2ec2c2c5174e376b95f535199ef4fe0a293d33842"
-"checksum bakervm-definitions 0.1.2 (git+https://github.com/bakervm/definitions)" = "<none>"
 "checksum bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "aad18937a628ec6abcd26d1489012cc0e18c21798210f491af69ded9b881106d"
 "checksum bitflags 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)" = "1370e9fc2a6ae53aea8b7a5110edbd08836ed87c88736dfabccade1c2b44bff4"
 "checksum cfg-if 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "de1e760d7b6535af4241fca8bd8adf68e2e7edacc6b29f5d399050c5e48cf88c"

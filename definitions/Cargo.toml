@@ -1,0 +1,6 @@
+[package]
+name = "bakervm-definitions"
+version = "0.1.2"
+authors = ["Julian Laubstein <contact@julianlaubstein.de>"]
+
+[dependencies]
