@@ -62,7 +62,7 @@ impl VM {
 
     pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
         let mut image_file = File::open(path).chain_err(|| "unable to open game image")?;
-        let mut image_bytes: Vec<Byte> = Vec::new();
+        let mut image_bytes: Image = Image::new();
         image_file.read_to_end(&mut image_bytes).chain_err(|| "unable to read image")?;
 
         while self.pc < image_bytes.len() {
@@ -74,9 +74,6 @@ impl VM {
                 bytecode::SUB => self.sub().chain_err(|| "unable to execute 'sub' instruction")?,
                 bytecode::MUL => self.mul().chain_err(|| "unable to execute 'mul' instruction")?,
                 bytecode::DIV => self.div().chain_err(|| "unable to execute 'div' instruction")?,
-                bytecode::PRINT => {
-                    self.print().chain_err(|| "unable to execute 'print' instruction")?
-                }
                 bytecode::PUSH => {
                     let res = self.read_word(&image_bytes).chain_err(|| "unable to read word")?;
 
@@ -186,7 +183,7 @@ impl VM {
         Ok(())
     }
 
-    fn read_word(&mut self, bytes: &Vec<Byte>) -> VMResult<Word> {
+    fn read_word(&mut self, bytes: &Image) -> VMResult<Word> {
         // Build a Word from single bytes
         let mut res: Word = 0;
         for _ in 0..8 {
@@ -200,7 +197,7 @@ impl VM {
         Ok(res)
     }
 
-    fn read_small_word(&mut self, bytes: &Vec<Byte>) -> VMResult<SmallWord> {
+    fn read_small_word(&mut self, bytes: &Image) -> VMResult<SmallWord> {
         // Build a Word from single bytes
         let mut res: SmallWord = 0;
         for _ in 0..4 {
@@ -214,7 +211,7 @@ impl VM {
         Ok(res)
     }
 
-    fn read_tiny_word(&mut self, bytes: &Vec<Byte>) -> VMResult<TinyWord> {
+    fn read_tiny_word(&mut self, bytes: &Image) -> VMResult<TinyWord> {
         // Build a Word from single bytes
         let mut res: TinyWord = 0;
         for _ in 0..2 {
@@ -233,7 +230,7 @@ impl VM {
         Ok(())
     }
 
-    fn current_byte(&mut self, bytes: &Vec<Byte>) -> VMResult<Byte> {
+    fn current_byte(&mut self, bytes: &Image) -> VMResult<Byte> {
         if self.pc < bytes.len() {
             Ok(bytes[self.pc])
         } else {
@@ -252,11 +249,5 @@ impl VM {
     fn peek_number(&mut self) -> VMResult<Number> {
         let top = self.peek_word().chain_err(|| "unable to peek for word")?;
         Ok(Number::from_bits(top))
-    }
-
-    fn print(&mut self) -> VMResult<()> {
-        let top = self.peek_number().chain_err(|| "unable to get current top of stack")?;
-        println!("{:?}", top);
-        Ok(())
     }
 }
