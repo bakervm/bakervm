@@ -7,8 +7,8 @@ use std::io::prelude::*;
 use std::path::Path;
 
 // We use CGA for the display resolution
-const DISPLAY_WIDTH: usize = 320;
-const DISPLAY_HEIGHT: usize = 200;
+pub const DISPLAY_WIDTH: usize = 320;
+pub const DISPLAY_HEIGHT: usize = 200;
 
 /// We can adjust the buffer register count here
 pub const BUF_REG_COUNT: usize = 32;
@@ -34,8 +34,11 @@ enum ColorMode {
 
 /// The whole state of the VM
 pub struct VM {
+    /// The program counter
     pc: Address,
+    /// The stack pointer
     stack_ptr: Address,
+    /// The buffer registers
     buf_regs: [Word; BUF_REG_COUNT],
     display_reg: DisplayRegister,
     cmp_reg: CompareRegister,
