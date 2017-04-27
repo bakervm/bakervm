@@ -19,7 +19,8 @@ pub const MUL: Byte = 0x04;
 /// top of the stack. This also removes the processed values from the stack.
 pub const DIV: Byte = 0x05;
 
-/// [DEPRECATED] Prints out the top most value on the stack
+/// Prints out the top most value on the stack
+#[deprecated(since="0.1.0")]
 pub const PRINT: Byte = 0x06;
 
 /// Pushes a value (Word) to the stack
@@ -46,5 +47,6 @@ pub const MOVT: Byte = 0x0D;
 /// Moves the specified value (Byte) to the specified register (Address)
 pub const MOVB: Byte = 0x0E;
 
-/// Moves the value specified register (Address) to the otherwise specified register (Address)
+/// Moves the value in the specified buffer register (Address) to the otherwise specified buffer
+/// register (Address)
 pub const MOV: Byte = 0x0F;
