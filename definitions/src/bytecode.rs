@@ -20,7 +20,7 @@ pub const MUL: Byte = 0x04;
 pub const DIV: Byte = 0x05;
 
 /// Prints out the top most value on the stack
-#[deprecated(since="0.1.0")]
+#[deprecated(since="0.1.0", note="will be replaced soon")]
 pub const PRINT: Byte = 0x06;
 
 /// Pushes a value (Word) to the stack
