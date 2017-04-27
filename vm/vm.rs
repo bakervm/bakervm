@@ -36,6 +36,8 @@ enum ColorMode {
 pub struct VM {
     /// The program counter
     pc: Address,
+    /// The currently loaded image
+    image: Image,
     /// The stack pointer
     stack_ptr: Address,
     /// The buffer registers
@@ -49,6 +51,7 @@ impl VM {
     pub fn new() -> VM {
         VM {
             pc: 0,
+            image: Image::new(),
             stack_ptr: 0,
             buf_regs: [0; BUF_REG_COUNT],
             display_reg: DisplayRegister {
@@ -62,11 +65,10 @@ impl VM {
 
     pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
         let mut image_file = File::open(path).chain_err(|| "unable to open game image")?;
-        let mut image_bytes: Image = Image::new();
-        image_file.read_to_end(&mut image_bytes).chain_err(|| "unable to read image")?;
+        image_file.read_to_end(&mut self.image).chain_err(|| "unable to read image")?;
 
-        while self.pc < image_bytes.len() {
-            let byte = self.current_byte(&image_bytes).chain_err(|| "unable to read current byte")?;
+        while self.pc < self.image.len() {
+            let byte = self.current_byte().chain_err(|| "unable to read current byte")?;
 
             match byte {
                 bytecode::HALT => break,
@@ -75,18 +77,18 @@ impl VM {
                 bytecode::MUL => self.mul().chain_err(|| "unable to execute 'mul' instruction")?,
                 bytecode::DIV => self.div().chain_err(|| "unable to execute 'div' instruction")?,
                 bytecode::PUSH => {
-                    let res = self.read_word(&image_bytes).chain_err(|| "unable to read word")?;
+                    let res = self.read_word().chain_err(|| "unable to read word")?;
 
                     self.push_word(res).chain_err(|| "unable to push value to the stack")?;
                 }
                 bytecode::JMP => {
-                    let addr = self.read_word(&image_bytes).chain_err(|| "unable to read word")?;
+                    let addr = self.read_word().chain_err(|| "unable to read word")?;
 
                     self.jmp(addr as Address).chain_err(|| "unable to jump")?;
                     continue;
                 }
                 bytecode::JZ => {
-                    let addr = self.read_word(&image_bytes).chain_err(|| "unable to read word")?;
+                    let addr = self.read_word().chain_err(|| "unable to read word")?;
 
                     let top_of_stack = self.peek_number()
                         .chain_err(|| "unable to get current top of stack")?;
@@ -97,7 +99,7 @@ impl VM {
                     }
                 }
                 bytecode::JNZ => {
-                    let addr = self.read_word(&image_bytes).chain_err(|| "unable to read word")?;
+                    let addr = self.read_word().chain_err(|| "unable to read word")?;
 
                     let top_of_stack = self.peek_number()
                         .chain_err(|| "unable to get current top of stack")?;
@@ -183,42 +185,39 @@ impl VM {
         Ok(())
     }
 
-    fn read_word(&mut self, bytes: &Image) -> VMResult<Word> {
+    fn read_word(&mut self) -> VMResult<Word> {
         // Build a Word from single bytes
         let mut res: Word = 0;
         for _ in 0..8 {
             res <<= 8;
             self.advance_pc().chain_err(|| "unable to advance program counter")?;
-            let current_byte = self.current_byte(&bytes)
-                .chain_err(|| "unable to read current byte")?;
+            let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
             res |= current_byte as Word;
         }
 
         Ok(res)
     }
 
-    fn read_small_word(&mut self, bytes: &Image) -> VMResult<SmallWord> {
+    fn read_small_word(&mut self) -> VMResult<SmallWord> {
         // Build a Word from single bytes
         let mut res: SmallWord = 0;
         for _ in 0..4 {
             res <<= 8;
             self.advance_pc().chain_err(|| "unable to advance program counter")?;
-            let current_byte = self.current_byte(&bytes)
-                .chain_err(|| "unable to read current byte")?;
+            let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
             res |= current_byte as SmallWord;
         }
 
         Ok(res)
     }
 
-    fn read_tiny_word(&mut self, bytes: &Image) -> VMResult<TinyWord> {
+    fn read_tiny_word(&mut self) -> VMResult<TinyWord> {
         // Build a Word from single bytes
         let mut res: TinyWord = 0;
         for _ in 0..2 {
             res <<= 8;
             self.advance_pc().chain_err(|| "unable to advance program counter")?;
-            let current_byte = self.current_byte(&bytes)
-                .chain_err(|| "unable to read current byte")?;
+            let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
             res |= current_byte as TinyWord;
         }
 
@@ -230,9 +229,9 @@ impl VM {
         Ok(())
     }
 
-    fn current_byte(&mut self, bytes: &Image) -> VMResult<Byte> {
-        if self.pc < bytes.len() {
-            Ok(bytes[self.pc])
+    fn current_byte(&mut self) -> VMResult<Byte> {
+        if self.pc < self.image.len() {
+            Ok(self.image[self.pc])
         } else {
             bail!("program counter out of bounds");
         }
