@@ -34,7 +34,7 @@ enum ColorMode {
 
 /// The whole state of the VM
 pub struct VM {
-    instruction_ptr: Address,
+    pc: Address,
     stack_ptr: Address,
     buf_regs: [Word; BUF_REG_COUNT],
     display_reg: DisplayRegister,
@@ -45,7 +45,7 @@ pub struct VM {
 impl VM {
     pub fn new() -> VM {
         VM {
-            instruction_ptr: 0,
+            pc: 0,
             stack_ptr: 0,
             buf_regs: [0; BUF_REG_COUNT],
             display_reg: DisplayRegister {
@@ -62,7 +62,7 @@ impl VM {
         let mut image_bytes: Vec<Byte> = Vec::new();
         image_file.read_to_end(&mut image_bytes).chain_err(|| "unable to read image")?;
 
-        while self.instruction_ptr < image_bytes.len() {
+        while self.pc < image_bytes.len() {
             let byte = self.current_byte(&image_bytes).chain_err(|| "unable to read current byte")?;
 
             match byte {
@@ -107,14 +107,10 @@ impl VM {
                         continue;
                     }
                 }
-                _ => {
-                    bail!("unexpected opcode {:02x} at address {:?}",
-                          byte,
-                          self.instruction_ptr)
-                }
+                _ => bail!("unexpected opcode {:02x} at address {:?}", byte, self.pc),
             }
 
-            self.advance_instruction_ptr().chain_err(|| "unable to advance instruction pointer")?;
+            self.advance_pc().chain_err(|| "unable to advance program counter")?;
         }
 
         Ok(())
@@ -183,7 +179,7 @@ impl VM {
     }
 
     fn jmp(&mut self, addr: Address) -> VMResult<()> {
-        self.instruction_ptr = addr;
+        self.pc = addr;
         Ok(())
     }
 
@@ -192,7 +188,7 @@ impl VM {
         let mut res: Word = 0;
         for _ in 0..8 {
             res <<= 8;
-            self.advance_instruction_ptr().chain_err(|| "unable to advance instruction pointer")?;
+            self.advance_pc().chain_err(|| "unable to advance program counter")?;
             let current_byte = self.current_byte(&bytes)
                 .chain_err(|| "unable to read current byte")?;
             res |= current_byte as Word;
@@ -206,7 +202,7 @@ impl VM {
         let mut res: SmallWord = 0;
         for _ in 0..4 {
             res <<= 8;
-            self.advance_instruction_ptr().chain_err(|| "unable to advance instruction pointer")?;
+            self.advance_pc().chain_err(|| "unable to advance program counter")?;
             let current_byte = self.current_byte(&bytes)
                 .chain_err(|| "unable to read current byte")?;
             res |= current_byte as SmallWord;
@@ -220,7 +216,7 @@ impl VM {
         let mut res: TinyWord = 0;
         for _ in 0..2 {
             res <<= 8;
-            self.advance_instruction_ptr().chain_err(|| "unable to advance instruction pointer")?;
+            self.advance_pc().chain_err(|| "unable to advance program counter")?;
             let current_byte = self.current_byte(&bytes)
                 .chain_err(|| "unable to read current byte")?;
             res |= current_byte as TinyWord;
@@ -229,16 +225,16 @@ impl VM {
         Ok(res)
     }
 
-    fn advance_instruction_ptr(&mut self) -> VMResult<()> {
-        self.instruction_ptr += 1;
+    fn advance_pc(&mut self) -> VMResult<()> {
+        self.pc += 1;
         Ok(())
     }
 
     fn current_byte(&mut self, bytes: &Vec<Byte>) -> VMResult<Byte> {
-        if self.instruction_ptr < bytes.len() {
-            Ok(bytes[self.instruction_ptr])
+        if self.pc < bytes.len() {
+            Ok(bytes[self.pc])
         } else {
-            bail!("instruction pointer out of bounds");
+            bail!("program counter out of bounds");
         }
     }
 
