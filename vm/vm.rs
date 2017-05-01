@@ -84,7 +84,7 @@ impl VM {
                 bytecode::JMP => {
                     let addr = self.read_word().chain_err(|| "unable to read word")?;
 
-                    self.jmp(addr as Address).chain_err(|| "unable to jump")?;
+                    self.jmp(addr as Address);
                     continue;
                 }
                 bytecode::JZ => {
@@ -94,7 +94,7 @@ impl VM {
                         .chain_err(|| "unable to get current top of stack")?;
 
                     if top_of_stack == 0.0 {
-                        self.jmp(addr as Address).chain_err(|| "unable to jump")?;
+                        self.jmp(addr as Address);
                         continue;
                     }
                 }
@@ -105,7 +105,7 @@ impl VM {
                         .chain_err(|| "unable to get current top of stack")?;
 
                     if top_of_stack != 0.0 {
-                        self.jmp(addr as Address).chain_err(|| "unable to jump")?;
+                        self.jmp(addr as Address);
                         continue;
                     }
                 }
@@ -180,9 +180,8 @@ impl VM {
         Ok(())
     }
 
-    fn jmp(&mut self, addr: Address) -> VMResult<()> {
+    fn jmp(&mut self, addr: Address) {
         self.pc = addr;
-        Ok(())
     }
 
     fn read_word(&mut self) -> VMResult<Word> {
