@@ -21,8 +21,8 @@ struct DisplayRegister {
 
 /// A register type for comparing two values
 struct CompareRegister {
-    cmp1: Word,
-    cmp2: Word,
+    cra: Word,
+    crb: Word,
 }
 
 /// The mode for *interpreting* the color data in the framebuffer
@@ -58,7 +58,7 @@ impl VM {
                 color_mode: ColorMode::_24Bit,
                 data: [[0; DISPLAY_HEIGHT]; DISPLAY_WIDTH],
             },
-            cmp_reg: CompareRegister { cmp1: 0, cmp2: 0 },
+            cmp_reg: CompareRegister { cra: 0, crb: 0 },
             stack: Vec::new(),
         }
     }
@@ -112,7 +112,7 @@ impl VM {
                 _ => bail!("unexpected opcode {:02x} at address {:?}", byte, self.pc),
             }
 
-            self.advance_pc().chain_err(|| "unable to advance program counter")?;
+            self.advance_pc();
         }
 
         Ok(())
@@ -190,7 +190,7 @@ impl VM {
         let mut res: Word = 0;
         for _ in 0..8 {
             res <<= 8;
-            self.advance_pc().chain_err(|| "unable to advance program counter")?;
+            self.advance_pc();
             let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
             res |= current_byte as Word;
         }
@@ -203,7 +203,7 @@ impl VM {
         let mut res: SmallWord = 0;
         for _ in 0..4 {
             res <<= 8;
-            self.advance_pc().chain_err(|| "unable to advance program counter")?;
+            self.advance_pc();
             let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
             res |= current_byte as SmallWord;
         }
@@ -216,7 +216,7 @@ impl VM {
         let mut res: TinyWord = 0;
         for _ in 0..2 {
             res <<= 8;
-            self.advance_pc().chain_err(|| "unable to advance program counter")?;
+            self.advance_pc();
             let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
             res |= current_byte as TinyWord;
         }
@@ -224,9 +224,8 @@ impl VM {
         Ok(res)
     }
 
-    fn advance_pc(&mut self) -> VMResult<()> {
+    fn advance_pc(&mut self) {
         self.pc += 1;
-        Ok(())
     }
 
     fn current_byte(&mut self) -> VMResult<Byte> {
