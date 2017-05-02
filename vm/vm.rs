@@ -1,165 +1,23 @@
 use definitions::bytecode;
 use definitions::typedef::*;
 use error::*;
-use ieee754::Ieee754;
-use num::traits::Num;
-use num::traits::cast::FromPrimitive;
+use image::Image;
 use output::Mountable;
-use std::fs::File;
-use std::io::prelude::*;
-use std::mem;
-use std::ops::{BitOrAssign, ShlAssign};
+use stack::Stack;
 use std::path::Path;
 
-#[derive(Default)]
-struct ImageData {
-    /// The currently loaded image
-    data: Image,
-    /// The program counter
-    pc: Address,
-}
-
-impl ImageData {
-    pub fn from_path<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
-        let mut image_file = File::open(path).chain_err(|| "unable to open game image file")?;
-        image_file.read_to_end(&mut self.data).chain_err(|| "unable to read game image file")?;
-
-        Ok(())
-    }
-
-    fn advance_pc(&mut self) {
-        self.pc += 1;
-    }
-
-    fn current_byte(&mut self) -> VMResult<Byte> {
-        if self.pc < self.data.len() {
-            Ok(self.data[self.pc])
-        } else {
-            bail!("program counter out of bounds");
-        }
-    }
-
-    fn jmp(&mut self, addr: Address) {
-        self.pc = addr;
-    }
-
-    fn read_next<T: FromPrimitive + Num + ShlAssign<u8> + BitOrAssign>(&mut self) -> VMResult<T> {
-        // Build a Word from single bytes
-        let mut res: T = T::zero();
-
-        let length = mem::size_of::<T>();
-
-        for _ in 0..length {
-            res <<= 8u8;
-            self.advance_pc();
-            let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
-            if let Some(number) = T::from_u8(current_byte) {
-                res |= number;
-            } else {
-                bail!("unable to convert from u8");
-            }
-
-        }
-
-        Ok(res)
-    }
-}
-
-#[derive(Default)]
-struct StackData {
-    /// The stack pointer
-    ptr: Address,
-    data: Vec<Word>,
-}
-
-impl StackData {
-    fn peek_word(&mut self) -> VMResult<Word> {
-        if self.ptr < self.data.len() {
-            Ok(self.data[self.ptr])
-        } else {
-            bail!("stack pointer out of bounds");
-        }
-    }
-
-    fn peek_number(&mut self) -> VMResult<Number> {
-        let top = self.peek_word().chain_err(|| "unable to peek for word")?;
-        Ok(Number::from_bits(top))
-    }
-
-    fn push_word(&mut self, value: Word) -> VMResult<()> {
-        if !self.data.is_empty() {
-            self.ptr += 1;
-        }
-
-        self.data.push(value);
-
-        Ok(())
-    }
-
-    fn push_number(&mut self, value: Number) -> VMResult<()> {
-        self.push_word(value.bits())
-    }
-
-    fn pop_word(&mut self) -> VMResult<Word> {
-        if self.data.is_empty() {
-            bail!("unable to pop word off an empty Stack");
-        }
-
-        let res = self.data.remove(self.ptr);
-        if !self.data.is_empty() {
-            self.ptr -= 1;
-        }
-
-        Ok(res)
-    }
-
-    fn pop_number(&mut self) -> VMResult<Number> {
-        let top = self.pop_word().chain_err(|| "unable to pop word off the stack")?;
-        Ok(Number::from_bits(top))
-    }
-
-    fn add(&mut self) -> VMResult<()> {
-        let b = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
-        let a = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
-        self.push_number(a + b).chain_err(|| "unable to push value to the stack")?;
-        Ok(())
-    }
-
-    fn sub(&mut self) -> VMResult<()> {
-        let b = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
-        let a = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
-        self.push_number(a - b).chain_err(|| "unable to push to stack")?;
-        Ok(())
-    }
-
-
-    fn mul(&mut self) -> VMResult<()> {
-        let b = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
-        let a = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
-        self.push_number(a * b).chain_err(|| "unable to push to stack")?;
-        Ok(())
-    }
-
-
-    fn div(&mut self) -> VMResult<()> {
-        let b = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
-        let a = self.pop_number().chain_err(|| "unable to pop word off the stack")?;
-        self.push_number(a / b).chain_err(|| "unable to push to stack")?;
-        Ok(())
-    }
-}
 
 /// The whole state of the VM
 pub struct VM {
-    image: ImageData,
-    stack: StackData,
+    image: Image,
+    stack: Stack,
 }
 
 impl VM {
     pub fn new() -> VM {
         VM {
-            image: ImageData::default(),
-            stack: StackData::default(),
+            image: Image::default(),
+            stack: Stack::default(),
         }
     }
 

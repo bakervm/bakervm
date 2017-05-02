@@ -9,6 +9,8 @@ extern crate num;
 mod vm;
 mod error;
 mod output;
+mod image;
+mod stack;
 
 use clap::{App, Arg};
 use error::*;

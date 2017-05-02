@@ -9,7 +9,7 @@ use std::io::prelude::*;
 pub fn compile(file: File, output: &str) -> CompilationResult<File> {
     let reader = BufReader::new(file);
 
-    let mut program: Image = Image::new();
+    let mut program: ImageData = ImageData::new();
 
     let mut line_addr_table: Vec<Address> = Vec::new();
 
@@ -55,7 +55,7 @@ pub fn compile(file: File, output: &str) -> CompilationResult<File> {
     Ok(output_file)
 }
 
-fn compile_instruction(opcode: String, args: Vec<String>) -> CompilationResult<Image> {
+fn compile_instruction(opcode: String, args: Vec<String>) -> CompilationResult<ImageData> {
     let mut res = Vec::new();
     match opcode.as_str() {
         "halt" => res.push(bytecode::HALT),
