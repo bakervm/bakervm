@@ -8,11 +8,14 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-bakervm-definitions = { path = "definitions" }
 clap = "2.23.3"
 error-chain = "0.10.0"
 sdl2 = "0.29.1"
 ieee754 = "0.2.1"
+
+[lib]
+name = "definitions"
+path = "definitions/lib.rs"
 
 [[bin]]
 name = "bakervm"

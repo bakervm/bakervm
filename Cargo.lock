@@ -2,7 +2,6 @@
 name = "bakervm"
 version = "0.2.0"
 dependencies = [
- "bakervm-definitions 0.1.2",
  "clap 2.23.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ieee754 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -46,10 +45,6 @@ dependencies = [
  "gcc 0.3.45 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
-
-[[package]]
-name = "bakervm-definitions"
-version = "0.1.2"
 
 [[package]]
 name = "bitflags"
