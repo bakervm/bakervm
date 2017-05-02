@@ -1,9 +1,11 @@
+mod image;
+mod stack;
+
+use self::image::Image;
+use self::stack::Stack;
 use definitions::bytecode;
 use definitions::typedef::*;
 use error::*;
-use image::Image;
-use output::Mountable;
-use stack::Stack;
 use std::path::Path;
 
 
@@ -87,12 +89,6 @@ impl VM {
 
             self.image.advance_pc();
         }
-
-        Ok(())
-    }
-
-    pub fn mount<T: Mountable>(&mut self, device: T) -> VMResult<()> {
-        device.run();
 
         Ok(())
     }

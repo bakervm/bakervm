@@ -8,9 +8,6 @@ extern crate num;
 
 mod vm;
 mod error;
-mod output;
-mod image;
-mod stack;
 
 use clap::{App, Arg};
 use error::*;
@@ -51,9 +48,6 @@ fn run() -> VMResult<()> {
     let input = matches.value_of("input").unwrap_or("").to_string();
 
     let mut vm = VM::new();
-
-    vm.mount(output::Console {}).chain_err(|| "unable to mount output")?;
-    vm.mount(output::CGADisplay {}).chain_err(|| "unable to mount output")?;
 
     vm.exec(input).chain_err(|| "unable to exec file")?;
 
