@@ -52,7 +52,7 @@ impl ImageData {
         self.pc = addr;
     }
 
-    fn read<T: FromPrimitive + Num + ShlAssign<u8> + BitOrAssign>(&mut self) -> VMResult<T> {
+    fn read_next<T: FromPrimitive + Num + ShlAssign<u8> + BitOrAssign>(&mut self) -> VMResult<T> {
         // Build a Word from single bytes
         let mut res: T = T::zero();
 
@@ -81,97 +81,26 @@ struct StackData {
     data: Vec<Word>,
 }
 
-/// The whole state of the VM
-pub struct VM {
-    /// The buffer registers
-    buf_regs: [Word; BUF_REG_COUNT],
-    cmp_reg: CompareRegister,
-    image: ImageData,
-    stack: StackData,
-}
-
-impl VM {
-    pub fn new() -> VM {
-        VM {
-            image: ImageData::default(),
-            stack: StackData::default(),
-            buf_regs: [0; BUF_REG_COUNT],
-            cmp_reg: CompareRegister { cra: 0, crb: 0 },
+impl StackData {
+    fn peek_word(&mut self) -> VMResult<Word> {
+        if self.ptr < self.data.len() {
+            Ok(self.data[self.ptr])
+        } else {
+            bail!("stack pointer out of bounds");
         }
     }
 
-    pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
-        self.image.from_path(path)?;
-
-        while self.image.pc < self.image.data.len() {
-            let byte = self.image.current_byte().chain_err(|| "unable to read current byte")?;
-
-            match byte {
-                bytecode::HALT => break,
-                bytecode::ADD => self.add().chain_err(|| "unable to execute 'add' instruction")?,
-                bytecode::SUB => self.sub().chain_err(|| "unable to execute 'sub' instruction")?,
-                bytecode::MUL => self.mul().chain_err(|| "unable to execute 'mul' instruction")?,
-                bytecode::DIV => self.div().chain_err(|| "unable to execute 'div' instruction")?,
-                bytecode::PUSH => {
-                    let res = self.image.read().chain_err(|| "unable to read word")?;
-
-                    self.push_word(res).chain_err(|| "unable to push value to the stack")?;
-                }
-                bytecode::JMP => {
-                    let addr: Word = self.image.read().chain_err(|| "unable to read word")?;
-
-                    self.image.jmp(addr as Address);
-                    continue;
-                }
-                bytecode::JZ => {
-                    let addr: Word = self.image.read().chain_err(|| "unable to read word")?;
-
-                    let top_of_stack = self.peek_number()
-                        .chain_err(|| "unable to get current top of stack")?;
-
-                    if top_of_stack == 0.0 {
-                        self.image.jmp(addr as Address);
-                        continue;
-                    }
-                }
-                bytecode::JNZ => {
-                    let addr: Word = self.image.read().chain_err(|| "unable to read word")?;
-
-                    let top_of_stack = self.peek_number()
-                        .chain_err(|| "unable to get current top of stack")?;
-
-                    if top_of_stack != 0.0 {
-                        self.image.jmp(addr as Address);
-                        continue;
-                    }
-                }
-                _ => {
-                    bail!(
-                        "unexpected opcode {:02x} at address {:?}",
-                        byte,
-                        self.image.pc
-                    )
-                }
-            }
-
-            self.image.advance_pc();
-        }
-
-        Ok(())
-    }
-
-    pub fn mount<T: Mountable>(&mut self, device: T) -> VMResult<()> {
-        device.run();
-
-        Ok(())
+    fn peek_number(&mut self) -> VMResult<Number> {
+        let top = self.peek_word().chain_err(|| "unable to peek for word")?;
+        Ok(Number::from_bits(top))
     }
 
     fn push_word(&mut self, value: Word) -> VMResult<()> {
-        if !self.stack.data.is_empty() {
-            self.stack.ptr += 1;
+        if !self.data.is_empty() {
+            self.ptr += 1;
         }
 
-        self.stack.data.push(value);
+        self.data.push(value);
 
         Ok(())
     }
@@ -181,13 +110,13 @@ impl VM {
     }
 
     fn pop_word(&mut self) -> VMResult<Word> {
-        if self.stack.data.is_empty() {
+        if self.data.is_empty() {
             bail!("unable to pop word off an empty Stack");
         }
 
-        let res = self.stack.data.remove(self.stack.ptr);
-        if !self.stack.data.is_empty() {
-            self.stack.ptr -= 1;
+        let res = self.data.remove(self.ptr);
+        if !self.data.is_empty() {
+            self.ptr -= 1;
         }
 
         Ok(res)
@@ -227,19 +156,100 @@ impl VM {
         self.push_number(a / b).chain_err(|| "unable to push to stack")?;
         Ok(())
     }
+}
 
+/// The whole state of the VM
+pub struct VM {
+    /// The buffer registers
+    buf_regs: [Word; BUF_REG_COUNT],
+    cmp_reg: CompareRegister,
+    image: ImageData,
+    stack: StackData,
+}
 
-
-    fn peek_word(&mut self) -> VMResult<Word> {
-        if self.stack.ptr < self.stack.data.len() {
-            Ok(self.stack.data[self.stack.ptr])
-        } else {
-            bail!("stack pointer out of bounds");
+impl VM {
+    pub fn new() -> VM {
+        VM {
+            image: ImageData::default(),
+            stack: StackData::default(),
+            buf_regs: [0; BUF_REG_COUNT],
+            cmp_reg: CompareRegister { cra: 0, crb: 0 },
         }
     }
 
-    fn peek_number(&mut self) -> VMResult<Number> {
-        let top = self.peek_word().chain_err(|| "unable to peek for word")?;
-        Ok(Number::from_bits(top))
+    pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
+        self.image.from_path(path)?;
+
+        while self.image.pc < self.image.data.len() {
+            let byte = self.image.current_byte().chain_err(|| "unable to read current byte")?;
+
+            match byte {
+                bytecode::HALT => break,
+                bytecode::ADD => {
+                    self.stack.add().chain_err(|| "unable to execute 'add' instruction")?
+                }
+                bytecode::SUB => {
+                    self.stack.sub().chain_err(|| "unable to execute 'sub' instruction")?
+                }
+                bytecode::MUL => {
+                    self.stack.mul().chain_err(|| "unable to execute 'mul' instruction")?
+                }
+                bytecode::DIV => {
+                    self.stack.div().chain_err(|| "unable to execute 'div' instruction")?
+                }
+                bytecode::PUSH => {
+                    let res = self.image.read_next().chain_err(|| "unable to read word")?;
+
+                    self.stack.push_word(res).chain_err(|| "unable to push value to the stack")?;
+                }
+                bytecode::JMP => {
+                    let addr: Word = self.image.read_next().chain_err(|| "unable to read word")?;
+
+                    self.image.jmp(addr as Address);
+                    continue;
+                }
+                bytecode::JZ => {
+                    let addr: Word = self.image.read_next().chain_err(|| "unable to read word")?;
+
+                    let top_of_stack = self.stack
+                        .peek_number()
+                        .chain_err(|| "unable to get current top of stack")?;
+
+                    if top_of_stack == 0.0 {
+                        self.image.jmp(addr as Address);
+                        continue;
+                    }
+                }
+                bytecode::JNZ => {
+                    let addr: Word = self.image.read_next().chain_err(|| "unable to read word")?;
+
+                    let top_of_stack = self.stack
+                        .peek_number()
+                        .chain_err(|| "unable to get current top of stack")?;
+
+                    if top_of_stack != 0.0 {
+                        self.image.jmp(addr as Address);
+                        continue;
+                    }
+                }
+                _ => {
+                    bail!(
+                        "unexpected opcode {:02x} at address {:?}",
+                        byte,
+                        self.image.pc
+                    )
+                }
+            }
+
+            self.image.advance_pc();
+        }
+
+        Ok(())
+    }
+
+    pub fn mount<T: Mountable>(&mut self, device: T) -> VMResult<()> {
+        device.run();
+
+        Ok(())
     }
 }
