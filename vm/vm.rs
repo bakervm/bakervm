@@ -20,37 +20,45 @@ struct CompareRegister {
     crb: Word,
 }
 
-/// The whole state of the VM
-pub struct VM {
+#[derive(Default)]
+struct ImageData {
+    /// The currently loaded image
+    data: Image,
     /// The program counter
     pc: Address,
-    /// The currently loaded image
-    image: Image,
+}
+
+#[derive(Default)]
+struct StackData {
     /// The stack pointer
-    stack_ptr: Address,
+    ptr: Address,
+    data: Vec<Word>,
+}
+
+/// The whole state of the VM
+pub struct VM {
     /// The buffer registers
     buf_regs: [Word; BUF_REG_COUNT],
     cmp_reg: CompareRegister,
-    stack: Vec<Word>,
+    image: ImageData,
+    stack: StackData,
 }
 
 impl VM {
     pub fn new() -> VM {
         VM {
-            pc: 0,
-            image: Image::new(),
-            stack_ptr: 0,
+            image: ImageData::default(),
+            stack: StackData::default(),
             buf_regs: [0; BUF_REG_COUNT],
             cmp_reg: CompareRegister { cra: 0, crb: 0 },
-            stack: Vec::new(),
         }
     }
 
     pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
         let mut image_file = File::open(path).chain_err(|| "unable to open game image file")?;
-        image_file.read_to_end(&mut self.image).chain_err(|| "unable to read game image file")?;
+        image_file.read_to_end(&mut self.image.data).chain_err(|| "unable to read game image file")?;
 
-        while self.pc < self.image.len() {
+        while self.image.pc < self.image.data.len() {
             let byte = self.current_byte().chain_err(|| "unable to read current byte")?;
 
             match byte {
@@ -92,7 +100,13 @@ impl VM {
                         continue;
                     }
                 }
-                _ => bail!("unexpected opcode {:02x} at address {:?}", byte, self.pc),
+                _ => {
+                    bail!(
+                        "unexpected opcode {:02x} at address {:?}",
+                        byte,
+                        self.image.pc
+                    )
+                }
             }
 
             self.advance_pc();
@@ -108,11 +122,11 @@ impl VM {
     }
 
     fn push_word(&mut self, value: Word) -> VMResult<()> {
-        if !self.stack.is_empty() {
-            self.stack_ptr += 1;
+        if !self.stack.data.is_empty() {
+            self.stack.ptr += 1;
         }
 
-        self.stack.push(value);
+        self.stack.data.push(value);
 
         Ok(())
     }
@@ -122,13 +136,13 @@ impl VM {
     }
 
     fn pop_word(&mut self) -> VMResult<Word> {
-        if self.stack.is_empty() {
+        if self.stack.data.is_empty() {
             bail!("unable to pop word off an empty Stack");
         }
 
-        let res = self.stack.remove(self.stack_ptr);
-        if !self.stack.is_empty() {
-            self.stack_ptr -= 1;
+        let res = self.stack.data.remove(self.stack.ptr);
+        if !self.stack.data.is_empty() {
+            self.stack.ptr -= 1;
         }
 
         Ok(res)
@@ -170,7 +184,7 @@ impl VM {
     }
 
     fn jmp(&mut self, addr: Address) {
-        self.pc = addr;
+        self.image.pc = addr;
     }
 
     fn read<T: FromPrimitive + Num + ShlAssign<u8> + BitOrAssign>(&mut self) -> VMResult<T> {
@@ -195,20 +209,20 @@ impl VM {
     }
 
     fn advance_pc(&mut self) {
-        self.pc += 1;
+        self.image.pc += 1;
     }
 
     fn current_byte(&mut self) -> VMResult<Byte> {
-        if self.pc < self.image.len() {
-            Ok(self.image[self.pc])
+        if self.image.pc < self.image.data.len() {
+            Ok(self.image.data[self.image.pc])
         } else {
             bail!("program counter out of bounds");
         }
     }
 
     fn peek_word(&mut self) -> VMResult<Word> {
-        if self.stack_ptr < self.stack.len() {
-            Ok(self.stack[self.stack_ptr])
+        if self.stack.ptr < self.stack.data.len() {
+            Ok(self.stack.data[self.stack.ptr])
         } else {
             bail!("stack pointer out of bounds");
         }
