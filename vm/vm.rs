@@ -28,6 +28,52 @@ struct ImageData {
     pc: Address,
 }
 
+impl ImageData {
+    pub fn from_path<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
+        let mut image_file = File::open(path).chain_err(|| "unable to open game image file")?;
+        image_file.read_to_end(&mut self.data).chain_err(|| "unable to read game image file")?;
+
+        Ok(())
+    }
+
+    fn advance_pc(&mut self) {
+        self.pc += 1;
+    }
+
+    fn current_byte(&mut self) -> VMResult<Byte> {
+        if self.pc < self.data.len() {
+            Ok(self.data[self.pc])
+        } else {
+            bail!("program counter out of bounds");
+        }
+    }
+
+    fn jmp(&mut self, addr: Address) {
+        self.pc = addr;
+    }
+
+    fn read<T: FromPrimitive + Num + ShlAssign<u8> + BitOrAssign>(&mut self) -> VMResult<T> {
+        // Build a Word from single bytes
+        let mut res: T = T::zero();
+
+        let length = mem::size_of::<T>();
+
+        for _ in 0..length {
+            res <<= 8u8;
+            self.advance_pc();
+            let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
+            if let Some(number) = T::from_u8(current_byte) {
+                res |= number;
+            } else {
+                bail!("unable to convert from u8");
+            }
+
+        }
+
+        Ok(res)
+    }
+}
+
 #[derive(Default)]
 struct StackData {
     /// The stack pointer
@@ -55,11 +101,10 @@ impl VM {
     }
 
     pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
-        let mut image_file = File::open(path).chain_err(|| "unable to open game image file")?;
-        image_file.read_to_end(&mut self.image.data).chain_err(|| "unable to read game image file")?;
+        self.image.from_path(path)?;
 
         while self.image.pc < self.image.data.len() {
-            let byte = self.current_byte().chain_err(|| "unable to read current byte")?;
+            let byte = self.image.current_byte().chain_err(|| "unable to read current byte")?;
 
             match byte {
                 bytecode::HALT => break,
@@ -68,35 +113,35 @@ impl VM {
                 bytecode::MUL => self.mul().chain_err(|| "unable to execute 'mul' instruction")?,
                 bytecode::DIV => self.div().chain_err(|| "unable to execute 'div' instruction")?,
                 bytecode::PUSH => {
-                    let res = self.read().chain_err(|| "unable to read word")?;
+                    let res = self.image.read().chain_err(|| "unable to read word")?;
 
                     self.push_word(res).chain_err(|| "unable to push value to the stack")?;
                 }
                 bytecode::JMP => {
-                    let addr: Word = self.read().chain_err(|| "unable to read word")?;
+                    let addr: Word = self.image.read().chain_err(|| "unable to read word")?;
 
-                    self.jmp(addr as Address);
+                    self.image.jmp(addr as Address);
                     continue;
                 }
                 bytecode::JZ => {
-                    let addr: Word = self.read().chain_err(|| "unable to read word")?;
+                    let addr: Word = self.image.read().chain_err(|| "unable to read word")?;
 
                     let top_of_stack = self.peek_number()
                         .chain_err(|| "unable to get current top of stack")?;
 
                     if top_of_stack == 0.0 {
-                        self.jmp(addr as Address);
+                        self.image.jmp(addr as Address);
                         continue;
                     }
                 }
                 bytecode::JNZ => {
-                    let addr: Word = self.read().chain_err(|| "unable to read word")?;
+                    let addr: Word = self.image.read().chain_err(|| "unable to read word")?;
 
                     let top_of_stack = self.peek_number()
                         .chain_err(|| "unable to get current top of stack")?;
 
                     if top_of_stack != 0.0 {
-                        self.jmp(addr as Address);
+                        self.image.jmp(addr as Address);
                         continue;
                     }
                 }
@@ -109,7 +154,7 @@ impl VM {
                 }
             }
 
-            self.advance_pc();
+            self.image.advance_pc();
         }
 
         Ok(())
@@ -183,42 +228,7 @@ impl VM {
         Ok(())
     }
 
-    fn jmp(&mut self, addr: Address) {
-        self.image.pc = addr;
-    }
 
-    fn read<T: FromPrimitive + Num + ShlAssign<u8> + BitOrAssign>(&mut self) -> VMResult<T> {
-        // Build a Word from single bytes
-        let mut res: T = T::zero();
-
-        let length = mem::size_of::<T>();
-
-        for _ in 0..length {
-            res <<= 8u8;
-            self.advance_pc();
-            let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
-            if let Some(number) = T::from_u8(current_byte) {
-                res |= number;
-            } else {
-                bail!("unable to convert from u8");
-            }
-
-        }
-
-        Ok(res)
-    }
-
-    fn advance_pc(&mut self) {
-        self.image.pc += 1;
-    }
-
-    fn current_byte(&mut self) -> VMResult<Byte> {
-        if self.image.pc < self.image.data.len() {
-            Ok(self.image.data[self.image.pc])
-        } else {
-            bail!("program counter out of bounds");
-        }
-    }
 
     fn peek_word(&mut self) -> VMResult<Word> {
         if self.stack.ptr < self.stack.data.len() {
