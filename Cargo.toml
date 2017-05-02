@@ -1,6 +1,6 @@
 [package]
 name = "bakervm"
-version = "0.2.1"
+version = "0.2.5"
 authors = ["Julian Laubstein <contact@julianlaubstein.de>"]
 description = "A virtual machine for classic point-and-click adventure games"
 repository = "https://github.com/bakervm/bakervm"
@@ -20,8 +20,8 @@ path = "definitions/lib.rs"
 
 [[bin]]
 name = "bakervm"
-path = "vm/main.rs"
+path = "bakervm/main.rs"
 
 [[bin]]
 name = "basm"
-path = "asm/main.rs"
+path = "basm/main.rs"
