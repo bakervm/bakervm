@@ -38,10 +38,12 @@ fn run() -> VMResult<()> {
     let matches = App::new("bakerVM")
         .version(env!("CARGO_PKG_VERSION"))
         .author("Julian Laubstein <contact@julianlaubstein.de>")
-        .about("A virtual machine for classic point-and-click adventure games")
-        .arg(Arg::with_name("input")
-                 .index(1)
-                 .help("Sets the image file to use. Uses a standard image if not specified."))
+        .about("A virtual machine for classic point-and-click adventure games",)
+        .arg(
+            Arg::with_name("input")
+                .index(1)
+                .help("Sets the image file to use. Uses a standard image if not specified.",),
+        )
         .get_matches();
 
     let input = matches.value_of("input").unwrap_or("").to_string();
@@ -49,6 +51,7 @@ fn run() -> VMResult<()> {
     let mut vm = VM::new();
 
     vm.mount(output::Console {}).chain_err(|| "unable to mount output")?;
+    vm.mount(output::CGADisplay {}).chain_err(|| "unable to mount output")?;
 
     vm.exec(input).chain_err(|| "unable to exec file")?;
 

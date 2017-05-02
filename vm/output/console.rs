@@ -11,19 +11,21 @@ impl Mountable for Console {
     fn run(&self) -> Sender<Self::DataFormat> {
         let (sender, receiver) = mpsc::channel::<Self::DataFormat>();
 
-        thread::spawn(move || {
-            let receiver = receiver;
+        thread::spawn(
+            move || {
+                let receiver = receiver;
 
-            'console: loop {
-                if let Ok(data) = receiver.recv() {
-                    let recv_string: String = data.into_iter().collect();
+                'console: loop {
+                    if let Ok(data) = receiver.recv() {
+                        let recv_string: String = data.into_iter().collect();
 
-                    print!("{}", recv_string);
-                } else {
-                    break 'console;
+                        print!("{}", recv_string);
+                    } else {
+                        break 'console;
+                    }
                 }
-            }
-        });
+            },
+        );
 
         sender
     }

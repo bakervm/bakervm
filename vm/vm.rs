@@ -11,15 +11,6 @@ use std::mem;
 use std::ops::{BitOrAssign, ShlAssign};
 use std::path::Path;
 
-/// We can adjust the buffer register count here
-pub const BUF_REG_COUNT: usize = 32;
-
-/// A register type for comparing two values
-struct CompareRegister {
-    cra: Word,
-    crb: Word,
-}
-
 #[derive(Default)]
 struct ImageData {
     /// The currently loaded image
@@ -160,9 +151,6 @@ impl StackData {
 
 /// The whole state of the VM
 pub struct VM {
-    /// The buffer registers
-    buf_regs: [Word; BUF_REG_COUNT],
-    cmp_reg: CompareRegister,
     image: ImageData,
     stack: StackData,
 }
@@ -172,8 +160,6 @@ impl VM {
         VM {
             image: ImageData::default(),
             stack: StackData::default(),
-            buf_regs: [0; BUF_REG_COUNT],
-            cmp_reg: CompareRegister { cra: 0, crb: 0 },
         }
     }
 
