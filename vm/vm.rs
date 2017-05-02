@@ -2,34 +2,22 @@ use definitions::bytecode;
 use definitions::typedef::*;
 use error::*;
 use ieee754::Ieee754;
+use num::traits::Num;
+use num::traits::cast::FromPrimitive;
+use output::Mountable;
 use std::fs::File;
 use std::io::prelude::*;
+use std::mem;
+use std::ops::{BitOrAssign, ShlAssign};
 use std::path::Path;
-
-// We use CGA for the display resolution
-pub const DISPLAY_WIDTH: usize = 320;
-pub const DISPLAY_HEIGHT: usize = 200;
 
 /// We can adjust the buffer register count here
 pub const BUF_REG_COUNT: usize = 32;
-
-/// A register for displaying color data on a virtual display
-struct DisplayRegister {
-    color_mode: ColorMode,
-    data: [[SmallWord; DISPLAY_HEIGHT]; DISPLAY_WIDTH],
-}
 
 /// A register type for comparing two values
 struct CompareRegister {
     cra: Word,
     crb: Word,
-}
-
-/// The mode for *interpreting* the color data in the framebuffer
-enum ColorMode {
-    _1Bit,
-    _8Bit,
-    _24Bit,
 }
 
 /// The whole state of the VM
@@ -42,7 +30,6 @@ pub struct VM {
     stack_ptr: Address,
     /// The buffer registers
     buf_regs: [Word; BUF_REG_COUNT],
-    display_reg: DisplayRegister,
     cmp_reg: CompareRegister,
     stack: Vec<Word>,
 }
@@ -54,18 +41,14 @@ impl VM {
             image: Image::new(),
             stack_ptr: 0,
             buf_regs: [0; BUF_REG_COUNT],
-            display_reg: DisplayRegister {
-                color_mode: ColorMode::_24Bit,
-                data: [[0; DISPLAY_HEIGHT]; DISPLAY_WIDTH],
-            },
             cmp_reg: CompareRegister { cra: 0, crb: 0 },
             stack: Vec::new(),
         }
     }
 
     pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
-        let mut image_file = File::open(path).chain_err(|| "unable to open game image")?;
-        image_file.read_to_end(&mut self.image).chain_err(|| "unable to read image")?;
+        let mut image_file = File::open(path).chain_err(|| "unable to open game image file")?;
+        image_file.read_to_end(&mut self.image).chain_err(|| "unable to read game image file")?;
 
         while self.pc < self.image.len() {
             let byte = self.current_byte().chain_err(|| "unable to read current byte")?;
@@ -77,18 +60,18 @@ impl VM {
                 bytecode::MUL => self.mul().chain_err(|| "unable to execute 'mul' instruction")?,
                 bytecode::DIV => self.div().chain_err(|| "unable to execute 'div' instruction")?,
                 bytecode::PUSH => {
-                    let res = self.read_word().chain_err(|| "unable to read word")?;
+                    let res = self.read().chain_err(|| "unable to read word")?;
 
                     self.push_word(res).chain_err(|| "unable to push value to the stack")?;
                 }
                 bytecode::JMP => {
-                    let addr = self.read_word().chain_err(|| "unable to read word")?;
+                    let addr: Word = self.read().chain_err(|| "unable to read word")?;
 
                     self.jmp(addr as Address);
                     continue;
                 }
                 bytecode::JZ => {
-                    let addr = self.read_word().chain_err(|| "unable to read word")?;
+                    let addr: Word = self.read().chain_err(|| "unable to read word")?;
 
                     let top_of_stack = self.peek_number()
                         .chain_err(|| "unable to get current top of stack")?;
@@ -99,7 +82,7 @@ impl VM {
                     }
                 }
                 bytecode::JNZ => {
-                    let addr = self.read_word().chain_err(|| "unable to read word")?;
+                    let addr: Word = self.read().chain_err(|| "unable to read word")?;
 
                     let top_of_stack = self.peek_number()
                         .chain_err(|| "unable to get current top of stack")?;
@@ -114,6 +97,12 @@ impl VM {
 
             self.advance_pc();
         }
+
+        Ok(())
+    }
+
+    pub fn mount<T: Mountable>(&mut self, device: T) -> VMResult<()> {
+        device.run();
 
         Ok(())
     }
@@ -184,40 +173,22 @@ impl VM {
         self.pc = addr;
     }
 
-    fn read_word(&mut self) -> VMResult<Word> {
+    fn read<T: FromPrimitive + Num + ShlAssign<u8> + BitOrAssign>(&mut self) -> VMResult<T> {
         // Build a Word from single bytes
-        let mut res: Word = 0;
-        for _ in 0..8 {
-            res <<= 8;
+        let mut res: T = T::zero();
+
+        let length = mem::size_of::<T>();
+
+        for _ in 0..length {
+            res <<= 8u8;
             self.advance_pc();
             let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
-            res |= current_byte as Word;
-        }
+            if let Some(number) = T::from_u8(current_byte) {
+                res |= number;
+            } else {
+                bail!("unable to convert from u8");
+            }
 
-        Ok(res)
-    }
-
-    fn read_small_word(&mut self) -> VMResult<SmallWord> {
-        // Build a Word from single bytes
-        let mut res: SmallWord = 0;
-        for _ in 0..4 {
-            res <<= 8;
-            self.advance_pc();
-            let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
-            res |= current_byte as SmallWord;
-        }
-
-        Ok(res)
-    }
-
-    fn read_tiny_word(&mut self) -> VMResult<TinyWord> {
-        // Build a Word from single bytes
-        let mut res: TinyWord = 0;
-        for _ in 0..2 {
-            res <<= 8;
-            self.advance_pc();
-            let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
-            res |= current_byte as TinyWord;
         }
 
         Ok(res)

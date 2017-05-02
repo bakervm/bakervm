@@ -4,9 +4,11 @@ extern crate error_chain;
 extern crate definitions;
 // extern crate sdl2;
 extern crate ieee754;
+extern crate num;
 
 mod vm;
 mod error;
+mod output;
 
 use clap::{App, Arg};
 use error::*;
@@ -44,7 +46,11 @@ fn run() -> VMResult<()> {
 
     let input = matches.value_of("input").unwrap_or("").to_string();
 
-    VM::new().exec(input).chain_err(|| "unable to exec file")?;
+    let mut vm = VM::new();
+
+    vm.mount(output::Console {}).chain_err(|| "unable to mount output")?;
+
+    vm.exec(input).chain_err(|| "unable to exec file")?;
 
     // // start sdl2 with everything
     // let ctx = sdl2::init().unwrap();
@@ -58,7 +64,8 @@ fn run() -> VMResult<()> {
     //     .chain_err(|| "unable to create window")?;
     //
     // // Create a rendering context
-    // let mut renderer = window.renderer().build().chain_err(|| "unable to create renderer")?;
+    // let mut renderer = window.renderer().build().chain_err(|| "unable to create
+    // renderer")?;
     //
     // // Set the drawing color to a light blue.
     // let _ = renderer.set_draw_color(sdl2::pixels::Color::RGB(101, 208, 246));
