@@ -6,13 +6,14 @@ use self::stack::Stack;
 use definitions::bytecode;
 use definitions::typedef::*;
 use error::*;
+use std::collections::HashMap;
 use std::path::Path;
-
 
 /// The whole state of the VM
 pub struct VM {
     image: Image,
     stack: Stack,
+    inter_reg: HashMap<Word, Address>,
 }
 
 impl VM {
@@ -20,11 +21,14 @@ impl VM {
         VM {
             image: Image::default(),
             stack: Stack::default(),
+            inter_reg: HashMap::new(),
         }
     }
 
     pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
         self.image.from_path(path)?;
+
+        self.image.check_preamble().chain_err(|| "malformed preamble")?;
 
         while self.image.pc < self.image.data.len() {
             let byte = self.image.current_byte().chain_err(|| "unable to read current byte")?;

@@ -11,6 +11,10 @@ pub fn compile(file: File, output: &str) -> CompilationResult<File> {
 
     let mut program: ImageData = ImageData::new();
 
+    let mut preamble = String::from(bytecode::PREAMBLE).into_bytes();
+
+    program.append(&mut preamble);
+
     let mut line_addr_table: Vec<Address> = Vec::new();
 
     for line in reader.lines() {

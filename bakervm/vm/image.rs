@@ -1,3 +1,4 @@
+use definitions::bytecode;
 use definitions::typedef::*;
 use error::*;
 use num::traits::Num;
@@ -20,6 +21,25 @@ impl Image {
     pub fn from_path<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
         let mut image_file = File::open(path).chain_err(|| "unable to open game image file")?;
         image_file.read_to_end(&mut self.data).chain_err(|| "unable to read game image file")?;
+
+        Ok(())
+    }
+
+    pub fn check_preamble(&mut self) -> VMResult<()> {
+        let char_vec: Vec<Byte> = vec![
+            self.read_next()?,
+            self.read_next()?,
+            self.read_next()?,
+            self.read_next()?,
+            self.read_next()?,
+            self.read_next()?,
+        ];
+
+        let magic_word = String::from_utf8(char_vec).chain_err(|| "invalid UTF-8 character")?;
+
+        if magic_word != bytecode::PREAMBLE {
+            bail!("unable to find magic word");
+        }
 
         Ok(())
     }
