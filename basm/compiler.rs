@@ -71,11 +71,13 @@ fn compile_instruction(opcode: String, args: Vec<String>) -> CompilationResult<I
         "jmp" => res.push(bytecode::JMP),
         "jz" => res.push(bytecode::JZ),
         "jnz" => res.push(bytecode::JNZ),
+        "call" => res.push(bytecode::CALL),
+        "ret" => res.push(bytecode::RET),
         _ => bail!("unknown opcode: {}", opcode),
     }
 
     match opcode.as_str() {
-        "jmp" | "jz" | "jnz" => {
+        "jmp" | "jz" | "jnz" | "call" => {
             if args.len() == 1 {
                 let number: Word = args[0].parse().chain_err(|| "unable to parse number")?;
 

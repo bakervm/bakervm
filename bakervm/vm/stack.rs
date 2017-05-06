@@ -10,6 +10,19 @@ pub struct Stack {
 }
 
 impl Stack {
+    pub fn discard(&mut self) -> VMResult<()> {
+        if self.data.is_empty() {
+            bail!("unable to discard word off an empty Stack");
+        }
+
+        self.data.remove(self.ptr);
+        if !self.data.is_empty() {
+            self.ptr -= 1;
+        }
+
+        Ok(())
+    }
+
     pub fn peek_word(&mut self) -> VMResult<Word> {
         if self.ptr < self.data.len() {
             Ok(self.data[self.ptr])
