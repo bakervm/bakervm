@@ -18,7 +18,7 @@ pub struct Image {
 }
 
 impl Image {
-    pub fn from_path<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
+    pub fn load<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
         let mut image_file = File::open(path).chain_err(|| "unable to open game image file")?;
         image_file.read_to_end(&mut self.data).chain_err(|| "unable to read game image file")?;
 
@@ -29,16 +29,20 @@ impl Image {
         let preamble = String::from(bytecode::PREAMBLE);
 
         let mut char_vec: Vec<Byte> = Vec::new();
+        char_vec.push(self.current_byte().chain_err(|| "unable to read byte")?);
 
-        for _ in 0..preamble.len() {
-            char_vec.push(self.read_next()?);
+        for _ in 1..preamble.len() {
+            char_vec.push(self.read_next().chain_err(|| "unable to read byte")?);
         }
 
         let magic_word = String::from_utf8(char_vec).chain_err(|| "invalid UTF-8 character")?;
 
-        if magic_word != bytecode::PREAMBLE {
-            bail!("unable to find magic word");
-        }
+        ensure!(
+            magic_word == bytecode::PREAMBLE,
+            "unable to find magic word"
+        );
+
+        self.advance_pc();
 
         Ok(())
     }
@@ -66,16 +70,17 @@ impl Image {
 
         let length = mem::size_of::<T>();
 
-        for _ in 0..length {
-            res <<= 8u8;
-            let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
+        for i in 0..length {
+            if i > 0 {
+                res <<= 8u8;
+            }
             self.advance_pc();
+            let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
             if let Some(number) = T::from_u8(current_byte) {
                 res |= number;
             } else {
                 bail!("unable to convert from u8");
             }
-
         }
 
         Ok(res)

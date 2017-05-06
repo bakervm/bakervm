@@ -14,6 +14,7 @@ pub struct VM {
     image: Image,
     data_stack: Stack,
     ret_addr_stack: Stack,
+    yield_stack: Stack,
     inter_reg: HashMap<Word, Address>,
 }
 
@@ -23,12 +24,13 @@ impl VM {
             image: Image::default(),
             data_stack: Stack::default(),
             ret_addr_stack: Stack::default(),
+            yield_stack: Stack::default(),
             inter_reg: HashMap::new(),
         }
     }
 
     pub fn exec<P: AsRef<Path>>(&mut self, path: P) -> VMResult<()> {
-        self.image.from_path(path)?;
+        self.image.load(path)?;
 
         self.image.check_preamble().chain_err(|| "malformed preamble")?;
 
