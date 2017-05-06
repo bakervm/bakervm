@@ -26,16 +26,17 @@ impl Image {
     }
 
     pub fn check_preamble(&mut self) -> VMResult<()> {
-        let char_vec: Vec<Byte> = vec![
-            self.read_next()?,
-            self.read_next()?,
-            self.read_next()?,
-            self.read_next()?,
-            self.read_next()?,
-            self.read_next()?,
-        ];
+        let preamble = String::from(bytecode::PREAMBLE);
+
+        let mut char_vec: Vec<Byte> = Vec::new();
+
+        for _ in 0..preamble.len() {
+            char_vec.push(self.read_next()?);
+        }
 
         let magic_word = String::from_utf8(char_vec).chain_err(|| "invalid UTF-8 character")?;
+
+        println!("{:?}", magic_word);
 
         if magic_word != bytecode::PREAMBLE {
             bail!("unable to find magic word");
@@ -69,8 +70,8 @@ impl Image {
 
         for _ in 0..length {
             res <<= 8u8;
-            self.advance_pc();
             let current_byte = self.current_byte().chain_err(|| "unable to read current byte")?;
+            self.advance_pc();
             if let Some(number) = T::from_u8(current_byte) {
                 res |= number;
             } else {

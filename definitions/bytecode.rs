@@ -1,5 +1,6 @@
 use typedef::*;
 
+/// A preamble to identify bakervm images
 pub const PREAMBLE: &str = "BAKER1";
 
 /// Stops the program and shuts down the vm
