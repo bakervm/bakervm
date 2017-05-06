@@ -36,8 +36,6 @@ impl Image {
 
         let magic_word = String::from_utf8(char_vec).chain_err(|| "invalid UTF-8 character")?;
 
-        println!("{:?}", magic_word);
-
         if magic_word != bytecode::PREAMBLE {
             bail!("unable to find magic word");
         }
