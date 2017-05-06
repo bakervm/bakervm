@@ -10,14 +10,11 @@ pub struct Stack {
 }
 
 impl Stack {
-    pub fn discard(&mut self) -> VMResult<()> {
-        if self.data.is_empty() {
-            bail!("unable to discard word off an empty Stack");
-        }
+    pub fn truncate(&mut self, len: usize) -> VMResult<()> {
+        self.data.truncate(len);
 
-        self.data.remove(self.ptr);
         if !self.data.is_empty() {
-            self.ptr -= 1;
+            self.ptr = self.data.len() - 1;
         }
 
         Ok(())
