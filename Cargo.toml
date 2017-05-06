@@ -8,11 +8,11 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-clap = "2.23.3"
-error-chain = "0.10.0"
-sdl2 = "0.29.1"
-ieee754 = "0.2.1"
-num = "0.1.37"
+clap = "*"
+error-chain = "*"
+sdl2 = "*"
+ieee754 = "*"
+num = "*"
 
 [lib]
 name = "definitions"
