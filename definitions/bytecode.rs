@@ -179,3 +179,14 @@ pub const CALL: Byte = 0x12;
 /// ret
 /// ```
 pub const RET: Byte = 0x13;
+
+/// Pushes a value from the data stack as a return value to the return value
+/// stack. This also tracks the number of return values yielded when `ret` is
+/// called
+///
+/// # Examples
+///
+/// ```
+/// yld
+/// ```
+pub const YLD: Byte = 0x14;
