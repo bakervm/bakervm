@@ -39,6 +39,8 @@ impl VM {
         self.image.check_preamble().chain_err(|| "malformed preamble")?;
 
         while self.image.pc < self.image.data.len() {
+            self.handle_intertupts().chain_err(|| "unable to handle interrupts")?;
+
             let byte = self.image.current_byte().chain_err(|| "unable to read current byte")?;
 
             match byte {
@@ -116,6 +118,14 @@ impl VM {
         }
 
         Ok(())
+    }
+
+    fn handle_intertupts(&mut self) -> VMResult<()> {
+        if self.inter_reg.is_empty() {
+            Ok(())
+        } else {
+            unimplemented!();
+        }
     }
 
     fn call(&mut self, address: Address) -> VMResult<()> {
