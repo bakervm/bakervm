@@ -18,11 +18,14 @@ num = "*"
 [lib]
 name = "definitions"
 path = "definitions/lib.rs"
+doctest = false
 
 [[bin]]
 name = "bakervm"
 path = "bakervm/main.rs"
+doctest = false
 
 [[bin]]
 name = "basm"
 path = "basm/main.rs"
+doctest = false
