@@ -10,14 +10,24 @@ pub struct Stack {
 }
 
 impl Stack {
-    pub fn truncate(&mut self, len: usize) -> VMResult<()> {
+    pub fn truncate(&mut self, len: usize) {
         self.data.truncate(len);
 
-        if !self.data.is_empty() {
-            self.ptr = self.data.len() - 1;
-        }
+        self.recalculate_ptr();
+    }
 
-        Ok(())
+    pub fn append(&mut self, other: &mut Vec<Word>) {
+        self.data.append(other);
+
+        self.recalculate_ptr();
+    }
+
+    pub fn recalculate_ptr(&mut self) {
+        self.ptr = if self.data.is_empty() {
+            0
+        } else {
+            self.data.len() - 1
+        };
     }
 
     pub fn peek_word(&mut self) -> VMResult<Word> {
@@ -34,11 +44,9 @@ impl Stack {
     }
 
     pub fn push_word(&mut self, value: Word) -> VMResult<()> {
-        if !self.data.is_empty() {
-            self.ptr += 1;
-        }
-
         self.data.push(value);
+
+        self.recalculate_ptr();
 
         Ok(())
     }
@@ -53,9 +61,8 @@ impl Stack {
         }
 
         let res = self.data.remove(self.ptr);
-        if !self.data.is_empty() {
-            self.ptr -= 1;
-        }
+
+        self.recalculate_ptr();
 
         Ok(res)
     }
