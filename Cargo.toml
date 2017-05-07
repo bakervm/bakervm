@@ -1,6 +1,6 @@
 [package]
 name = "bakervm"
-version = "0.2.8"
+version = "0.3.0"
 authors = ["Julian Laubstein <contact@julianlaubstein.de>"]
 description = "A virtual machine for classic point-and-click adventure games"
 repository = "https://github.com/bakervm/bakervm"

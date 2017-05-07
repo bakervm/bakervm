@@ -1,6 +1,6 @@
 [root]
 name = "bakervm"
-version = "0.2.8"
+version = "0.3.0"
 dependencies = [
  "clap 2.24.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
