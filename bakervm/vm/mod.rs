@@ -1,6 +1,9 @@
 mod image;
 mod stack;
+mod call_stack;
 
+use self::call_stack::Call;
+use self::call_stack::CallStack;
 use self::image::Image;
 use self::stack::Stack;
 use definitions::bytecode;
@@ -13,10 +16,7 @@ use std::path::Path;
 pub struct VM {
     image: Image,
     data_stack: Stack,
-    call_stack: Stack,
-    gc_stack: Stack,
-    yield_stack: Stack,
-    yield_count_stack: Stack,
+    call_stack: CallStack,
     inter_reg: HashMap<Word, Address>,
 }
 
@@ -25,10 +25,7 @@ impl VM {
         VM {
             image: Image::default(),
             data_stack: Stack::default(),
-            call_stack: Stack::default(),
-            gc_stack: Stack::default(),
-            yield_stack: Stack::default(),
-            yield_count_stack: Stack::default(),
+            call_stack: CallStack::default(),
             inter_reg: HashMap::new(),
         }
     }
@@ -129,17 +126,11 @@ impl VM {
     }
 
     fn call(&mut self, address: Address) -> VMResult<()> {
-        self.call_stack
-            .push_word(address as Word)
-            .chain_err(|| "unable to push address to address stack")?;
+        let stack_len = self.data_stack.data.len();
 
-        let stack_ptr = self.data_stack.ptr;
+        let call = Call::new(address, stack_len);
 
-        self.gc_stack
-            .push_word((stack_ptr + 1) as Word)
-            .chain_err(|| "unable to push activation frame to GC stack")?;
-
-        self.yield_count_stack.push_word(0)?;
+        self.call_stack.push(call);
 
         self.image.jmp(address);
 
@@ -147,47 +138,36 @@ impl VM {
     }
 
     fn ret(&mut self) -> VMResult<()> {
-        let return_addr =
-            self.call_stack.pop_word().chain_err(|| "unable to pop address off the address stack")?;
-
-        let activation_frame =
-            self.gc_stack.pop_word().chain_err(|| "unable to pop activation frame from GC stack")?;
-
-        self.data_stack
-            .truncate(activation_frame as usize)
-            .chain_err(|| "unable to truncate data stack")?;
-
-        let yield_count = self.yield_count_stack.pop_word()?;
-
-        for _ in 0..yield_count {
-            let value = self.yield_stack.pop_word()?;
-
-            self.data_stack.push_word(value)?;
+        if self.call_stack.is_empty() {
+            bail!("unable to yield values from an empty call stack");
         }
 
-        self.image.jmp(return_addr as Address);
+        // We unwrap here because we already checked if the call stack is empty
+        let mut call = self.call_stack.pop().unwrap();
+
+        self.data_stack.truncate(call.gc).chain_err(|| "unable to truncate data stack")?;
+
+        self.data_stack.data.append(&mut call.yield_stack);
+
+        self.image.jmp(call.ret_addr);
 
         Ok(())
     }
 
     fn yld(&mut self) -> VMResult<()> {
-        if self.call_stack.data.is_empty() {
+        if self.call_stack.is_empty() {
             bail!("unable to yield values from an empty call stack");
         }
+
+        // We unwrap here because we already checked if the call stack is empty
+        let mut call = self.call_stack.pop().unwrap();
 
         let value =
             self.data_stack.pop_word().chain_err(|| "unable to pop value off the data stack")?;
 
-        self.yield_stack.push_word(value).chain_err(|| "unable to push value to the yield stack")?;
+        call.yield_stack.push(value);
 
-        // increase yield count
-        let yield_count = self.yield_count_stack
-            .pop_word()
-            .chain_err(|| "unable to pop value off the data stack")?;
-
-        self.yield_count_stack
-            .push_word(yield_count + 1)
-            .chain_err(|| "unable to increase yield count")?;
+        self.call_stack.push(call);
 
         Ok(())
     }
