@@ -7,7 +7,7 @@ pub const PREAMBLE: &str = "BAKER1";
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// halt
 /// ```
 pub const HALT: Byte = 0x01;
@@ -17,7 +17,7 @@ pub const HALT: Byte = 0x01;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// add
 /// ```
 pub const ADD: Byte = 0x02;
@@ -28,7 +28,7 @@ pub const ADD: Byte = 0x02;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// sub
 /// ```
 pub const SUB: Byte = 0x03;
@@ -38,7 +38,7 @@ pub const SUB: Byte = 0x03;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// mul
 /// ```
 pub const MUL: Byte = 0x04;
@@ -49,7 +49,7 @@ pub const MUL: Byte = 0x04;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// div
 /// ```
 pub const DIV: Byte = 0x05;
@@ -62,7 +62,7 @@ pub const PRINT: Byte = 0x06;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// push WORD
 /// ```
 pub const PUSH: Byte = 0x07;
@@ -71,7 +71,7 @@ pub const PUSH: Byte = 0x07;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// jmp ADDRESS
 /// ```
 pub const JMP: Byte = 0x08;
@@ -81,7 +81,7 @@ pub const JMP: Byte = 0x08;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// jz ADDRESS
 /// ```
 pub const JZ: Byte = 0x09;
@@ -91,7 +91,7 @@ pub const JZ: Byte = 0x09;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// jnz ADDRESS
 /// ```
 pub const JNZ: Byte = 0x0A;
@@ -100,7 +100,7 @@ pub const JNZ: Byte = 0x0A;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// movw WORD, ADDRESS
 /// ```
 pub const MOVW: Byte = 0x0B;
@@ -109,7 +109,7 @@ pub const MOVW: Byte = 0x0B;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// movs SMALLWORD, ADDRESS
 /// ```
 pub const MOVS: Byte = 0x0C;
@@ -118,7 +118,7 @@ pub const MOVS: Byte = 0x0C;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// movt TINYWORD, ADDRESS
 /// ```
 pub const MOVT: Byte = 0x0D;
@@ -127,7 +127,7 @@ pub const MOVT: Byte = 0x0D;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// movb BYTE, ADDRESS
 /// ```
 pub const MOVB: Byte = 0x0E;
@@ -137,7 +137,7 @@ pub const MOVB: Byte = 0x0E;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// mov ADDRESS, ADDRESS
 /// ```
 pub const MOV: Byte = 0x0F;
@@ -147,7 +147,7 @@ pub const MOV: Byte = 0x0F;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// smov ADDRESS
 /// ```
 pub const SMOV: Byte = 0x10;
@@ -157,7 +157,7 @@ pub const SMOV: Byte = 0x10;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// regi WORD, ADDRESS
 /// ```
 pub const REGI: Byte = 0x11;
@@ -166,7 +166,7 @@ pub const REGI: Byte = 0x11;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// call ADDRESS
 /// ```
 pub const CALL: Byte = 0x12;
@@ -175,7 +175,7 @@ pub const CALL: Byte = 0x12;
 ///
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// ret
 /// ```
 pub const RET: Byte = 0x13;
@@ -186,7 +186,7 @@ pub const RET: Byte = 0x13;
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// yld
 /// ```
 pub const YLD: Byte = 0x14;
