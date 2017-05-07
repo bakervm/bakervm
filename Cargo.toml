@@ -2,7 +2,7 @@
 name = "bakervm"
 version = "0.3.0"
 authors = ["Julian Laubstein <contact@julianlaubstein.de>"]
-description = "A virtual machine for classic point-and-click adventure games"
+description = "A virtual machine for building and running retro games"
 repository = "https://github.com/bakervm/bakervm"
 readme = "README.md"
 license = "MIT"
