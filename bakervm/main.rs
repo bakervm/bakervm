@@ -37,11 +37,11 @@ fn run() -> VMResult<()> {
     let matches = App::new("bakerVM")
         .version(env!("CARGO_PKG_VERSION"))
         .author("Julian Laubstein <contact@julianlaubstein.de>")
-        .about("A virtual machine for classic point-and-click adventure games",)
+        .about("A virtual machine for building and running retro games",)
         .arg(
             Arg::with_name("input")
                 .index(1)
-                .help("Sets the image file to use. Uses a standard image if not specified.",),
+                .help("Sets the image file to use. Uses a standard image if nothing is specified.",),
         )
         .get_matches();
 
