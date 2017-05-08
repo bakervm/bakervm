@@ -15,6 +15,7 @@ use std::path::Path;
 use std::sync::mpsc::{self, Receiver, Sender, TryRecvError};
 
 /// The whole state of the VM
+#[derive(Debug)]
 pub struct VM {
     image: Image,
     data_stack: Stack,
