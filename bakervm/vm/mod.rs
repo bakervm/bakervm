@@ -174,6 +174,8 @@ impl VM {
                 continue;
             }
 
+            println!("{:#?}", self);
+
             let byte = self.image.current_byte().chain_err(|| "unable to read current byte")?;
 
             match byte {
@@ -236,7 +238,10 @@ impl VM {
                     self.call(addr).chain_err(|| "unable to call function")?;
                     continue;
                 }
-                bytecode::RET => self.ret().chain_err(|| "unable to return from function call")?,
+                bytecode::RET => {
+                    self.ret().chain_err(|| "unable to return from function call")?;
+                    continue;
+                }
                 bytecode::YLD => self.yld().chain_err(|| "unable to yield value")?,
                 _ => {
                     bail!(

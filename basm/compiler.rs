@@ -54,25 +54,33 @@ pub fn compile(file: File, output: &str) -> CompilationResult<File> {
 
     let mut output_file = File::create(output).chain_err(|| "unable to create output file")?;
 
+    println!(
+        "Compilation finished with an image size of {} Bytes",
+        program.len()
+    );
+
     output_file.write_all(program.as_slice()).chain_err(|| "unable to write to file")?;
 
     Ok(output_file)
 }
 
 fn compile_instruction(opcode: String, args: Vec<String>) -> CompilationResult<ImageData> {
+    println!("Compiling {:?} with args: {:?}", opcode, args);
+
     let mut res = Vec::new();
     match opcode.as_str() {
-        "halt" => res.push(bytecode::HALT),
         "add" => res.push(bytecode::ADD),
-        "sub" => res.push(bytecode::SUB),
-        "mul" => res.push(bytecode::MUL),
-        "div" => res.push(bytecode::DIV),
-        "push" => res.push(bytecode::PUSH),
-        "jmp" => res.push(bytecode::JMP),
-        "jz" => res.push(bytecode::JZ),
-        "jnz" => res.push(bytecode::JNZ),
         "call" => res.push(bytecode::CALL),
+        "div" => res.push(bytecode::DIV),
+        "halt" => res.push(bytecode::HALT),
+        "jmp" => res.push(bytecode::JMP),
+        "jnz" => res.push(bytecode::JNZ),
+        "jz" => res.push(bytecode::JZ),
+        "mul" => res.push(bytecode::MUL),
+        "push" => res.push(bytecode::PUSH),
         "ret" => res.push(bytecode::RET),
+        "sub" => res.push(bytecode::SUB),
+        "yld" => res.push(bytecode::YLD),
         _ => bail!("unknown opcode: {}", opcode),
     }
 
@@ -91,7 +99,7 @@ fn compile_instruction(opcode: String, args: Vec<String>) -> CompilationResult<I
         }
         "push" => {
             if args.len() == 1 {
-                let float_number: f64 = args[0].parse().chain_err(|| "unable to parse number")?;
+                let float_number: Number = args[0].parse().chain_err(|| "unable to parse number")?;
 
                 let save_number: Word = float_number.bits();
 
@@ -105,6 +113,8 @@ fn compile_instruction(opcode: String, args: Vec<String>) -> CompilationResult<I
         }
         _ => {}
     }
+
+    println!("Compiled {:?} with {} Bytes", opcode, res.len());
 
     Ok(res)
 }

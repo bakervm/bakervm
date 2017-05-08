@@ -42,7 +42,11 @@ impl Image {
             "unable to find magic word"
         );
 
-        self.advance_pc();
+        for _ in 0..preamble.len() {
+            self.data.remove(0);
+        }
+
+        self.pc = 0;
 
         Ok(())
     }
