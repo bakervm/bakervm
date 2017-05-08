@@ -14,6 +14,9 @@ error-chain = "*"
 sdl2 = "*"
 ieee754 = "*"
 num = "*"
+serde_derive = "*"
+serde = "*"
+serde_json = "*"
 
 [lib]
 name = "definitions"

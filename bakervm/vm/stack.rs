@@ -2,7 +2,7 @@ use definitions::typedef::*;
 use error::*;
 use ieee754::Ieee754;
 
-#[derive(Default, Debug)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 pub struct Stack {
     /// The stack pointer
     pub ptr: Address,

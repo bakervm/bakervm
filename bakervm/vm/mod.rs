@@ -10,7 +10,11 @@ use self::stack::Stack;
 use definitions::bytecode;
 use definitions::typedef::*;
 use error::*;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::de::{self, MapAccess, SeqAccess, Visitor};
+use serde::ser::SerializeStruct;
 use std::collections::HashMap;
+use std::fmt;
 use std::path::Path;
 use std::sync::mpsc::{self, Receiver, Sender, TryRecvError};
 
@@ -23,6 +27,125 @@ pub struct VM {
     inter_reg: HashMap<Word, Address>,
     pub interrupt_sender: Sender<Interrupt>,
     interrupt_receiver: Receiver<Interrupt>,
+}
+
+impl Serialize for VM {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where S: Serializer
+    {
+        let mut vm = serializer.serialize_struct("vm", 4)?;
+        vm.serialize_field("image", &self.image)?;
+        vm.serialize_field("data_stack", &self.data_stack)?;
+        vm.serialize_field("call_stack", &self.call_stack)?;
+        vm.serialize_field("inter_reg", &self.inter_reg)?;
+        vm.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for VM {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+        where D: Deserializer<'de>
+    {
+        #[derive(Deserialize)]
+        #[serde(field_identifier, rename_all = "lowercase")]
+        enum Field {
+            Image,
+            DataStack,
+            CallStack,
+            InterReg,
+        }
+
+        struct VMVisitor;
+
+        impl<'de> Visitor<'de> for VMVisitor {
+            type Value = VM;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("struct VM")
+            }
+
+            fn visit_seq<V>(self, mut seq: V) -> Result<VM, V::Error>
+                where V: SeqAccess<'de>
+            {
+                let image = seq.next_element()?.ok_or_else(|| de::Error::invalid_length(0, &self))?;
+                let data_stack = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(1, &self))?;
+                let call_stack = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(2, &self))?;
+                let inter_reg = seq.next_element()?
+                    .ok_or_else(|| de::Error::invalid_length(3, &self))?;
+
+                let base_vm = VM::new();
+
+                Ok(
+                    VM {
+                        image,
+                        data_stack,
+                        call_stack,
+                        inter_reg,
+                        ..base_vm
+                    },
+                )
+            }
+
+            fn visit_map<V>(self, mut map: V) -> Result<VM, V::Error>
+                where V: MapAccess<'de>
+            {
+                let mut image = None;
+                let mut data_stack = None;
+                let mut call_stack = None;
+                let mut inter_reg = None;
+
+                while let Some(key) = map.next_key()? {
+                    match key {
+                        Field::Image => {
+                            if image.is_some() {
+                                return Err(de::Error::duplicate_field("image"));
+                            }
+                            image = Some(map.next_value()?);
+                        }
+                        Field::DataStack => {
+                            if data_stack.is_some() {
+                                return Err(de::Error::duplicate_field("data_stack"));
+                            }
+                            data_stack = Some(map.next_value()?);
+                        }
+                        Field::CallStack => {
+                            if call_stack.is_some() {
+                                return Err(de::Error::duplicate_field("call_stack"));
+                            }
+                            call_stack = Some(map.next_value()?);
+                        }
+                        Field::InterReg => {
+                            if inter_reg.is_some() {
+                                return Err(de::Error::duplicate_field("inter_reg"));
+                            }
+                            inter_reg = Some(map.next_value()?);
+                        }
+                    }
+                }
+                let image = image.ok_or_else(|| de::Error::missing_field("image"))?;
+                let data_stack = data_stack.ok_or_else(|| de::Error::missing_field("data_stack"))?;
+                let call_stack = call_stack.ok_or_else(|| de::Error::missing_field("call_stack"))?;
+                let inter_reg = inter_reg.ok_or_else(|| de::Error::missing_field("inter_reg"))?;
+
+                let base_vm = VM::new();
+
+                Ok(
+                    VM {
+                        image,
+                        data_stack,
+                        call_stack,
+                        inter_reg,
+                        ..base_vm
+                    },
+                )
+            }
+        }
+
+        const FIELDS: &'static [&'static str] = &["image", "data_stack", "inter_reg"];
+        deserializer.deserialize_struct("vm", FIELDS, VMVisitor)
+    }
 }
 
 impl VM {

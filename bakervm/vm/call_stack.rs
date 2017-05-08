@@ -1,6 +1,6 @@
 use definitions::typedef::*;
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Call {
     pub yield_stack: Vec<Word>,
     pub gc: usize,

@@ -9,7 +9,7 @@ use std::mem;
 use std::ops::{BitOrAssign, ShlAssign};
 use std::path::Path;
 
-#[derive(Default, Debug)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 pub struct Image {
     /// The currently loaded image
     pub data: ImageData,

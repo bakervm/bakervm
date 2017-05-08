@@ -1,6 +1,6 @@
 use definitions::typedef::*;
 
-#[derive(Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Interrupt {
     pub signal_id: u64,
     pub arguments: Vec<Word>,

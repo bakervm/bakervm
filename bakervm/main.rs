@@ -1,3 +1,9 @@
+#[macro_use]
+extern crate serde_derive;
+
+extern crate serde;
+extern crate serde_json;
+
 extern crate clap;
 #[macro_use]
 extern crate error_chain;
@@ -50,6 +56,8 @@ fn run() -> VMResult<()> {
     let mut vm = VM::new();
 
     vm.exec(input).chain_err(|| "unable to exec file")?;
+
+    println!("{:#?}", vm);
 
     // // start sdl2 with everything
     // let ctx = sdl2::init().unwrap();
