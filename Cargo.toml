@@ -16,7 +16,7 @@ ieee754 = "*"
 num = "*"
 serde_derive = "*"
 serde = "*"
-serde_json = "*"
+bincode = "*"
 
 [lib]
 name = "definitions"
