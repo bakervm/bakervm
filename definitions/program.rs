@@ -133,7 +133,7 @@ pub enum Instruction {
     Halt,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Default)]
 pub struct Program {
     pub preamble: String,
     pub version: String,

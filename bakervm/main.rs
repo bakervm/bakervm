@@ -46,13 +46,16 @@ fn run() -> VMResult<()> {
         )
         .get_matches();
 
-    let input = matches.value_of("input").unwrap_or("").to_string();
+    let program: Program = if let Some(input) = matches.value_of("input") {
+        let mut file = File::open(input).chain_err(|| "unable to open file")?;
+        let mut buf: ImageData = ImageData::new();
+        file.read_to_end(&mut buf).chain_err(|| "unable to read from file")?;
 
-    let mut file = File::open(input).chain_err(|| "unable to open file")?;
-    let mut buf: ImageData = ImageData::new();
-    file.read_to_end(&mut buf).chain_err(|| "unable to read from file")?;
+        bincode::deserialize(&buf[..]).chain_err(|| "unable to decode image file")?
+    } else {
+        Program::default()
+    };
 
-    let program: Program = bincode::deserialize(&buf[..]).unwrap();
 
     let mut vm = VM::new();
 
