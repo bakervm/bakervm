@@ -31,10 +31,10 @@ fn main() {
 }
 
 fn run() -> CompilationResult<()> {
-    let matches = App::new("basm")
+    let matches = App::new("blimpc")
         .version(env!("CARGO_PKG_VERSION"))
         .author("Julian Laubstein <contact@julianlaubstein.de>")
-        .about("The assembler for the bakerVM")
+        .about("The blimp compiler")
         .arg(Arg::with_name("input").index(1).required(true).help("Sets the source file to use."),)
         .arg(Arg::with_name("output").index(2).required(true).help("Sets the destination file."),)
         .get_matches();
