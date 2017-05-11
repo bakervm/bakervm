@@ -6,6 +6,7 @@ extern crate ieee754;
 
 mod error;
 mod compiler;
+mod ast;
 
 use clap::{App, Arg};
 use error::*;
@@ -35,8 +36,8 @@ fn run() -> CompilationResult<()> {
         .version(env!("CARGO_PKG_VERSION"))
         .author("Julian Laubstein <contact@julianlaubstein.de>")
         .about("The assembler for the bakerVM")
-        .arg(Arg::with_name("input").index(1).required(true).help("Sets the source file to use."))
-        .arg(Arg::with_name("output").index(2).required(true).help("Sets the destination file."))
+        .arg(Arg::with_name("input").index(1).required(true).help("Sets the source file to use."),)
+        .arg(Arg::with_name("output").index(2).required(true).help("Sets the destination file."),)
         .get_matches();
 
     let input_file_name = matches.value_of("input").unwrap_or("");
@@ -45,7 +46,8 @@ fn run() -> CompilationResult<()> {
 
     let input_file = File::open(input_file_name).chain_err(|| "unable to open input file")?;
 
-    compiler::compile(input_file, output_file_name).chain_err(|| "unable to compile file")?;
+    // compiler::compile(input_file, output_file_name).chain_err(|| "unable to
+    // compile file")?;
 
     Ok(())
 }

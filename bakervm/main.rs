@@ -1,6 +1,3 @@
-#[macro_use]
-extern crate serde_derive;
-
 extern crate serde;
 extern crate bincode;
 
@@ -16,7 +13,11 @@ mod vm;
 mod error;
 
 use clap::{App, Arg};
+use definitions::program::Program;
+use definitions::typedef::*;
 use error::*;
+use std::fs::File;
+use std::io::Read;
 // use sdl2::event::Event;
 // use sdl2::rect::Rect;
 use vm::VM;
@@ -53,11 +54,15 @@ fn run() -> VMResult<()> {
 
     let input = matches.value_of("input").unwrap_or("").to_string();
 
+    let mut file = File::open(input).chain_err(|| "unable to open file")?;
+    let mut buf: ImageData = ImageData::new();
+    file.read_to_end(&mut buf).chain_err(|| "unable to read from file")?;
+
+    let program: Program = bincode::deserialize(&buf[..]).unwrap();
+
     let mut vm = VM::new();
 
-    vm.exec(input).chain_err(|| "unable to exec file")?;
-
-    println!("{:#?}", vm);
+    vm.exec(program).chain_err(|| "unable to exec program")?;
 
     // // start sdl2 with everything
     // let ctx = sdl2::init().unwrap();

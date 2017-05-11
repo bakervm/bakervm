@@ -29,6 +29,6 @@ path = "bakervm/main.rs"
 doctest = false
 
 [[bin]]
-name = "basm"
-path = "basm/main.rs"
+name = "blimpc"
+path = "blimpc/main.rs"
 doctest = false
