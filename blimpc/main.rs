@@ -2,7 +2,6 @@
 extern crate error_chain;
 extern crate clap;
 extern crate definitions;
-extern crate ieee754;
 
 mod error;
 mod compiler;
