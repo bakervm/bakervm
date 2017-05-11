@@ -1,4 +1,4 @@
-use ast::AST;
+use ast::Expression;
 use definitions::typedef::*;
 use error::*;
 use std::fs::File;
@@ -78,15 +78,15 @@ impl LispParser {
         }
     }
 
-    pub fn parse(&mut self, tokenstream: Vec<Token>) -> CompilationResult<Vec<AST>> {
+    pub fn parse(&mut self, tokenstream: Vec<Token>) -> CompilationResult<Vec<Expression>> {
         self.tokens = tokenstream;
         self.counter = 0;
 
-        let mut program: Vec<AST> = Vec::new();
+        let mut program: Vec<Expression> = Vec::new();
 
         while let Some(token) = self.tokens.get(self.counter).cloned() {
             let ast = match token {
-                Token::Symbol(inner) => AST::Symbol(inner),
+                Token::Symbol(inner) => Expression::Symbol(inner),
                 Token::OpenBrace => self.list().chain_err(|| "unable to parse list")?,
                 x => {
                     bail!(
@@ -106,10 +106,10 @@ impl LispParser {
         self.counter += 1;
     }
 
-    fn symbol(&mut self) -> CompilationResult<AST> {
+    fn symbol(&mut self) -> CompilationResult<Expression> {
         if let Some(Token::Symbol(inner)) = self.tokens.get(self.counter).cloned() {
             self.advance_counter();
-            Ok(AST::Symbol(inner.clone()))
+            Ok(Expression::Symbol(inner.clone()))
         } else {
             bail!("expected symbol");
         }
@@ -122,8 +122,8 @@ impl LispParser {
         }
     }
 
-    fn list(&mut self) -> CompilationResult<AST> {
-        let mut ast: Vec<AST> = Vec::new();
+    fn list(&mut self) -> CompilationResult<Expression> {
+        let mut ast: Vec<Expression> = Vec::new();
 
         if self.match_token(Token::OpenBrace) {
             self.advance_counter();
@@ -145,7 +145,7 @@ impl LispParser {
             }
         }
 
-        Ok(AST::List(ast))
+        Ok(Expression::List(ast))
     }
 
     fn match_token(&mut self, token: Token) -> bool {

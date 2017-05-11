@@ -1,5 +1,5 @@
 #[derive(Debug)]
-pub enum AST {
+pub enum Expression {
     Symbol(String),
-    List(Vec<AST>),
+    List(Vec<Expression>),
 }
