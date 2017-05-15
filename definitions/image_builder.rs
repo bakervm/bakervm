@@ -89,8 +89,8 @@ mod tests {
     #[test]
     fn generate() {
         let data = ImageBuilder::new("BAKER", "0.3.0")
-            .push(Target::Stack(0), Value::Number(23.0))
-            .push(Target::Register(0), Value::Number(35.0))
+            .push(Target::Stack(0), Value::Float(23.0))
+            .push(Target::Register(0), Value::Float(35.0))
             .add(Target::Stack(0), Target::Register(0))
             .gen();
     }

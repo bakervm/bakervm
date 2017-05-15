@@ -14,6 +14,8 @@ enum Token {
     OpenBrace,
     ClosedBrace,
     Symbol(String),
+    Float(Float),
+    StringLiteral(String),
 }
 
 struct Tokenizer {
@@ -38,7 +40,7 @@ impl Tokenizer {
             for character in line.chars() {
                 print!("{:?}", character);
 
-                if !character.is_alphanumeric() && !self.string_flag && !word.is_empty() {
+                if !(character.is_alphanumeric() || self.string_flag || word.is_empty()) {
                     let sym: String = word.iter().cloned().collect();
                     tokenstream.push(Token::Symbol(sym));
                     word.clear();

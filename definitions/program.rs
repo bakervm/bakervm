@@ -3,7 +3,8 @@ use typedef::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub enum Value {
-    Number(Number),
+    Float(Float),
+    Integer(Integer),
     String(String),
     Nil,
 }
@@ -21,19 +22,33 @@ impl Add for Value {
     type Output = Value;
 
     fn add(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Number(lhs_num), Value::Number(rhs_num)) => Value::Number(lhs_num + rhs_num),
-            (Value::String(lhs_string), Value::String(rhs_string)) => {
-                Value::String(lhs_string + rhs_string.as_str())
+        match self {
+            Value::Float(lhs_float) => {
+                match rhs {
+                    Value::Float(rhs_float) => Value::Float(lhs_float + rhs_float),
+                    Value::Integer(rhs_integer) => Value::Float(lhs_float + (rhs_integer as Float)),
+                    Value::String(rhs_string) => Value::String(format!("{}{}", lhs_float, rhs_string),),
+                    _ => Value::Nil,
+                }
             }
 
-            (Value::Number(lhs_num), Value::String(rhs_string)) => {
-                Value::String(format!("{}{}", lhs_num, rhs_string))
-            }
-            (Value::String(lhs_string), Value::Number(rhs_num)) => {
-                Value::String(format!("{}{}", lhs_string, rhs_num))
+            Value::Integer(lhs_integer) => {
+                match rhs {
+                    Value::Float(rhs_float) => Value::Float((lhs_integer as Float) + rhs_float),
+                    Value::Integer(rhs_integer) => Value::Integer(lhs_integer + rhs_integer),
+                    Value::String(rhs_string) => Value::String(format!("{}{}", lhs_integer, rhs_string),),
+                    _ => Value::Nil,
+                }
             }
 
+            Value::String(lhs_string) => {
+                match rhs {
+                    Value::Float(rhs_float) => Value::String(format!("{}{}", lhs_string, rhs_float),),
+                    Value::Integer(rhs_integer) => Value::String(format!("{}{}", lhs_string, rhs_integer),),
+                    Value::String(rhs_string) => Value::String(format!("{}{}", lhs_string, rhs_string),),
+                    _ => Value::Nil,
+                }
+            }
             _ => Value::Nil,
         }
     }
@@ -43,8 +58,22 @@ impl Sub for Value {
     type Output = Value;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Number(lhs_num), Value::Number(rhs_num)) => Value::Number(lhs_num - rhs_num),
+        match self {
+            Value::Float(lhs_float) => {
+                match rhs {
+                    Value::Float(rhs_float) => Value::Float(lhs_float - rhs_float),
+                    Value::Integer(rhs_integer) => Value::Float(lhs_float - (rhs_integer as Float)),
+                    _ => Value::Nil,
+                }
+            }
+
+            Value::Integer(lhs_integer) => {
+                match rhs {
+                    Value::Float(rhs_float) => Value::Float((lhs_integer as Float) - rhs_float),
+                    Value::Integer(rhs_integer) => Value::Integer(lhs_integer - rhs_integer),
+                    _ => Value::Nil,
+                }
+            }
             _ => Value::Nil,
         }
     }
@@ -54,28 +83,22 @@ impl Mul for Value {
     type Output = Value;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Number(lhs_num), Value::Number(rhs_num)) => Value::Number(lhs_num * rhs_num),
-
-            (Value::Number(lhs_num), Value::String(rhs_string)) => {
-                let mut result_string = String::new();
-
-                for _ in 0..(lhs_num as i64) {
-                    result_string += rhs_string.as_str();
+        match self {
+            Value::Float(lhs_float) => {
+                match rhs {
+                    Value::Float(rhs_float) => Value::Float(lhs_float * rhs_float),
+                    Value::Integer(rhs_integer) => Value::Float(lhs_float * (rhs_integer as Float)),
+                    _ => Value::Nil,
                 }
-
-                Value::String(result_string)
-            }
-            (Value::String(lhs_string), Value::Number(rhs_num)) => {
-                let mut result_string = String::new();
-
-                for _ in 0..(rhs_num as i64) {
-                    result_string += lhs_string.as_str();
-                }
-
-                Value::String(result_string)
             }
 
+            Value::Integer(lhs_integer) => {
+                match rhs {
+                    Value::Float(rhs_float) => Value::Float((lhs_integer as Float) * rhs_float),
+                    Value::Integer(rhs_integer) => Value::Integer(lhs_integer * rhs_integer),
+                    _ => Value::Nil,
+                }
+            }
             _ => Value::Nil,
         }
     }
@@ -85,8 +108,22 @@ impl Div for Value {
     type Output = Value;
 
     fn div(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Number(lhs_num), Value::Number(rhs_num)) => Value::Number(lhs_num / rhs_num),
+        match self {
+            Value::Float(lhs_float) => {
+                match rhs {
+                    Value::Float(rhs_float) => Value::Float(lhs_float / rhs_float),
+                    Value::Integer(rhs_integer) => Value::Float(lhs_float / (rhs_integer as Float)),
+                    _ => Value::Nil,
+                }
+            }
+
+            Value::Integer(lhs_integer) => {
+                match rhs {
+                    Value::Float(rhs_float) => Value::Float((lhs_integer as Float) / rhs_float),
+                    Value::Integer(rhs_integer) => Value::Integer(lhs_integer / rhs_integer),
+                    _ => Value::Nil,
+                }
+            }
             _ => Value::Nil,
         }
     }
@@ -96,8 +133,22 @@ impl Rem for Value {
     type Output = Value;
 
     fn rem(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Number(lhs_num), Value::Number(rhs_num)) => Value::Number(lhs_num % rhs_num),
+        match self {
+            Value::Float(lhs_float) => {
+                match rhs {
+                    Value::Float(rhs_float) => Value::Float(lhs_float % rhs_float),
+                    Value::Integer(rhs_integer) => Value::Float(lhs_float % (rhs_integer as Float)),
+                    _ => Value::Nil,
+                }
+            }
+
+            Value::Integer(lhs_integer) => {
+                match rhs {
+                    Value::Float(rhs_float) => Value::Float((lhs_integer as Float) % rhs_float),
+                    Value::Integer(rhs_integer) => Value::Integer(lhs_integer % rhs_integer),
+                    _ => Value::Nil,
+                }
+            }
             _ => Value::Nil,
         }
     }
