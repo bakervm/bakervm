@@ -1,4 +1,5 @@
 use ast::Expression;
+use definitions::program::Value;
 use definitions::typedef::*;
 use error::*;
 use std::fs::File;
@@ -14,8 +15,7 @@ enum Token {
     OpenBrace,
     ClosedBrace,
     Symbol(String),
-    Float(Float),
-    StringLiteral(String),
+    Literal(Value),
 }
 
 struct Tokenizer {
