@@ -9,11 +9,11 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-clap = "*"
-error-chain = "*"
-serde_derive = "*"
-serde = "*"
-bincode = "*"
+clap = "^2.24.2"
+error-chain = "^0.10.0"
+serde_derive = "^1.0.6"
+serde = "^1.0.6"
+bincode = "^0.8.0"
 
 [lib]
 name = "definitions"
