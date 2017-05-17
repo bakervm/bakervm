@@ -8,6 +8,7 @@ pub enum Value {
     Integer(Integer),
     Symbol(String),
     String(String),
+    Char(char),
     Nil,
 }
 
