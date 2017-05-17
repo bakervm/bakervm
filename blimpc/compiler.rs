@@ -1,12 +1,11 @@
-use ast::Expression;
-use definitions::program::Value;
-use definitions::typedef::*;
+use ast::{AST, Expression};
+use definitions::program::{Program, Value};
 use error::*;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
 
-pub fn compile(file: File) -> ImageData {
+pub fn compile(file: File) -> Program {
     unimplemented!()
 }
 
@@ -80,11 +79,11 @@ impl LispParser {
         }
     }
 
-    pub fn parse(&mut self, tokenstream: Vec<Token>) -> CompilationResult<Vec<Expression>> {
+    pub fn parse(&mut self, tokenstream: Vec<Token>) -> CompilationResult<AST> {
         self.tokens = tokenstream;
         self.counter = 0;
 
-        let mut program: Vec<Expression> = Vec::new();
+        let mut program: AST = AST::new();
 
         while let Some(token) = self.tokens.get(self.counter).cloned() {
             let ast = match token {
@@ -125,7 +124,7 @@ impl LispParser {
     }
 
     fn list(&mut self) -> CompilationResult<Expression> {
-        let mut ast: Vec<Expression> = Vec::new();
+        let mut ast: AST = AST::new();
 
         if self.match_token(Token::OpenBrace) {
             self.advance_counter();

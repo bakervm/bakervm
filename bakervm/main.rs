@@ -56,10 +56,7 @@ fn run() -> VMResult<()> {
         Program::default()
     };
 
-
-    let mut vm = VM::new();
-
-    vm.exec(program).chain_err(|| "unable to exec program")?;
+    VM::new().exec(program).chain_err(|| "unable to exec program")?;
 
     Ok(())
 }
