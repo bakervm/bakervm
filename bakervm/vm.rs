@@ -1,17 +1,10 @@
 use definitions::program::{Instruction, Program, Target, Value};
 use definitions::typedef::*;
 use error::*;
+use std::cmp::Ordering;
 
 const STACK_COUNT: usize = 2;
 const REGISTER_COUNT: usize = 4;
-
-#[derive(PartialEq)]
-enum CompareResult {
-    LowerThan,
-    GreaterThan,
-    Equal,
-    None,
-}
 
 /// The whole state of the VM
 pub struct VM {
@@ -19,7 +12,7 @@ pub struct VM {
     pc: Address,
     data_stacks: [Vec<Value>; STACK_COUNT],
     data_registers: [Value; REGISTER_COUNT],
-    compare_result: CompareResult,
+    cmp_reg: Option<Ordering>,
     call_stack: Vec<Address>,
     skip_advance: bool,
 }
@@ -32,7 +25,7 @@ impl VM {
             pc: 0,
             data_stacks: [Vec::new(), Vec::new()],
             data_registers: [Value::Nil, Value::Nil, Value::Nil, Value::Nil],
-            compare_result: CompareResult::None,
+            cmp_reg: None,
             call_stack: Vec::new(),
             skip_advance: false,
         }
@@ -87,7 +80,7 @@ impl VM {
     }
 
     fn reset_cmp(&mut self) {
-        self.compare_result = CompareResult::None;
+        self.cmp_reg = None;
     }
 
     /// Advances the program counter
@@ -173,7 +166,7 @@ impl VM {
     }
 
     /// Compares the top values of the two targets and saves the result to
-    /// `self.compare_result`
+    /// `self.cmp_reg`
     fn cmp(&mut self, target_a: Target, target_b: Target) -> VMResult<()> {
         self.reset_cmp();
 
@@ -181,11 +174,11 @@ impl VM {
         let target_b_value = self.pop(&target_b)?;
 
         if target_a_value < target_b_value {
-            self.compare_result = CompareResult::LowerThan;
+            self.cmp_reg = Some(Ordering::Less);
         } else if target_a_value > target_b_value {
-            self.compare_result = CompareResult::GreaterThan;
+            self.cmp_reg = Some(Ordering::Greater);
         } else if target_a_value == target_b_value {
-            self.compare_result = CompareResult::Equal;
+            self.cmp_reg = Some(Ordering::Equal);
         }
 
         Ok(())
@@ -197,25 +190,25 @@ impl VM {
         self.skip_advance = true;
     }
 
-    /// Jumps if the last compare got the result `CompareResult::LowerThan`
+    /// Jumps if the last compare got the result `Some(Ordering::Less)`
     fn jmp_lt(&mut self, addr: Address) {
-        if self.compare_result == CompareResult::LowerThan {
+        if self.cmp_reg == Some(Ordering::Less) {
             self.jmp(addr);
             self.reset_cmp();
         }
     }
 
-    /// Jumps if the last compare got the result `CompareResult::GreaterThan`
+    /// Jumps if the last compare got the result `Some(Ordering::Greater)`
     fn jmp_gt(&mut self, addr: Address) {
-        if self.compare_result == CompareResult::GreaterThan {
+        if self.cmp_reg == Some(Ordering::Greater) {
             self.jmp(addr);
             self.reset_cmp();
         }
     }
 
-    /// Jumps if the last compare got the result `CompareResult::Equal`
+    /// Jumps if the last compare got the result `Some(Ordering::Equal)`
     fn jmp_eq(&mut self, addr: Address) {
-        if self.compare_result == CompareResult::Equal {
+        if self.cmp_reg == Some(Ordering::Equal) {
             self.jmp(addr);
             self.reset_cmp();
         }
