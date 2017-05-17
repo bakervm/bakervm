@@ -8,6 +8,9 @@ homepage = "http://bakervm.org"
 readme = "README.md"
 license = "MIT"
 
+[badges]
+travis-ci = { repository = "bakervm/bakervm" }
+
 [dependencies]
 clap = "^2.24.2"
 error-chain = "^0.10.0"
