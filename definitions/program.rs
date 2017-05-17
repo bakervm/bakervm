@@ -3,13 +3,13 @@ use typedef::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub enum Value {
-    Boolean(bool),
-    Float(Float),
-    Integer(Integer),
-    Symbol(String),
-    String(String),
-    Char(char),
-    Nil,
+    Boolean(bool), // true | false
+    Float(Float), // -1.33 | 0.23114 | 3.141 | ...
+    Integer(Integer), // 12 | 42 | 1 | 0 | 24 | ...
+    Symbol(String), // :hello | :test | :symbol | ...
+    String(String), // "hello world" | "hello!" | "yellow \"blue\" or red" | ...
+    Char(char), // 'a' | 'b' | 'c' | 'd' | ...
+    Nil, // nil
 }
 
 impl Value {
