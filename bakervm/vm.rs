@@ -8,12 +8,16 @@ const REGISTER_COUNT: usize = 4;
 
 /// The whole state of the VM
 pub struct VM {
+    /// The instructions that are currently executed
     image_data: Vec<Instruction>,
+    /// The current program counter
     pc: Address,
     data_stacks: [Vec<Value>; STACK_COUNT],
     data_registers: [Value; REGISTER_COUNT],
+    /// A register for holding infomation about a recent comparison
     cmp_reg: Option<Ordering>,
     call_stack: Vec<Address>,
+    /// A boolean lock used for jumps
     skip_advance: bool,
 }
 
@@ -33,7 +37,7 @@ impl VM {
 
     // # Maintainance functions
 
-    /// Executes te given program
+    /// Executes the given program
     pub fn exec(&mut self, program: Program) -> VMResult<()> {
         self.reset();
         self.load_program(program);
@@ -43,6 +47,7 @@ impl VM {
 
             match current_instruction {
                 Instruction::Halt => break,
+
                 Instruction::Add(dest, src) => self.add(dest, src)?,
                 Instruction::Sub(dest, src) => self.sub(dest, src)?,
                 Instruction::Div(dest, src) => self.div(dest, src)?,
