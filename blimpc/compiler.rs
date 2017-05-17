@@ -5,15 +5,24 @@ use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
 
-pub fn compile(file: File) -> Program {
-    unimplemented!()
+pub fn compile(file: File) -> CompilationResult<Program> {
+    let token_list = Tokenizer::new().tokenize(file)?;
+    let ast = LispParser::new().parse(token_list)?;
+
+    Ok(
+        Program {
+            version: String::from(env!("CARGO_PKG_VERSION")),
+            preamble: String::from("BAKERVM"),
+            instructions: Vec::new(),
+        },
+    )
 }
 
 #[derive(PartialEq, Clone, Debug)]
 enum Token {
     OpenBrace,
     ClosedBrace,
-    Symbol(String),
+    AtomicSymbol(String),
     Literal(Value),
 }
 
@@ -41,7 +50,7 @@ impl Tokenizer {
 
                 if !(character.is_alphanumeric() || self.string_flag || word.is_empty()) {
                     let sym: String = word.iter().cloned().collect();
-                    tokenstream.push(Token::Symbol(sym));
+                    tokenstream.push(Token::AtomicSymbol(sym));
                     word.clear();
                 }
 
@@ -87,11 +96,11 @@ impl LispParser {
 
         while let Some(token) = self.tokens.get(self.counter).cloned() {
             let ast = match token {
-                Token::Symbol(inner) => Expression::Symbol(inner),
+                Token::AtomicSymbol(inner) => Expression::AtomicSymbol(inner),
                 Token::OpenBrace => self.list().chain_err(|| "unable to parse list")?,
                 x => {
                     bail!(
-                        "expected one of (Token::Symbol(_), Token::OpenBrace). Got {:?}",
+                        "expected one of (Token::AtomicSymbol(_), Token::OpenBrace). Got {:?}",
                         x
                     )
                 }
@@ -108,9 +117,9 @@ impl LispParser {
     }
 
     fn symbol(&mut self) -> CompilationResult<Expression> {
-        if let Some(Token::Symbol(inner)) = self.tokens.get(self.counter).cloned() {
+        if let Some(Token::AtomicSymbol(inner)) = self.tokens.get(self.counter).cloned() {
             self.advance_counter();
-            Ok(Expression::Symbol(inner.clone()))
+            Ok(Expression::AtomicSymbol(inner.clone()))
         } else {
             bail!("expected symbol");
         }
@@ -118,7 +127,7 @@ impl LispParser {
 
     fn match_symbol(&mut self) -> bool {
         match self.tokens.get(self.counter) {
-            Some(&Token::Symbol(_)) => true,
+            Some(&Token::AtomicSymbol(_)) => true,
             _ => false,
         }
     }
@@ -163,12 +172,12 @@ mod tests {
     fn parser() {
         let tokenstream = vec![
             Token::OpenBrace,
-            Token::Symbol(String::from("defun")),
-            Token::Symbol(String::from("defun")),
+            Token::AtomicSymbol(String::from("defun")),
+            Token::AtomicSymbol(String::from("defun")),
             Token::OpenBrace,
-            Token::Symbol(String::from("defun")),
-            Token::Symbol(String::from("defun")),
-            Token::Symbol(String::from("defun")),
+            Token::AtomicSymbol(String::from("defun")),
+            Token::AtomicSymbol(String::from("defun")),
+            Token::AtomicSymbol(String::from("defun")),
             Token::ClosedBrace,
             Token::ClosedBrace,
             Token::OpenBrace,

@@ -3,8 +3,10 @@ use typedef::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub enum Value {
+    Boolean(bool),
     Float(Float),
     Integer(Integer),
+    Symbol(String),
     String(String),
     Nil,
 }

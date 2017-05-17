@@ -1,7 +1,9 @@
 #[macro_use]
 extern crate error_chain;
+#[macro_use]
 extern crate clap;
 extern crate definitions;
+extern crate bincode;
 
 mod error;
 mod compiler;
@@ -45,8 +47,7 @@ fn run() -> CompilationResult<()> {
 
     let input_file = File::open(input_file_name).chain_err(|| "unable to open input file")?;
 
-    // compiler::compile(input_file, output_file_name).chain_err(|| "unable to
-    // compile file")?;
+    compiler::compile(input_file).chain_err(|| "unable to compile file")?;
 
     Ok(())
 }
