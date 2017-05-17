@@ -1,4 +1,4 @@
-use definitions::program::{Instruction, Program, Target, Value};
+use definitions::program::{Instruction, PREAMBLE, Program, Target, Value};
 use definitions::typedef::*;
 use error::*;
 use std::cmp::Ordering;
@@ -40,7 +40,7 @@ impl VM {
     /// Executes the given program
     pub fn exec(&mut self, program: Program) -> VMResult<()> {
         self.reset();
-        self.load_program(program);
+        self.load_program(program)?;
 
         while self.pc < self.image_data.len() {
             let current_instruction = self.image_data[self.pc].clone();
@@ -75,8 +75,15 @@ impl VM {
     }
 
     /// Loads the instructions of the given program to the VM's state
-    fn load_program(&mut self, program: Program) {
-        self.image_data = program.instructions;
+    fn load_program(&mut self, program: Program) -> VMResult<()> {
+        if program.preamble != String::from(PREAMBLE) {
+            bail!("invalid preamble");
+        } else if program.version != String::from(env!("CARGO_PKG_VERSION")) {
+            bail!("invalid version");
+        } else {
+            self.image_data = program.instructions;
+            Ok(())
+        }
     }
 
     /// Resets the VM to a clean state

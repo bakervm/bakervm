@@ -1,6 +1,8 @@
 use std::ops::{Add, Div, Mul, Rem, Sub};
 use typedef::*;
 
+pub const PREAMBLE: &str = "BAKERVM";
+
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub enum Value {
     Boolean(bool), // true | false
