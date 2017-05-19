@@ -189,11 +189,21 @@ pub enum Instruction {
     Halt,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Default)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Program {
     pub preamble: String,
     pub version: String,
     pub instructions: Vec<Instruction>,
+}
+
+impl Default for Program {
+    fn default() -> Self {
+        Program {
+            preamble: String::from(PREAMBLE),
+            version: String::from(env!("CARGO_PKG_VERSION")),
+            instructions: Vec::new(),
+        }
+    }
 }
 
 #[cfg(test)]

@@ -3,18 +3,12 @@ use program::*;
 use typedef::*;
 
 pub struct ImageBuilder {
-    preamble: String,
-    version: String,
     instructions: Vec<Instruction>,
 }
 
 impl ImageBuilder {
     pub fn new() -> ImageBuilder {
-        ImageBuilder {
-            preamble: String::from(PREAMBLE),
-            version: String::from(env!("CARGO_PKG_VERSION")),
-            instructions: Vec::new(),
-        }
+        ImageBuilder { instructions: Vec::new() }
     }
 
     fn add_instruction(&mut self, instruction: Instruction) {
@@ -103,9 +97,8 @@ impl ImageBuilder {
 
     pub fn gen(self) -> ImageData {
         let program = Program {
-            preamble: self.preamble,
-            version: self.version,
             instructions: self.instructions,
+            ..Program::default()
         };
 
         bincode::serialize(&program, Infinite).expect("unable to encode program")

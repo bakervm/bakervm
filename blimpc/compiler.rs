@@ -11,9 +11,8 @@ pub fn compile(file: File) -> CompilationResult<Program> {
 
     Ok(
         Program {
-            version: String::from(env!("CARGO_PKG_VERSION")),
-            preamble: String::from("BAKERVM"),
             instructions: Vec::new(),
+            ..Program::default()
         },
     )
 }
