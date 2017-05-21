@@ -2,6 +2,7 @@ use definitions::program::{Instruction, PREAMBLE, Program, Target, Value};
 use definitions::typedef::*;
 use error::*;
 use std::cmp::Ordering;
+use std::collections::LinkedList;
 
 const STACK_COUNT: usize = 2;
 const REGISTER_COUNT: usize = 4;
@@ -12,11 +13,11 @@ pub struct VM {
     image_data: Vec<Instruction>,
     /// The current program counter
     pc: Address,
-    data_stacks: [Vec<Value>; STACK_COUNT],
+    data_stacks: [LinkedList<Value>; STACK_COUNT],
     data_registers: [Value; REGISTER_COUNT],
     /// A register for holding infomation about a recent comparison
     cmp_register: Option<Ordering>,
-    call_stack: Vec<Address>,
+    call_stack: LinkedList<Address>,
     /// A boolean used for lock the program counter
     pc_locked: bool,
 }
@@ -27,10 +28,10 @@ impl VM {
         VM {
             image_data: Vec::new(),
             pc: 0,
-            data_stacks: [Vec::new(), Vec::new()],
+            data_stacks: [LinkedList::new(), LinkedList::new()],
             data_registers: [Value::Nil, Value::Nil, Value::Nil, Value::Nil],
             cmp_register: None,
-            call_stack: Vec::new(),
+            call_stack: LinkedList::new(),
             pc_locked: false,
         }
     }
@@ -115,7 +116,7 @@ impl VM {
                 Ok(value)
             }
             &Target::Stack(index) => {
-                if let Some(value) = self.data_stacks[index].pop() {
+                if let Some(value) = self.data_stacks[index].pop_front() {
                     Ok(value)
                 } else {
                     bail!("unable to pop value off an empty stack");
@@ -230,7 +231,7 @@ impl VM {
     fn push(&mut self, dest: Target, value: Value) {
         match dest {
             Target::Register(index) => self.data_registers[index] = value,
-            Target::Stack(index) => self.data_stacks[index].push(value),
+            Target::Stack(index) => self.data_stacks[index].push_front(value),
         }
     }
 
@@ -256,7 +257,7 @@ impl VM {
     /// Calls the function at the specified address saving the return address
     /// to the call stack
     fn call(&mut self, addr: Address) {
-        self.call_stack.push(self.pc + 1);
+        self.call_stack.push_front(self.pc + 1);
         self.jmp(addr);
     }
 
@@ -266,7 +267,7 @@ impl VM {
             bail!("unable to return from an empty call stack");
         }
 
-        let retur_addr = self.call_stack.pop().unwrap();
+        let retur_addr = self.call_stack.pop_front().unwrap();
 
         self.jmp(retur_addr);
 
