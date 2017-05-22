@@ -1,6 +1,7 @@
 use bincode::{self, Infinite};
-use program::*;
+use program::{Instruction, Program, Target};
 use typedef::*;
+use value::Value;
 
 pub struct ImageBuilder {
     instructions: Vec<Instruction>,

@@ -1,4 +1,5 @@
-use definitions::program::{Instruction, PREAMBLE, Program, Target, Value};
+use definitions::Value;
+use definitions::program::{Instruction, PREAMBLE, Program, Target};
 use definitions::typedef::*;
 use error::*;
 use std::cmp::Ordering;
@@ -92,8 +93,14 @@ impl VM {
         *self = VM::new();
     }
 
+    /// Resets the result of the last comparison
     fn reset_cmp(&mut self) {
         self.cmp_register = None;
+    }
+
+    /// Locks the program counter in place
+    fn lock_pc(&mut self) {
+        self.pc_locked = true;
     }
 
     /// Advances the program counter
@@ -200,7 +207,7 @@ impl VM {
     /// Jumps unconditionally to the specified address
     fn jmp(&mut self, addr: Address) {
         self.pc = addr;
-        self.pc_locked = true;
+        self.lock_pc();
     }
 
     /// Jumps if the last compare got the result `Some(Ordering::Less)`
@@ -263,13 +270,11 @@ impl VM {
 
     /// Returns from an ongoing function call
     fn ret(&mut self) -> VMResult<()> {
-        if self.call_stack.is_empty() {
+        if let Some(retur_addr) = self.call_stack.pop_front() {
+            self.jmp(retur_addr);
+        } else {
             bail!("unable to return from an empty call stack");
         }
-
-        let retur_addr = self.call_stack.pop_front().unwrap();
-
-        self.jmp(retur_addr);
 
         Ok(())
     }

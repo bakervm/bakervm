@@ -1,4 +1,4 @@
-use definitions::program::Value;
+use definitions::Value;
 
 #[derive(Debug)]
 pub enum Expression {

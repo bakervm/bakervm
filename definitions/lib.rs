@@ -6,3 +6,6 @@ extern crate bincode;
 pub mod typedef;
 pub mod program;
 pub mod image_builder;
+pub mod value;
+
+pub use value::Value;
