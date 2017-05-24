@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate error_chain;
-#[macro_use]
 extern crate clap;
 extern crate definitions;
 extern crate bincode;
@@ -9,9 +8,11 @@ mod error;
 mod compiler;
 mod ast;
 
+use bincode::Infinite;
 use clap::{App, Arg};
 use error::*;
 use std::fs::File;
+use std::io::Write;
 
 
 fn main() {
@@ -47,7 +48,17 @@ fn run() -> CompilationResult<()> {
 
     let input_file = File::open(input_file_name).chain_err(|| "unable to open input file")?;
 
-    compiler::compile(input_file).chain_err(|| "unable to compile file")?;
+    let program = compiler::compile(input_file).chain_err(|| "unable to compile file")?;
+
+    let program_data = bincode::serialize(&program, Infinite)
+        .chain_err(|| "unable to serialize program")?;
+
+    let mut output_file =
+        File::create(output_file_name).chain_err(|| "unable to open output file")?;
+
+    output_file.write_all(&program_data[..]).chain_err(|| "unable to write output file")?;
+
+    output_file.sync_all().chain_err(|| "unable to sync output file to file system")?;
 
     Ok(())
 }

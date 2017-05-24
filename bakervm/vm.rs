@@ -3,8 +3,7 @@ use definitions::program::{Instruction, PREAMBLE, Program, Target, VMConfig};
 use definitions::typedef::*;
 use error::*;
 use std::cmp::Ordering;
-use std::collections::BTreeMap;
-use std::collections::LinkedList;
+use std::collections::{BTreeMap, LinkedList};
 
 /// The whole state of the VM
 #[derive(Default)]
@@ -20,7 +19,7 @@ pub struct VM {
     cmp_register: Option<Ordering>,
     /// A stack to hold the return addresses of function calls
     call_stack: LinkedList<Address>,
-    /// A boolean used for lock the program counter
+    /// A boolean used for locking the program counter
     pc_locked: bool,
     /// The configuration of the VM
     config: VMConfig,
