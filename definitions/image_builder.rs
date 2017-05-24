@@ -36,8 +36,8 @@ impl ImageBuilder {
         self
     }
 
-    pub fn modulus(mut self, dest: Target, src: Target) -> Self {
-        self.add_instruction(Instruction::Mod(dest, src));
+    pub fn rem(mut self, dest: Target, src: Target) -> Self {
+        self.add_instruction(Instruction::Rem(dest, src));
         self
     }
 

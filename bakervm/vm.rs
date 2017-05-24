@@ -1,5 +1,5 @@
 use definitions::Value;
-use definitions::program::{Instruction, PREAMBLE, Program, Target};
+use definitions::program::{Instruction, PREAMBLE, Program, Target, VMConfig};
 use definitions::typedef::*;
 use error::*;
 use std::cmp::Ordering;
@@ -21,6 +21,8 @@ pub struct VM {
     call_stack: LinkedList<Address>,
     /// A boolean used for lock the program counter
     pc_locked: bool,
+    /// The configuration of the VM
+    config: VMConfig,
 }
 
 impl VM {
@@ -30,10 +32,16 @@ impl VM {
             image_data: Vec::new(),
             pc: 0,
             data_stacks: [LinkedList::new(), LinkedList::new()],
-            data_registers: [Value::Nil, Value::Nil, Value::Nil, Value::Nil],
+            data_registers: [
+                Value::Undefined,
+                Value::Undefined,
+                Value::Undefined,
+                Value::Undefined,
+            ],
             cmp_register: None,
             call_stack: LinkedList::new(),
             pc_locked: false,
+            config: Default::default(),
         }
     }
 
@@ -50,23 +58,25 @@ impl VM {
             match current_instruction {
                 Instruction::Halt => break,
 
-                Instruction::Add(dest, src) => self.add(dest, src)?,
-                Instruction::Sub(dest, src) => self.sub(dest, src)?,
-                Instruction::Div(dest, src) => self.div(dest, src)?,
-                Instruction::Mul(dest, src) => self.mul(dest, src)?,
-                Instruction::Mod(dest, src) => self.modulo(dest, src)?,
+                Instruction::Add(dest, src) => self.add(&dest, &src)?,
+                Instruction::Sub(dest, src) => self.sub(&dest, &src)?,
+                Instruction::Div(dest, src) => self.div(&dest, &src)?,
+                Instruction::Mul(dest, src) => self.mul(&dest, &src)?,
+                Instruction::Rem(dest, src) => self.rem(&dest, &src)?,
 
-                Instruction::Cmp(target_a, target_b) => self.cmp(target_a, target_b)?,
-                Instruction::Jmp(addr) => self.jmp(addr),
-                Instruction::JmpLt(addr) => self.jmp_lt(addr),
-                Instruction::JmpGt(addr) => self.jmp_gt(addr),
-                Instruction::JmpEq(addr) => self.jmp_eq(addr),
+                Instruction::Cmp(target_a, target_b) => self.cmp(&target_a, &target_b)?,
+                Instruction::Jmp(addr) => self.jmp(&addr),
+                Instruction::JmpLt(addr) => self.jmp_lt(&addr),
+                Instruction::JmpGt(addr) => self.jmp_gt(&addr),
+                Instruction::JmpEq(addr) => self.jmp_eq(&addr),
+                Instruction::JmpLtEq(addr) => self.jmp_lt_eq(&addr),
+                Instruction::JmpGtEq(addr) => self.jmp_gt_eq(&addr),
 
-                Instruction::Push(dest, value) => self.push(dest, value),
-                Instruction::Mov(dest, src) => self.mov(dest, src)?,
-                Instruction::Swp(target_a, target_b) => self.swp(target_a, target_b)?,
+                Instruction::Push(dest, value) => self.push(&dest, value),
+                Instruction::Mov(dest, src) => self.mov(&dest, &src)?,
+                Instruction::Swp(target_a, target_b) => self.swp(&target_a, &target_b)?,
 
-                Instruction::Call(addr) => self.call(addr),
+                Instruction::Call(addr) => self.call(&addr),
                 Instruction::Ret => self.ret()?,
             }
 
@@ -84,6 +94,7 @@ impl VM {
             bail!("invalid version");
         } else {
             self.image_data = program.instructions;
+            self.config = program.config;
             Ok(())
         }
     }
@@ -118,7 +129,7 @@ impl VM {
         match target {
             &Target::Register(index) => {
                 let value = self.data_registers[index].clone();
-                self.data_registers[index] = Value::Nil;
+                self.data_registers[index] = Value::Undefined;
 
                 Ok(value)
             }
@@ -135,7 +146,7 @@ impl VM {
     // # Instruction functions
 
     /// Adds the value of the src target to the value of the dest target
-    fn add(&mut self, dest: Target, src: Target) -> VMResult<()> {
+    fn add(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
         let dest_value = self.pop(&dest)?;
         let src_value = self.pop(&src)?;
 
@@ -145,7 +156,7 @@ impl VM {
     }
 
     /// Subtracts the value of the src target from the value of the dest target
-    fn sub(&mut self, dest: Target, src: Target) -> VMResult<()> {
+    fn sub(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
         let dest_value = self.pop(&dest)?;
         let src_value = self.pop(&src)?;
 
@@ -155,7 +166,7 @@ impl VM {
     }
 
     /// Divides the value of the dest target through the value of the src target
-    fn div(&mut self, dest: Target, src: Target) -> VMResult<()> {
+    fn div(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
         let dest_value = self.pop(&dest)?;
         let src_value = self.pop(&src)?;
 
@@ -165,7 +176,7 @@ impl VM {
     }
 
     /// Multiplies the value of the dest target with the value of the src target
-    fn mul(&mut self, dest: Target, src: Target) -> VMResult<()> {
+    fn mul(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
         let dest_value = self.pop(&dest)?;
         let src_value = self.pop(&src)?;
 
@@ -176,7 +187,7 @@ impl VM {
 
     /// Applies the modulo operator on the value of the dest target using the
     /// value of the src target
-    fn modulo(&mut self, dest: Target, src: Target) -> VMResult<()> {
+    fn rem(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
         let dest_value = self.pop(&dest)?;
         let src_value = self.pop(&src)?;
 
@@ -187,11 +198,11 @@ impl VM {
 
     /// Compares the top values of the two targets and saves the result to
     /// `self.cmp_register`
-    fn cmp(&mut self, target_a: Target, target_b: Target) -> VMResult<()> {
+    fn cmp(&mut self, target_a: &Target, target_b: &Target) -> VMResult<()> {
         self.reset_cmp();
 
-        let target_a_value = self.pop(&target_a)?;
-        let target_b_value = self.pop(&target_b)?;
+        let target_a_value = self.pop(target_a)?;
+        let target_b_value = self.pop(target_b)?;
 
         if target_a_value < target_b_value {
             self.cmp_register = Some(Ordering::Less);
@@ -205,13 +216,13 @@ impl VM {
     }
 
     /// Jumps unconditionally to the specified address
-    fn jmp(&mut self, addr: Address) {
-        self.pc = addr;
+    fn jmp(&mut self, addr: &Address) {
+        self.pc = *addr;
         self.lock_pc();
     }
 
     /// Jumps if the last compare got the result `Some(Ordering::Less)`
-    fn jmp_lt(&mut self, addr: Address) {
+    fn jmp_lt(&mut self, addr: &Address) {
         if self.cmp_register == Some(Ordering::Less) {
             self.jmp(addr);
             self.reset_cmp();
@@ -219,7 +230,7 @@ impl VM {
     }
 
     /// Jumps if the last compare got the result `Some(Ordering::Greater)`
-    fn jmp_gt(&mut self, addr: Address) {
+    fn jmp_gt(&mut self, addr: &Address) {
         if self.cmp_register == Some(Ordering::Greater) {
             self.jmp(addr);
             self.reset_cmp();
@@ -227,23 +238,43 @@ impl VM {
     }
 
     /// Jumps if the last compare got the result `Some(Ordering::Equal)`
-    fn jmp_eq(&mut self, addr: Address) {
+    fn jmp_eq(&mut self, addr: &Address) {
         if self.cmp_register == Some(Ordering::Equal) {
             self.jmp(addr);
             self.reset_cmp();
         }
     }
 
+    /// Jumps if the last compare got the result `Some(Ordering::Less)` or
+    /// `Some(Ordering::Equal)`
+    fn jmp_lt_eq(&mut self, addr: &Address) {
+        if (self.cmp_register == Some(Ordering::Less)) ||
+           (self.cmp_register == Some(Ordering::Equal)) {
+            self.jmp(addr);
+            self.reset_cmp();
+        }
+    }
+
+    /// Jumps if the last compare got the result `Some(Ordering::Greater)` or
+    /// `Some(Ordering::Equal)`
+    fn jmp_gt_eq(&mut self, addr: &Address) {
+        if (self.cmp_register == Some(Ordering::Greater)) ||
+           (self.cmp_register == Some(Ordering::Equal)) {
+            self.jmp(addr);
+            self.reset_cmp();
+        }
+    }
+
     /// Pushes the given value to the given target
-    fn push(&mut self, dest: Target, value: Value) {
+    fn push(&mut self, dest: &Target, value: Value) {
         match dest {
-            Target::Register(index) => self.data_registers[index] = value,
-            Target::Stack(index) => self.data_stacks[index].push_front(value),
+            &Target::Register(index) => self.data_registers[index] = value,
+            &Target::Stack(index) => self.data_stacks[index].push_front(value),
         }
     }
 
     /// Moves the top value of the src target to the dest target
-    fn mov(&mut self, dest: Target, src: Target) -> VMResult<()> {
+    fn mov(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
         let src_value = self.pop(&src)?;
         self.push(dest, src_value);
 
@@ -251,19 +282,19 @@ impl VM {
     }
 
     /// Swaps the top values of the targets
-    fn swp(&mut self, target_a: Target, target_b: Target) -> VMResult<()> {
-        let a_value = self.pop(&target_a)?;
-        let b_value = self.pop(&target_b)?;
+    fn swp(&mut self, target_a: &Target, target_b: &Target) -> VMResult<()> {
+        let a_value = self.pop(target_a)?;
+        let b_value = self.pop(target_b)?;
 
-        self.push(target_a, b_value);
-        self.push(target_b, a_value);
+        self.push(&target_a, b_value);
+        self.push(&target_b, a_value);
 
         Ok(())
     }
 
     /// Calls the function at the specified address saving the return address
     /// to the call stack
-    fn call(&mut self, addr: Address) {
+    fn call(&mut self, addr: &Address) {
         self.call_stack.push_front(self.pc + 1);
         self.jmp(addr);
     }
@@ -271,7 +302,7 @@ impl VM {
     /// Returns from an ongoing function call
     fn ret(&mut self) -> VMResult<()> {
         if let Some(retur_addr) = self.call_stack.pop_front() {
-            self.jmp(retur_addr);
+            self.jmp(&retur_addr);
         } else {
             bail!("unable to return from an empty call stack");
         }

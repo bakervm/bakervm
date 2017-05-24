@@ -9,13 +9,13 @@ pub enum Value {
     Symbol(String), // :hello | :test | :symbol | ...
     String(String), // "hello world" | "hello!" | "yellow \"blue\" or red" | ...
     Char(char), // 'a' | 'b' | 'c' | 'd' | ...
-    Nil, // nil
+    Undefined, // The Undefined value symbolizes an internal error or a wrong use of the bytecode
 }
 
 impl Value {
-    pub fn is_nil(&self) -> bool {
+    pub fn is_undefined(&self) -> bool {
         match self {
-            &Value::Nil => true,
+            &Value::Undefined => true,
             _ => false,
         }
     }
@@ -29,18 +29,16 @@ impl Add for Value {
             Value::Float(lhs_float) => {
                 match rhs {
                     Value::Float(rhs_float) => Value::Float(lhs_float + rhs_float),
-                    Value::Integer(rhs_integer) => Value::Float(lhs_float + (rhs_integer as Float)),
                     Value::String(rhs_string) => Value::String(format!("{}{}", lhs_float, rhs_string),),
-                    _ => Value::Nil,
+                    _ => Value::Undefined,
                 }
             }
 
             Value::Integer(lhs_integer) => {
                 match rhs {
-                    Value::Float(rhs_float) => Value::Float((lhs_integer as Float) + rhs_float),
                     Value::Integer(rhs_integer) => Value::Integer(lhs_integer + rhs_integer),
                     Value::String(rhs_string) => Value::String(format!("{}{}", lhs_integer, rhs_string),),
-                    _ => Value::Nil,
+                    _ => Value::Undefined,
                 }
             }
 
@@ -49,10 +47,10 @@ impl Add for Value {
                     Value::Float(rhs_float) => Value::String(format!("{}{}", lhs_string, rhs_float),),
                     Value::Integer(rhs_integer) => Value::String(format!("{}{}", lhs_string, rhs_integer),),
                     Value::String(rhs_string) => Value::String(format!("{}{}", lhs_string, rhs_string),),
-                    _ => Value::Nil,
+                    _ => Value::Undefined,
                 }
             }
-            _ => Value::Nil,
+            _ => Value::Undefined,
         }
     }
 }
@@ -61,23 +59,12 @@ impl Sub for Value {
     type Output = Value;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        match self {
-            Value::Float(lhs_float) => {
-                match rhs {
-                    Value::Float(rhs_float) => Value::Float(lhs_float - rhs_float),
-                    Value::Integer(rhs_integer) => Value::Float(lhs_float - (rhs_integer as Float)),
-                    _ => Value::Nil,
-                }
+        match (self, rhs) {
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Value::Float(lhs_float - rhs_float,),
+            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
+                Value::Integer(lhs_integer - rhs_integer)
             }
-
-            Value::Integer(lhs_integer) => {
-                match rhs {
-                    Value::Float(rhs_float) => Value::Float((lhs_integer as Float) - rhs_float),
-                    Value::Integer(rhs_integer) => Value::Integer(lhs_integer - rhs_integer),
-                    _ => Value::Nil,
-                }
-            }
-            _ => Value::Nil,
+            _ => Value::Undefined,
         }
     }
 }
@@ -90,19 +77,17 @@ impl Mul for Value {
             Value::Float(lhs_float) => {
                 match rhs {
                     Value::Float(rhs_float) => Value::Float(lhs_float * rhs_float),
-                    Value::Integer(rhs_integer) => Value::Float(lhs_float * (rhs_integer as Float)),
-                    _ => Value::Nil,
+                    _ => Value::Undefined,
                 }
             }
 
             Value::Integer(lhs_integer) => {
                 match rhs {
-                    Value::Float(rhs_float) => Value::Float((lhs_integer as Float) * rhs_float),
                     Value::Integer(rhs_integer) => Value::Integer(lhs_integer * rhs_integer),
-                    _ => Value::Nil,
+                    _ => Value::Undefined,
                 }
             }
-            _ => Value::Nil,
+            _ => Value::Undefined,
         }
     }
 }
@@ -111,23 +96,9 @@ impl Div for Value {
     type Output = Value;
 
     fn div(self, rhs: Self) -> Self::Output {
-        match self {
-            Value::Float(lhs_float) => {
-                match rhs {
-                    Value::Float(rhs_float) => Value::Float(lhs_float / rhs_float),
-                    Value::Integer(rhs_integer) => Value::Float(lhs_float / (rhs_integer as Float)),
-                    _ => Value::Nil,
-                }
-            }
-
-            Value::Integer(lhs_integer) => {
-                match rhs {
-                    Value::Float(rhs_float) => Value::Float((lhs_integer as Float) / rhs_float),
-                    Value::Integer(rhs_integer) => Value::Integer(lhs_integer / rhs_integer),
-                    _ => Value::Nil,
-                }
-            }
-            _ => Value::Nil,
+        match (self, rhs) {
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Value::Float(lhs_float / rhs_float,),
+            _ => Value::Undefined,
         }
     }
 }
@@ -136,23 +107,12 @@ impl Rem for Value {
     type Output = Value;
 
     fn rem(self, rhs: Self) -> Self::Output {
-        match self {
-            Value::Float(lhs_float) => {
-                match rhs {
-                    Value::Float(rhs_float) => Value::Float(lhs_float % rhs_float),
-                    Value::Integer(rhs_integer) => Value::Float(lhs_float % (rhs_integer as Float)),
-                    _ => Value::Nil,
-                }
+        match (self, rhs) {
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Value::Float(lhs_float % rhs_float,),
+            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
+                Value::Integer(lhs_integer % rhs_integer)
             }
-
-            Value::Integer(lhs_integer) => {
-                match rhs {
-                    Value::Float(rhs_float) => Value::Float((lhs_integer as Float) % rhs_float),
-                    Value::Integer(rhs_integer) => Value::Integer(lhs_integer % rhs_integer),
-                    _ => Value::Nil,
-                }
-            }
-            _ => Value::Nil,
+            _ => Value::Undefined,
         }
     }
 }

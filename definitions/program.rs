@@ -15,13 +15,15 @@ pub enum Instruction {
     Sub(Target, Target),
     Div(Target, Target),
     Mul(Target, Target),
-    Mod(Target, Target),
+    Rem(Target, Target),
 
     Cmp(Target, Target),
     Jmp(Address),
     JmpLt(Address),
     JmpGt(Address),
     JmpEq(Address),
+    JmpLtEq(Address),
+    JmpGtEq(Address),
 
     Push(Target, Value),
     Mov(Target, Target),
@@ -34,9 +36,59 @@ pub enum Instruction {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum ColorMode {
+    _1bit,
+    _4bit,
+    _8bit,
+    _16bit,
+    _24bit,
+}
+
+impl Default for ColorMode {
+    fn default() -> Self {
+        ColorMode::_24bit
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct DisplayResolution {
+    width: u16,
+    height: u16,
+}
+
+impl Default for DisplayResolution {
+    fn default() -> Self {
+        DisplayResolution {
+            width: 360,
+            height: 200,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct VMConfig {
+    color_mode: ColorMode,
+    display_resolution: DisplayResolution,
+    keyboard_enabled: bool,
+    mouse_enabled: bool,
+}
+
+impl Default for VMConfig {
+    fn default() -> Self {
+        VMConfig {
+            color_mode: Default::default(),
+            display_resolution: Default::default(),
+            keyboard_enabled: true,
+            mouse_enabled: true,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Program {
     pub preamble: String,
     pub version: String,
+    pub config: VMConfig,
     pub instructions: Vec<Instruction>,
 }
 
@@ -45,7 +97,8 @@ impl Default for Program {
         Program {
             preamble: String::from(PREAMBLE),
             version: String::from(env!("CARGO_PKG_VERSION")),
-            instructions: Vec::new(),
+            config: Default::default(),
+            instructions: Default::default(),
         }
     }
 }
