@@ -14,6 +14,8 @@ use definitions::typedef::*;
 use error::*;
 use std::fs::File;
 use std::io::Read;
+use std::sync::mpsc;
+use std::thread;
 use vm::VM;
 
 fn main() {
@@ -56,7 +58,29 @@ fn run() -> VMResult<()> {
         Program::default()
     };
 
-    VM::default().exec(program).chain_err(|| "unable to exec program")?;
+    let display_resolution = program.config.display_resolution.clone();
+
+    let (vm_sender, outer_receiver) = mpsc::channel::<Frame>();
+    let (outer_sender, vm_receiver) = mpsc::channel::<Address>();
+
+    thread::spawn(
+        move || {
+            VM::default().exec(program, vm_sender, vm_receiver).expect("unable to exec program");
+        },
+    );
+
+    'main: loop {
+        if let Ok(frame) = outer_receiver.recv() {
+            for y in 0..display_resolution.height {
+                for x in 0..display_resolution.width {
+                    print!("{:?}", frame[(y * display_resolution.width) + x]);
+                }
+                println!();
+            }
+        } else {
+            break 'main;
+        }
+    }
 
     Ok(())
 }

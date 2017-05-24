@@ -4,9 +4,10 @@ use definitions::typedef::*;
 use error::*;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, LinkedList};
+use std::sync::mpsc::{Receiver, Sender};
 
 /// The whole state of the VM
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct VM {
     /// The instructions that are currently executed
     image_data: Vec<Instruction>,
@@ -14,7 +15,8 @@ pub struct VM {
     pc: Address,
     stack: LinkedList<Value>,
     val_index: BTreeMap<Address, Value>,
-    framebuffer: Vec<u32>,
+    framebuffer: Frame,
+    framebuffer_invalid: bool,
     /// A register for holding infomation about a recent comparison
     cmp_register: Option<Ordering>,
     /// A stack to hold the return addresses of function calls
@@ -29,7 +31,8 @@ impl VM {
     // # Maintainance functions
 
     /// Executes the given program
-    pub fn exec(&mut self, program: Program) -> VMResult<()> {
+    pub fn exec(&mut self, program: Program, sender: Sender<Frame>, receiver: Receiver<Address>)
+        -> VMResult<()> {
         self.reset();
         self.load_program(program)?;
         self.build_framebuffer();
@@ -62,6 +65,14 @@ impl VM {
                 Instruction::Ret => self.ret()?,
             }
 
+            if self.framebuffer_invalid {
+                sender
+                    .send(self.framebuffer.clone())
+                    .chain_err(|| "unable to send frame from buffer")?;
+
+                self.framebuffer_invalid = false;
+            }
+
             self.advance_pc();
         }
 
@@ -84,7 +95,7 @@ impl VM {
     /// Allocates all the needed space in the framebuffer
     fn build_framebuffer(&mut self) {
         let ref resolution = self.config.display_resolution;
-        let allocation_space: usize = (resolution.width * resolution.height) as usize;
+        let allocation_space = resolution.width * resolution.height;
         self.framebuffer = vec![0; allocation_space];
     }
 
@@ -112,6 +123,12 @@ impl VM {
         }
     }
 
+    /// Invalidates the frambuffer causing it to be resent to the display
+    /// receiver
+    fn invalidate(&mut self) {
+        self.framebuffer_invalid = true;
+    }
+
     /// Return the value at the specified target. The value will be consumed
     /// from the target.
     fn pop(&mut self, target: &Target) -> VMResult<Value> {
@@ -131,11 +148,15 @@ impl VM {
                 }
             }
             &Target::Framebuffer(index) => {
-                if let Some(value) = self.framebuffer.get(index) {
-                    Ok(Value::Integer(*value as i64))
+                let res = if let Some(value) = self.framebuffer.get(index) {
+                    Ok(Value::Integer(*value as Integer))
                 } else {
                     bail!("no value found in framebuffer at index {}", index);
-                }
+                };
+
+                self.invalidate();
+
+                res
             }
         }
     }
@@ -270,6 +291,7 @@ impl VM {
             &Target::Framebuffer(index) => {
                 if let Value::Color(value) = value {
                     self.framebuffer[index] = value;
+                    self.invalidate();
                 }
             }
         }

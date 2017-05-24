@@ -38,8 +38,8 @@ pub enum Instruction {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DisplayResolution {
-    pub width: u16,
-    pub height: u16,
+    pub width: usize,
+    pub height: usize,
 }
 
 impl Default for DisplayResolution {
@@ -54,6 +54,7 @@ impl Default for DisplayResolution {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VMConfig {
     pub display_resolution: DisplayResolution,
+    pub display_scale: Float,
     pub keyboard_enabled: bool,
     pub mouse_enabled: bool,
 }
@@ -62,6 +63,7 @@ impl Default for VMConfig {
     fn default() -> Self {
         VMConfig {
             display_resolution: Default::default(),
+            display_scale: 4.0,
             keyboard_enabled: true,
             mouse_enabled: true,
         }
