@@ -45,7 +45,7 @@ pub struct DisplayResolution {
 impl Default for DisplayResolution {
     fn default() -> Self {
         DisplayResolution {
-            width: 360,
+            width: 320,
             height: 200,
         }
     }
