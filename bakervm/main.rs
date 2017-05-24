@@ -56,7 +56,7 @@ fn run() -> VMResult<()> {
         Program::default()
     };
 
-    VM::new().exec(program).chain_err(|| "unable to exec program")?;
+    VM::default().exec(program).chain_err(|| "unable to exec program")?;
 
     Ok(())
 }

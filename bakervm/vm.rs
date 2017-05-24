@@ -3,21 +3,22 @@ use definitions::program::{Instruction, PREAMBLE, Program, Target, VMConfig};
 use definitions::typedef::*;
 use error::*;
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
 use std::collections::LinkedList;
 
-const STACK_COUNT: usize = 2;
-const REGISTER_COUNT: usize = 4;
-
 /// The whole state of the VM
+#[derive(Default)]
 pub struct VM {
     /// The instructions that are currently executed
     image_data: Vec<Instruction>,
     /// The current program counter
     pc: Address,
-    data_stacks: [LinkedList<Value>; STACK_COUNT],
-    data_registers: [Value; REGISTER_COUNT],
+    stack: LinkedList<Value>,
+    val_index: BTreeMap<Address, Value>,
+    framebuffer: Vec<u32>,
     /// A register for holding infomation about a recent comparison
     cmp_register: Option<Ordering>,
+    /// A stack to hold the return addresses of function calls
     call_stack: LinkedList<Address>,
     /// A boolean used for lock the program counter
     pc_locked: bool,
@@ -26,31 +27,13 @@ pub struct VM {
 }
 
 impl VM {
-    /// Creates a new VM state for executing programs
-    pub fn new() -> VM {
-        VM {
-            image_data: Vec::new(),
-            pc: 0,
-            data_stacks: [LinkedList::new(), LinkedList::new()],
-            data_registers: [
-                Value::Undefined,
-                Value::Undefined,
-                Value::Undefined,
-                Value::Undefined,
-            ],
-            cmp_register: None,
-            call_stack: LinkedList::new(),
-            pc_locked: false,
-            config: Default::default(),
-        }
-    }
-
     // # Maintainance functions
 
     /// Executes the given program
     pub fn exec(&mut self, program: Program) -> VMResult<()> {
         self.reset();
         self.load_program(program)?;
+        self.build_framebuffer();
 
         while self.pc < self.image_data.len() {
             let current_instruction = self.image_data[self.pc].clone();
@@ -99,9 +82,16 @@ impl VM {
         }
     }
 
+    /// Allocates all the needed space in the framebuffer
+    fn build_framebuffer(&mut self) {
+        let ref resolution = self.config.display_resolution;
+        let allocation_space: usize = (resolution.width * resolution.height) as usize;
+        self.framebuffer = vec![0; allocation_space];
+    }
+
     /// Resets the VM to a clean state
     fn reset(&mut self) {
-        *self = VM::new();
+        *self = VM::default();
     }
 
     /// Resets the result of the last comparison
@@ -127,17 +117,25 @@ impl VM {
     /// from the target.
     fn pop(&mut self, target: &Target) -> VMResult<Value> {
         match target {
-            &Target::Register(index) => {
-                let value = self.data_registers[index].clone();
-                self.data_registers[index] = Value::Undefined;
-
-                Ok(value)
+            &Target::ValueIndex(index) => {
+                if let Some(value) = self.val_index.remove(&index) {
+                    Ok(value)
+                } else {
+                    bail!("no value found at index {}", index);
+                }
             }
-            &Target::Stack(index) => {
-                if let Some(value) = self.data_stacks[index].pop_front() {
+            &Target::Stack => {
+                if let Some(value) = self.stack.pop_front() {
                     Ok(value)
                 } else {
                     bail!("unable to pop value off an empty stack");
+                }
+            }
+            &Target::Framebuffer(index) => {
+                if let Some(value) = self.framebuffer.get(index) {
+                    Ok(Value::Integer(*value as i64))
+                } else {
+                    bail!("no value found in framebuffer at index {}", index);
                 }
             }
         }
@@ -225,7 +223,6 @@ impl VM {
     fn jmp_lt(&mut self, addr: &Address) {
         if self.cmp_register == Some(Ordering::Less) {
             self.jmp(addr);
-            self.reset_cmp();
         }
     }
 
@@ -233,7 +230,6 @@ impl VM {
     fn jmp_gt(&mut self, addr: &Address) {
         if self.cmp_register == Some(Ordering::Greater) {
             self.jmp(addr);
-            self.reset_cmp();
         }
     }
 
@@ -241,7 +237,6 @@ impl VM {
     fn jmp_eq(&mut self, addr: &Address) {
         if self.cmp_register == Some(Ordering::Equal) {
             self.jmp(addr);
-            self.reset_cmp();
         }
     }
 
@@ -268,8 +263,16 @@ impl VM {
     /// Pushes the given value to the given target
     fn push(&mut self, dest: &Target, value: Value) {
         match dest {
-            &Target::Register(index) => self.data_registers[index] = value,
-            &Target::Stack(index) => self.data_stacks[index].push_front(value),
+            &Target::ValueIndex(index) => {
+                self.val_index.entry(index).or_insert(value);
+                return;
+            }
+            &Target::Stack => self.stack.push_front(value),
+            &Target::Framebuffer(index) => {
+                if let Value::Color(value) = value {
+                    self.framebuffer[index] = value;
+                }
+            }
         }
     }
 

@@ -8,7 +8,7 @@ use std::io::prelude::*;
 
 pub fn compile(file: File) -> CompilationResult<Program> {
     let token_list = Tokenizer::new().tokenize(file)?;
-    let ast = LispParser::new().parse(token_list)?;
+    let _ast = LispParser::new().parse(token_list)?;
 
     Ok(
         Program {

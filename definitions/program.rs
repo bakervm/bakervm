@@ -5,8 +5,9 @@ pub const PREAMBLE: &str = "BAKERVM";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Target {
-    Register(usize),
-    Stack(usize),
+    Framebuffer(Address),
+    ValueIndex(Address),
+    Stack,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -36,24 +37,9 @@ pub enum Instruction {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum ColorMode {
-    _1bit,
-    _4bit,
-    _8bit,
-    _16bit,
-    _24bit,
-}
-
-impl Default for ColorMode {
-    fn default() -> Self {
-        ColorMode::_24bit
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DisplayResolution {
-    width: u16,
-    height: u16,
+    pub width: u16,
+    pub height: u16,
 }
 
 impl Default for DisplayResolution {
@@ -67,16 +53,14 @@ impl Default for DisplayResolution {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VMConfig {
-    color_mode: ColorMode,
-    display_resolution: DisplayResolution,
-    keyboard_enabled: bool,
-    mouse_enabled: bool,
+    pub display_resolution: DisplayResolution,
+    pub keyboard_enabled: bool,
+    pub mouse_enabled: bool,
 }
 
 impl Default for VMConfig {
     fn default() -> Self {
         VMConfig {
-            color_mode: Default::default(),
             display_resolution: Default::default(),
             keyboard_enabled: true,
             mouse_enabled: true,
