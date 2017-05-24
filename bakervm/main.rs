@@ -59,6 +59,7 @@ fn run() -> VMResult<()> {
     };
 
     let display_resolution = program.config.display_resolution.clone();
+    let display_scale = program.config.display_scale.clone();
 
     let (vm_sender, outer_receiver) = mpsc::channel::<Frame>();
     let (outer_sender, vm_receiver) = mpsc::channel::<Address>();
