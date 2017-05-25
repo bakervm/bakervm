@@ -1,10 +1,10 @@
 use definitions::Value;
-use definitions::program::{Instruction, PREAMBLE, Program, Target, VMConfig};
+use definitions::program::{Instruction, Interrupt, PREAMBLE, Program, Target, VMConfig};
 use definitions::typedef::*;
 use error::*;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, LinkedList};
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 
 /// The whole state of the VM
 #[derive(Default, Debug)]
@@ -15,6 +15,7 @@ pub struct VM {
     pc: Address,
     stack: LinkedList<Value>,
     val_index: BTreeMap<Address, Value>,
+    interrupt_register: BTreeMap<usize, Address>,
     framebuffer: Frame,
     framebuffer_invalid: bool,
     /// A register for holding infomation about a recent comparison
@@ -31,13 +32,15 @@ impl VM {
     // # Maintainance functions
 
     /// Executes the given program
-    pub fn exec(&mut self, program: Program, sender: Sender<Frame>, receiver: Receiver<Address>)
+    pub fn exec(&mut self, program: Program, sender: Sender<Frame>, receiver: Receiver<Interrupt>)
         -> VMResult<()> {
         self.reset();
         self.load_program(program)?;
         self.build_framebuffer();
 
         while self.pc < self.image_data.len() {
+            self.handle_interrupts(&receiver)?;
+
             let current_instruction = self.image_data[self.pc].clone();
 
             match current_instruction {
@@ -57,7 +60,7 @@ impl VM {
                 Instruction::JmpLtEq(addr) => self.jmp_lt_eq(&addr),
                 Instruction::JmpGtEq(addr) => self.jmp_gt_eq(&addr),
 
-                Instruction::Push(dest, value) => self.push(&dest, value),
+                Instruction::Push(dest, value) => self.push(&dest, value)?,
                 Instruction::Mov(dest, src) => self.mov(&dest, &src)?,
                 Instruction::Swp(target_a, target_b) => self.swp(&target_a, &target_b)?,
 
@@ -65,13 +68,7 @@ impl VM {
                 Instruction::Ret => self.ret()?,
             }
 
-            if self.framebuffer_invalid {
-                sender
-                    .send(self.framebuffer.clone())
-                    .chain_err(|| "unable to send frame from buffer")?;
-
-                self.framebuffer_invalid = false;
-            }
+            self.send_framebuffer(&sender)?;
 
             self.advance_pc();
         }
@@ -90,6 +87,44 @@ impl VM {
             self.config = program.config;
             Ok(())
         }
+    }
+
+    /// Handles incoming interrupts or moves along
+    fn handle_interrupts(&mut self, receiver: &Receiver<Interrupt>) -> VMResult<()> {
+        match receiver.try_recv() {
+            Ok(interrupt) => {
+                let call_addr = if let Some(call_addr) = self.interrupt_register
+                       .get(&interrupt.signal_id) {
+                    call_addr.clone()
+                } else {
+                    bail!(
+                        "no registered interrupt found at signal_id {}",
+                        &interrupt.signal_id
+                    );
+                };
+
+                for value in interrupt.args {
+                    self.push(&Target::Stack, value)?;
+                }
+
+                self.call(&call_addr);
+
+                Ok(())
+            }
+            Err(TryRecvError::Disconnected) => bail!("interrupt receiver disconnected"),
+            _ => Ok(()),
+        }
+    }
+
+    /// Sends the internal framebuffer using the given sender
+    fn send_framebuffer(&mut self, sender: &Sender<Frame>) -> VMResult<()> {
+        if self.framebuffer_invalid {
+            sender.send(self.framebuffer.clone()).chain_err(|| "unable to send framebuffer")?;
+
+            self.framebuffer_invalid = false;
+        }
+
+        Ok(())
     }
 
     /// Allocates all the needed space in the framebuffer
@@ -149,7 +184,7 @@ impl VM {
             }
             &Target::Framebuffer(index) => {
                 let res = if let Some(value) = self.framebuffer.get(index) {
-                    Ok(Value::Integer(*value as Integer))
+                    Ok(Value::Color(*value))
                 } else {
                     bail!("no value found in framebuffer at index {}", index);
                 };
@@ -165,40 +200,40 @@ impl VM {
 
     /// Adds the value of the src target to the value of the dest target
     fn add(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
-        let dest_value = self.pop(&dest)?;
-        let src_value = self.pop(&src)?;
+        let dest_value = self.pop(dest)?;
+        let src_value = self.pop(src)?;
 
-        self.push(dest, dest_value + src_value);
+        self.push(dest, dest_value + src_value)?;
 
         Ok(())
     }
 
     /// Subtracts the value of the src target from the value of the dest target
     fn sub(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
-        let dest_value = self.pop(&dest)?;
-        let src_value = self.pop(&src)?;
+        let dest_value = self.pop(dest)?;
+        let src_value = self.pop(src)?;
 
-        self.push(dest, dest_value - src_value);
+        self.push(dest, dest_value - src_value)?;
 
         Ok(())
     }
 
     /// Divides the value of the dest target through the value of the src target
     fn div(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
-        let dest_value = self.pop(&dest)?;
-        let src_value = self.pop(&src)?;
+        let dest_value = self.pop(dest)?;
+        let src_value = self.pop(src)?;
 
-        self.push(dest, dest_value / src_value);
+        self.push(dest, dest_value / src_value)?;
 
         Ok(())
     }
 
     /// Multiplies the value of the dest target with the value of the src target
     fn mul(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
-        let dest_value = self.pop(&dest)?;
-        let src_value = self.pop(&src)?;
+        let dest_value = self.pop(dest)?;
+        let src_value = self.pop(src)?;
 
-        self.push(dest, dest_value * src_value);
+        self.push(dest, dest_value * src_value)?;
 
         Ok(())
     }
@@ -206,10 +241,10 @@ impl VM {
     /// Applies the modulo operator on the value of the dest target using the
     /// value of the src target
     fn rem(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
-        let dest_value = self.pop(&dest)?;
-        let src_value = self.pop(&src)?;
+        let dest_value = self.pop(dest)?;
+        let src_value = self.pop(src)?;
 
-        self.push(dest, dest_value * src_value);
+        self.push(dest, dest_value * src_value)?;
 
         Ok(())
     }
@@ -281,17 +316,23 @@ impl VM {
     }
 
     /// Pushes the given value to the given target
-    fn push(&mut self, dest: &Target, value: Value) {
+    fn push(&mut self, dest: &Target, value: Value) -> VMResult<()> {
         match dest {
             &Target::ValueIndex(index) => {
                 self.val_index.entry(index).or_insert(value);
-                return;
+                Ok(())
             }
-            &Target::Stack => self.stack.push_front(value),
+            &Target::Stack => {
+                self.stack.push_front(value);
+                Ok(())
+            }
             &Target::Framebuffer(index) => {
                 if let Value::Color(value) = value {
                     self.framebuffer[index] = value;
                     self.invalidate();
+                    Ok(())
+                } else {
+                    bail!("unable push a non-color value to the framebuffer");
                 }
             }
         }
@@ -299,8 +340,8 @@ impl VM {
 
     /// Moves the top value of the src target to the dest target
     fn mov(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
-        let src_value = self.pop(&src)?;
-        self.push(dest, src_value);
+        let src_value = self.pop(src)?;
+        self.push(dest, src_value)?;
 
         Ok(())
     }
@@ -310,8 +351,8 @@ impl VM {
         let a_value = self.pop(target_a)?;
         let b_value = self.pop(target_b)?;
 
-        self.push(&target_a, b_value);
-        self.push(&target_b, a_value);
+        self.push(target_a, b_value)?;
+        self.push(target_b, a_value)?;
 
         Ok(())
     }

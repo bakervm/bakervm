@@ -9,7 +9,7 @@ mod vm;
 mod error;
 
 use clap::{App, Arg};
-use definitions::program::Program;
+use definitions::program::{Interrupt, Program};
 use definitions::typedef::*;
 use error::*;
 use std::fs::File;
@@ -62,7 +62,7 @@ fn run() -> VMResult<()> {
     let display_scale = program.config.display_scale.clone();
 
     let (vm_sender, outer_receiver) = mpsc::channel::<Frame>();
-    let (outer_sender, vm_receiver) = mpsc::channel::<Address>();
+    let (outer_sender, vm_receiver) = mpsc::channel::<Interrupt>();
 
     thread::spawn(
         move || {
@@ -71,7 +71,7 @@ fn run() -> VMResult<()> {
     );
 
     'main: loop {
-        if let Ok(frame) = outer_receiver.recv() {
+        if let Ok(frame) = outer_receiver.try_recv() {
             for y in 0..display_resolution.height {
                 for x in 0..display_resolution.width {
                     print!("{:?}", frame[(y * display_resolution.width) + x]);
@@ -81,6 +81,8 @@ fn run() -> VMResult<()> {
         } else {
             break 'main;
         }
+
+        // TODO: Send interrupt based on real input
     }
 
     Ok(())

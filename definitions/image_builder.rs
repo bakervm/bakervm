@@ -97,12 +97,16 @@ impl ImageBuilder {
     }
 
     pub fn gen(self) -> ImageData {
-        let program = Program {
-            instructions: self.instructions,
-            ..Program::default()
-        };
+        let program = self.gen_program();
 
         bincode::serialize(&program, Infinite).expect("unable to encode program")
+    }
+
+    pub fn gen_program(&self) -> Program {
+        Program {
+            instructions: self.instructions.clone(),
+            ..Program::default()
+        }
     }
 }
 

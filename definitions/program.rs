@@ -4,6 +4,12 @@ use value::Value;
 pub const PREAMBLE: &str = "BAKERVM";
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Interrupt {
+    pub signal_id: usize,
+    pub args: Vec<Value>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Target {
     Framebuffer(Address),
     ValueIndex(Address),
