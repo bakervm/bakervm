@@ -66,7 +66,19 @@ fn run() -> VMResult<()> {
 
     thread::spawn(
         move || {
-            VM::default().exec(program, vm_sender, vm_receiver).expect("unable to exec program");
+            if let Err(ref e) = VM::default().exec(program, vm_sender, vm_receiver) {
+                println!("error: {}", e);
+
+                for e in e.iter().skip(1) {
+                    println!("caused by: {}", e);
+                }
+
+                // The backtrace is not always generated. Try to run this example
+                // with `RUST_BACKTRACE=1`.
+                if let Some(backtrace) = e.backtrace() {
+                    println!("backtrace: {:?}", backtrace);
+                }
+            }
         },
     );
 
