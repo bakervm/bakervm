@@ -5,6 +5,28 @@ use error::*;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, LinkedList};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
+use std::thread::{self, JoinHandle};
+
+pub fn start(program: Program, sender: Sender<Frame>, receiver: Receiver<Interrupt>)
+    -> JoinHandle<()> {
+    thread::spawn(
+        move || {
+            if let Err(ref e) = VM::default().exec(program, sender, receiver) {
+                println!("error: {}", e);
+
+                for e in e.iter().skip(1) {
+                    println!("caused by: {}", e);
+                }
+
+                // The backtrace is not always generated. Try to run this example
+                // with `RUST_BACKTRACE=1`.
+                if let Some(backtrace) = e.backtrace() {
+                    println!("backtrace: {:?}", backtrace);
+                }
+            }
+        },
+    )
+}
 
 /// The whole state of the VM
 #[derive(Default, Debug)]

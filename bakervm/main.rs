@@ -1,12 +1,13 @@
 extern crate bincode;
-
 extern crate clap;
 #[macro_use]
 extern crate error_chain;
 extern crate definitions;
+extern crate sdl2;
 
 mod vm;
 mod error;
+mod io;
 
 use clap::{App, Arg};
 use definitions::program::{Interrupt, Program};
@@ -15,8 +16,6 @@ use error::*;
 use std::fs::File;
 use std::io::Read;
 use std::sync::mpsc;
-use std::thread;
-use vm::VM;
 
 fn main() {
     if let Err(ref e) = run() {
@@ -58,43 +57,17 @@ fn run() -> VMResult<()> {
         Program::default()
     };
 
-    let display_resolution = program.config.display_resolution.clone();
-    let display_scale = program.config.display_scale.clone();
+    let vm_config = program.config.clone();
 
     let (vm_sender, outer_receiver) = mpsc::channel::<Frame>();
     let (outer_sender, vm_receiver) = mpsc::channel::<Interrupt>();
 
-    thread::spawn(
-        move || {
-            if let Err(ref e) = VM::default().exec(program, vm_sender, vm_receiver) {
-                println!("error: {}", e);
+    let vm_handle = vm::start(program, vm_sender, vm_receiver);
 
-                for e in e.iter().skip(1) {
-                    println!("caused by: {}", e);
-                }
+    io::start(outer_receiver, outer_sender, vm_config)?;
 
-                // The backtrace is not always generated. Try to run this example
-                // with `RUST_BACKTRACE=1`.
-                if let Some(backtrace) = e.backtrace() {
-                    println!("backtrace: {:?}", backtrace);
-                }
-            }
-        },
-    );
-
-    'main: loop {
-        if let Ok(frame) = outer_receiver.try_recv() {
-            for y in 0..display_resolution.height {
-                for x in 0..display_resolution.width {
-                    print!("{:?}", frame[(y * display_resolution.width) + x]);
-                }
-                println!();
-            }
-        } else {
-            break 'main;
-        }
-
-        // TODO: Send interrupt based on real input
+    if let Err(err) = vm_handle.join() {
+        bail!("unable to join: {:?}", err);
     }
 
     Ok(())

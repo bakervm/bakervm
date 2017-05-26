@@ -59,6 +59,7 @@ impl Default for DisplayResolution {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct VMConfig {
+    pub title: String,
     pub display_resolution: DisplayResolution,
     pub display_scale: Float,
     pub keyboard_enabled: bool,
@@ -68,8 +69,9 @@ pub struct VMConfig {
 impl Default for VMConfig {
     fn default() -> Self {
         VMConfig {
+            title: "bakerVM".into(),
             display_resolution: Default::default(),
-            display_scale: 4.0,
+            display_scale: 2.0,
             keyboard_enabled: true,
             mouse_enabled: true,
         }
