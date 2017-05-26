@@ -1,8 +1,9 @@
 language: rust
+dist: trusty
 addons:
   apt:
     packages:
-      - libsdl2
+      - libsdl2-dev
 rust:
   - stable
   - beta
