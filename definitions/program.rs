@@ -51,8 +51,8 @@ pub struct DisplayResolution {
 impl Default for DisplayResolution {
     fn default() -> Self {
         DisplayResolution {
-            width: 320,
-            height: 200,
+            width: 160,
+            height: 100,
         }
     }
 }
@@ -71,7 +71,7 @@ impl Default for VMConfig {
         VMConfig {
             title: "bakerVM".into(),
             display_resolution: Default::default(),
-            display_scale: 2.0,
+            display_scale: 4.0,
             keyboard_enabled: true,
             mouse_enabled: true,
         }

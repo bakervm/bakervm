@@ -38,8 +38,6 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
 
     let mut event_pump = sdl_context.event_pump()?;
 
-    let mut frame_count = 0;
-
     'main: loop {
         // get the inputs here
         for event in event_pump.poll_iter() {
@@ -66,7 +64,6 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
         // Receive a frame
         let maybe_frame = frame_receiver.try_recv();
         if let Ok(frame) = maybe_frame {
-            println!("Frame {:?}", frame_count);
 
             let mut index = 0;
             for y_coord in 0..config.display_resolution.height {
@@ -90,8 +87,6 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
         } else if let Err(TryRecvError::Disconnected) = maybe_frame {
             break 'main;
         }
-
-        frame_count += 1;
     }
 
     Ok(())

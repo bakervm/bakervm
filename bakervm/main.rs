@@ -59,7 +59,7 @@ fn run() -> VMResult<()> {
     } else {
         let mut builder = ImageBuilder::new();
 
-        let max = 320 * 200;
+        let max = 160 * 100;
 
         for _ in 0..max {
             let random = rand::random::<usize>() % max;
@@ -68,6 +68,7 @@ fn run() -> VMResult<()> {
                 Value::Color(rand::random::<u32>()),
             );
         }
+
         builder.jmp(0).gen_program()
     };
 
