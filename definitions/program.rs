@@ -35,7 +35,7 @@ pub enum Instruction {
     Push(Target, Value),
     Mov(Target, Target),
     Swp(Target, Target),
-
+    // Cpy(Target, Target),
     Call(Address),
     Ret,
 

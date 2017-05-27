@@ -4,13 +4,16 @@ extern crate clap;
 extern crate error_chain;
 extern crate definitions;
 extern crate sdl2;
+extern crate rand;
 
 mod vm;
 mod error;
 mod io;
 
 use clap::{App, Arg};
-use definitions::program::{Interrupt, Program};
+use definitions::Value;
+use definitions::image_builder::ImageBuilder;
+use definitions::program::{Interrupt, Program, Target};
 use definitions::typedef::*;
 use error::*;
 use std::fs::File;
@@ -54,7 +57,18 @@ fn run() -> VMResult<()> {
 
         bincode::deserialize(&buf[..]).chain_err(|| "unable to decode image file")?
     } else {
-        Program::default()
+        let mut builder = ImageBuilder::new();
+
+        let max = 320 * 200;
+
+        for _ in 0..max {
+            let random = rand::random::<usize>() % max;
+            builder = builder.push(
+                Target::Framebuffer(random),
+                Value::Color(rand::random::<u32>()),
+            );
+        }
+        builder.jmp(0).gen_program()
     };
 
     let vm_config = program.config.clone();

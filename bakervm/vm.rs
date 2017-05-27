@@ -48,6 +48,7 @@ pub struct VM {
     pc_locked: bool,
     /// The configuration of the VM
     config: VMConfig,
+    halted: bool,
 }
 
 impl VM {
@@ -60,7 +61,7 @@ impl VM {
         self.load_program(program)?;
         self.build_framebuffer();
 
-        while self.pc < self.image_data.len() {
+        while (self.pc < self.image_data.len()) && !self.halted {
             self.handle_interrupts(&receiver)?;
 
             let current_instruction = self.image_data[self.pc].clone();
@@ -111,10 +112,20 @@ impl VM {
         }
     }
 
+    /// Aborts the execution of the current image
+    fn abort(&mut self) {
+        self.halted = true;
+    }
+
     /// Handles incoming interrupts or moves along
     fn handle_interrupts(&mut self, receiver: &Receiver<Interrupt>) -> VMResult<()> {
         match receiver.try_recv() {
             Ok(interrupt) => {
+                if interrupt.signal_id == 0 {
+                    self.abort();
+                    return Ok(());
+                }
+
                 let call_addr = if let Some(call_addr) = self.interrupt_register
                        .get(&interrupt.signal_id) {
                     call_addr.clone()

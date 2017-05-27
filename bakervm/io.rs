@@ -34,13 +34,29 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
         .build()
         .chain_err(|| "unable to convert window into canvas")?;
 
+    canvas.set_scale(config.display_scale as f32, config.display_scale as f32)?;
+
     let mut event_pump = sdl_context.event_pump()?;
+
+    let mut frame_count = 0;
+
     'main: loop {
         // get the inputs here
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } |
-                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => break 'main,
+                Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
+                    interrupt_sender
+                        .send(
+                            Interrupt {
+                                signal_id: 0,
+                                args: Vec::new(),
+                            },
+                        )
+                        .chain_err(|| "unable to send interrupt")?;
+
+                    break 'main;
+                }
                 _ => {
                     // TODO: Send interrupt here
                 }
@@ -50,13 +66,32 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
         // Receive a frame
         let maybe_frame = frame_receiver.try_recv();
         if let Ok(frame) = maybe_frame {
-            // TODO: Draw the frame onto the window
-            canvas.set_draw_color(Color::RGB(0xFF, 0xFF, 0xFF));
-            canvas.clear();
+            println!("Frame {:?}", frame_count);
+
+            let mut index = 0;
+            for y_coord in 0..config.display_resolution.height {
+                for x_coord in 0..config.display_resolution.width {
+                    if let Some(raw_color) = frame.get(index) {
+                        let r: u8 = (raw_color >> 16) as u8;
+                        let g: u8 = (raw_color >> 8) as u8;
+                        let b: u8 = *raw_color as u8;
+
+                        canvas.set_draw_color(Color::RGB(r, g, b));
+
+                        canvas.draw_point((x_coord as i32, y_coord as i32))?;
+                        index += 1;
+                    } else {
+                        bail!("no color point available at index {}", index);
+                    }
+                }
+            }
+
             canvas.present();
         } else if let Err(TryRecvError::Disconnected) = maybe_frame {
             break 'main;
         }
+
+        frame_count += 1;
     }
 
     Ok(())
