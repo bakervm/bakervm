@@ -206,8 +206,8 @@ impl VM {
         self.framebuffer_invalid = true;
     }
 
-    /// Return the value at the specified target. The value will be consumed
-    /// by the target.
+    /// Return the value at the specified target. The value of the target will
+    /// be consumed
     fn pop(&mut self, target: &Target) -> VMResult<Value> {
         match target {
             &Target::ValueIndex(index) => {
