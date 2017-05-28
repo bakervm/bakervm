@@ -10,6 +10,11 @@ pub struct Interrupt {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+pub enum InternalInterrupt {
+    FlushFramebuffer,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Target {
     Framebuffer(Address),
     ValueIndex(Address),
@@ -35,11 +40,12 @@ pub enum Instruction {
     Push(Target, Value),
     Mov(Target, Target),
     Swp(Target, Target),
-    // Cpy(Target, Target),
+
     Call(Address),
     Ret,
 
     Halt,
+    Int(InternalInterrupt),
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

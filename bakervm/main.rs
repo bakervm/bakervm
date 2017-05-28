@@ -13,7 +13,7 @@ mod io;
 use clap::{App, Arg};
 use definitions::Value;
 use definitions::image_builder::ImageBuilder;
-use definitions::program::{Interrupt, Program, Target};
+use definitions::program::*;
 use definitions::typedef::*;
 use error::*;
 use std::fs::File;
@@ -63,13 +63,25 @@ fn run() -> VMResult<()> {
 
         for _ in 0..max {
             let random = rand::random::<usize>() % max;
-            builder = builder.push(
+            builder.push(
                 Target::Framebuffer(random),
                 Value::Color(rand::random::<u32>()),
             );
         }
 
-        builder.jmp(0).gen_program()
+        builder.int(InternalInterrupt::FlushFramebuffer);
+
+        for _ in 0..max {
+            let random = rand::random::<usize>() % max;
+            builder.push(
+                Target::Framebuffer(random),
+                Value::Color(rand::random::<u32>()),
+            );
+        }
+
+        builder.int(InternalInterrupt::FlushFramebuffer);
+        builder.jmp(0);
+        builder.gen_program()
     };
 
     let vm_config = program.config.clone();

@@ -1,5 +1,5 @@
 use definitions::Value;
-use definitions::program::{Instruction, Interrupt, PREAMBLE, Program, Target, VMConfig};
+use definitions::program::*;
 use definitions::typedef::*;
 use error::*;
 use std::cmp::Ordering;
@@ -62,12 +62,13 @@ impl VM {
         self.build_framebuffer();
 
         while (self.pc < self.image_data.len()) && !self.halted {
-            self.handle_interrupts(&receiver)?;
+            self.external_interrupt(&receiver)?;
 
             let current_instruction = self.image_data[self.pc].clone();
 
             match current_instruction {
                 Instruction::Halt => break,
+                Instruction::Int(interrupt) => self.internal_interrupt(interrupt),
 
                 Instruction::Add(dest, src) => self.add(&dest, &src)?,
                 Instruction::Sub(dest, src) => self.sub(&dest, &src)?,
@@ -91,7 +92,7 @@ impl VM {
                 Instruction::Ret => self.ret()?,
             }
 
-            self.send_framebuffer(&sender)?;
+            self.flush_framebuffer(&sender)?;
 
             self.advance_pc();
         }
@@ -117,8 +118,15 @@ impl VM {
         self.halted = true;
     }
 
+    /// Handles an internal interrupt
+    fn internal_interrupt(&mut self, interrupt: InternalInterrupt) {
+        match interrupt {
+            InternalInterrupt::FlushFramebuffer => self.invalidate(),
+        }
+    }
+
     /// Handles incoming interrupts or moves along
-    fn handle_interrupts(&mut self, receiver: &Receiver<Interrupt>) -> VMResult<()> {
+    fn external_interrupt(&mut self, receiver: &Receiver<Interrupt>) -> VMResult<()> {
         match receiver.try_recv() {
             Ok(interrupt) => {
                 if interrupt.signal_id == 0 {
@@ -149,10 +157,10 @@ impl VM {
         }
     }
 
-    /// Sends the internal framebuffer using the given sender
-    fn send_framebuffer(&mut self, sender: &Sender<Frame>) -> VMResult<()> {
+    /// Flushes the internal framebuffer using the given sender
+    fn flush_framebuffer(&mut self, sender: &Sender<Frame>) -> VMResult<()> {
         if self.framebuffer_invalid {
-            sender.send(self.framebuffer.clone()).chain_err(|| "unable to send framebuffer")?;
+            sender.send(self.framebuffer.clone()).chain_err(|| "unable to flush framebuffer")?;
 
             self.framebuffer_invalid = false;
         }
@@ -198,7 +206,7 @@ impl VM {
     }
 
     /// Return the value at the specified target. The value will be consumed
-    /// from the target.
+    /// by the target.
     fn pop(&mut self, target: &Target) -> VMResult<Value> {
         match target {
             &Target::ValueIndex(index) => {
@@ -216,15 +224,11 @@ impl VM {
                 }
             }
             &Target::Framebuffer(index) => {
-                let res = if let Some(value) = self.framebuffer.get(index) {
+                if let Some(value) = self.framebuffer.get(index) {
                     Ok(Value::Color(*value))
                 } else {
                     bail!("no value found in framebuffer at index {}", index);
-                };
-
-                self.invalidate();
-
-                res
+                }
             }
         }
     }
@@ -362,7 +366,6 @@ impl VM {
             &Target::Framebuffer(index) => {
                 if let Value::Color(value) = value {
                     self.framebuffer[index] = value;
-                    self.invalidate();
                     Ok(())
                 } else {
                     bail!("unable push a non-color value to the framebuffer");
