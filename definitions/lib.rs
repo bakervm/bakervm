@@ -7,5 +7,6 @@ pub mod typedef;
 pub mod program;
 pub mod image_builder;
 pub mod value;
+pub mod config;
 
 pub use value::Value;

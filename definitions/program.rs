@@ -1,3 +1,4 @@
+use config::VMConfig;
 use typedef::*;
 use value::Value;
 
@@ -48,41 +49,6 @@ pub enum Instruction {
     Int(InternalInterrupt),
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct DisplayResolution {
-    pub width: usize,
-    pub height: usize,
-}
-
-impl Default for DisplayResolution {
-    fn default() -> Self {
-        DisplayResolution {
-            width: 160,
-            height: 100,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct VMConfig {
-    pub title: String,
-    pub display_resolution: DisplayResolution,
-    pub display_scale: Float,
-    pub keyboard_enabled: bool,
-    pub mouse_enabled: bool,
-}
-
-impl Default for VMConfig {
-    fn default() -> Self {
-        VMConfig {
-            title: "bakerVM".into(),
-            display_resolution: Default::default(),
-            display_scale: 4.0,
-            keyboard_enabled: true,
-            mouse_enabled: true,
-        }
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Program {

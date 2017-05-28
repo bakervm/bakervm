@@ -1,5 +1,5 @@
+use definitions::config::VMConfig;
 use definitions::program::Interrupt;
-use definitions::program::VMConfig;
 use definitions::typedef::*;
 use error::*;
 use sdl2;
@@ -20,8 +20,8 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
     let window = video_subsystem
         .window(
             config.title.as_ref(),
-            (config.display_scale * (config.display_resolution.width as Float)).round() as u32,
-            (config.display_scale * (config.display_resolution.height as Float)).round() as u32,
+            (config.display.scale * (config.display.resolution.width as Float)).round() as u32,
+            (config.display.scale * (config.display.resolution.height as Float)).round() as u32,
         )
         .position_centered()
         .build()
@@ -34,7 +34,7 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
         .build()
         .chain_err(|| "unable to convert window into canvas")?;
 
-    canvas.set_scale(config.display_scale as f32, config.display_scale as f32)?;
+    canvas.set_scale(config.display.scale as f32, config.display.scale as f32)?;
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -66,8 +66,8 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
         if let Ok(frame) = maybe_frame {
 
             let mut index = 0;
-            for y_coord in 0..config.display_resolution.height {
-                for x_coord in 0..config.display_resolution.width {
+            for y_coord in 0..config.display.resolution.height {
+                for x_coord in 0..config.display.resolution.width {
                     if let Some(raw_color) = frame.get(index) {
                         let r: u8 = (raw_color >> 16) as u8;
                         let g: u8 = (raw_color >> 8) as u8;

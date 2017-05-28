@@ -1,4 +1,5 @@
 use definitions::Value;
+use definitions::config::VMConfig;
 use definitions::program::*;
 use definitions::typedef::*;
 use error::*;
@@ -170,7 +171,7 @@ impl VM {
 
     /// Allocates all the needed space in the framebuffer
     fn build_framebuffer(&mut self) {
-        let ref resolution = self.config.display_resolution;
+        let ref resolution = self.config.display.resolution;
         let allocation_space = resolution.width * resolution.height;
         self.framebuffer = vec![0; allocation_space];
     }
