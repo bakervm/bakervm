@@ -1,5 +1,4 @@
 use typedef::*;
-use value::Value;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DisplayConfig {
