@@ -173,7 +173,7 @@ impl VM {
     fn build_framebuffer(&mut self) {
         let ref resolution = self.config.display.resolution;
         let allocation_space = resolution.width * resolution.height;
-        self.framebuffer = vec![0; allocation_space];
+        self.framebuffer = vec![(0, 0, 0); allocation_space];
     }
 
     /// Resets the VM to a clean state
@@ -225,8 +225,8 @@ impl VM {
                 }
             }
             &Target::Framebuffer(index) => {
-                if let Some(value) = self.framebuffer.get(index) {
-                    Ok(Value::Color(*value))
+                if let Some(&(r, g, b)) = self.framebuffer.get(index) {
+                    Ok(Value::Color(r, g, b))
                 } else {
                     bail!("no value found in framebuffer at index {}", index);
                 }
@@ -365,8 +365,8 @@ impl VM {
                 Ok(())
             }
             &Target::Framebuffer(index) => {
-                if let Value::Color(value) = value {
-                    self.framebuffer[index] = value;
+                if let Value::Color(r, g, b) = value {
+                    self.framebuffer[index] = (r, g, b);
                     Ok(())
                 } else {
                     bail!("unable push a non-color value to the framebuffer");

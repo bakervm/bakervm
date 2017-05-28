@@ -64,13 +64,8 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
             let mut index = 0;
             for y_coord in 0..config.display.resolution.height {
                 for x_coord in 0..config.display.resolution.width {
-                    if let Some(raw_color) = frame.get(index) {
-                        let r: u8 = (raw_color >> 16) as u8;
-                        let g: u8 = (raw_color >> 8) as u8;
-                        let b: u8 = *raw_color as u8;
-
+                    if let Some(&(r, g, b)) = frame.get(index) {
                         canvas.set_draw_color(Color::RGB(r, g, b));
-
                         canvas.draw_point((x_coord as i32, y_coord as i32))?;
                         index += 1;
                     } else {
