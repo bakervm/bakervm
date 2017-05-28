@@ -1,6 +1,8 @@
 # bakerVM [![Crates.io](https://img.shields.io/crates/v/bakervm.svg)](https://crates.io/crates/bakervm) [![Build Status](https://travis-ci.org/bakervm/bakervm.svg?branch=master)](https://travis-ci.org/bakervm/bakervm)
 A virtual machine for building and running retro games
 
+![A screenshot of the bakerVM](https://raw.githubusercontent.com/bakervm/bakervm/master/screenshot.png)
+
 ## Introduction
 The bakerVM is a virtual machine that executes bakerVM bytecode.
 
