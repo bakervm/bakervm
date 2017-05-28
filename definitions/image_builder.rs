@@ -1,5 +1,8 @@
 use bincode::{self, Infinite};
-use program::*;
+use instruction::Instruction;
+use interrupt::InternalInterrupt;
+use program::Program;
+use target::Target;
 use typedef::*;
 use value::Value;
 

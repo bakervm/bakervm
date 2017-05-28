@@ -117,3 +117,19 @@ impl Rem for Value {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn comparison() {
+        assert!(Value::Float(1.3) < Value::Float(1.4));
+        assert!(Value::Float(3.1) > Value::Float(2.4));
+        assert!(Value::Float(9.6) == Value::Float(9.6));
+
+        assert!(Value::Integer(124) < Value::Integer(234));
+        assert!(Value::Integer(4) > Value::Integer(1));
+        assert!(Value::Integer(839) == Value::Integer(839));
+    }
+}

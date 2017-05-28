@@ -1,5 +1,5 @@
 use definitions::config::VMConfig;
-use definitions::program::Interrupt;
+use definitions::interrupt::ExternalInterrupt;
 use definitions::typedef::*;
 use error::*;
 use sdl2;
@@ -9,7 +9,7 @@ use sdl2::pixels::Color;
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::time::Instant;
 
-pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt>, config: VMConfig)
+pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalInterrupt>, config: VMConfig)
     -> VMResult<()> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -45,7 +45,7 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
                 Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     interrupt_sender
                         .send(
-                            Interrupt {
+                            ExternalInterrupt {
                                 signal_id: 0,
                                 args: Vec::new(),
                             },
@@ -82,7 +82,7 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
         } else if let Err(TryRecvError::Disconnected) = maybe_frame {
             interrupt_sender
                 .send(
-                    Interrupt {
+                    ExternalInterrupt {
                         signal_id: 0,
                         args: Vec::new(),
                     },

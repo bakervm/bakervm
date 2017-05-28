@@ -1,6 +1,10 @@
+use definitions::PREAMBLE;
 use definitions::Value;
 use definitions::config::VMConfig;
-use definitions::program::*;
+use definitions::instruction::Instruction;
+use definitions::interrupt::{ExternalInterrupt, InternalInterrupt};
+use definitions::program::Program;
+use definitions::target::Target;
 use definitions::typedef::*;
 use error::*;
 use std::cmp::Ordering;
@@ -8,7 +12,7 @@ use std::collections::{BTreeMap, LinkedList};
 use std::sync::mpsc::{Receiver, SyncSender, TryRecvError, TrySendError};
 use std::thread::{self, JoinHandle};
 
-pub fn start(program: Program, sender: SyncSender<Frame>, receiver: Receiver<Interrupt>)
+pub fn start(program: Program, sender: SyncSender<Frame>, receiver: Receiver<ExternalInterrupt>)
     -> JoinHandle<()> {
     thread::spawn(
         move || {
@@ -31,7 +35,7 @@ pub fn start(program: Program, sender: SyncSender<Frame>, receiver: Receiver<Int
 
 /// The whole state of the VM
 #[derive(Default, Debug)]
-pub struct VM {
+struct VM {
     /// The instructions that are currently executed
     image_data: Vec<Instruction>,
     /// The current program counter
@@ -56,8 +60,10 @@ impl VM {
     // # Maintainance functions
 
     /// Executes the given program
-    pub fn exec(&mut self, program: Program, sender: SyncSender<Frame>, receiver: Receiver<Interrupt>)
-        -> VMResult<()> {
+    pub fn exec(
+        &mut self, program: Program, sender: SyncSender<Frame>,
+        receiver: Receiver<ExternalInterrupt>
+    ) -> VMResult<()> {
         self.reset();
         self.load_program(program)?;
         self.build_framebuffer();
@@ -129,7 +135,7 @@ impl VM {
     }
 
     /// Handles incoming interrupts or moves along
-    fn external_interrupt(&mut self, receiver: &Receiver<Interrupt>) -> VMResult<()> {
+    fn external_interrupt(&mut self, receiver: &Receiver<ExternalInterrupt>) -> VMResult<()> {
         match receiver.try_recv() {
             Ok(interrupt) => {
                 if interrupt.signal_id == 0 {

@@ -14,7 +14,9 @@ use clap::{App, Arg};
 use definitions::Value;
 use definitions::config::DisplayResolution;
 use definitions::image_builder::ImageBuilder;
-use definitions::program::*;
+use definitions::interrupt::{ExternalInterrupt, InternalInterrupt};
+use definitions::program::Program;
+use definitions::target::Target;
 use definitions::typedef::*;
 use error::*;
 use std::fs::File;
@@ -95,7 +97,7 @@ fn run() -> VMResult<()> {
     let vm_config = program.config.clone();
 
     let (vm_sender, outer_receiver) = mpsc::sync_channel::<Frame>(1);
-    let (outer_sender, vm_receiver) = mpsc::channel::<Interrupt>();
+    let (outer_sender, vm_receiver) = mpsc::channel::<ExternalInterrupt>();
 
     let vm_handle = vm::start(program, vm_sender, vm_receiver);
 
