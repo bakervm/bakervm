@@ -181,11 +181,6 @@ impl VM {
         *self = VM::default();
     }
 
-    /// Resets the result of the last comparison
-    fn reset_cmp(&mut self) {
-        self.cmp_register = None;
-    }
-
     /// Locks the program counter in place
     fn lock_pc(&mut self) {
         self.pc_locked = true;
@@ -290,8 +285,6 @@ impl VM {
     /// Compares the top values of the two targets and saves the result to
     /// `self.cmp_register`
     fn cmp(&mut self, target_a: &Target, target_b: &Target) -> VMResult<()> {
-        self.reset_cmp();
-
         let target_a_value = self.pop(target_a)?;
         let target_b_value = self.pop(target_b)?;
 
@@ -339,7 +332,6 @@ impl VM {
         if (self.cmp_register == Some(Ordering::Less)) ||
            (self.cmp_register == Some(Ordering::Equal)) {
             self.jmp(addr);
-            self.reset_cmp();
         }
     }
 
@@ -349,7 +341,6 @@ impl VM {
         if (self.cmp_register == Some(Ordering::Greater)) ||
            (self.cmp_register == Some(Ordering::Equal)) {
             self.jmp(addr);
-            self.reset_cmp();
         }
     }
 
