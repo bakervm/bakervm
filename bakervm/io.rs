@@ -7,6 +7,7 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
+use std::time::Instant;
 
 pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt>, config: VMConfig)
     -> VMResult<()> {
@@ -33,6 +34,8 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
     canvas.set_scale(config.display.scale as f32, config.display.scale as f32)?;
 
     let mut event_pump = sdl_context.event_pump()?;
+    let mut frame_count = 0;
+    let mut now_before = Instant::now();
 
     'main: loop {
         // get the inputs here
@@ -57,6 +60,7 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
             }
         }
 
+
         // Receive a frame
         let maybe_frame = frame_receiver.try_recv();
         if let Ok(frame) = maybe_frame {
@@ -78,6 +82,14 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
         } else if let Err(TryRecvError::Disconnected) = maybe_frame {
             break 'main;
         }
+
+        if now_before.elapsed().as_secs() >= 1 {
+            now_before = Instant::now();
+            println!("FPS: {:?}", frame_count);
+            frame_count = 0;
+        }
+
+        frame_count += 1;
     }
 
     Ok(())
