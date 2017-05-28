@@ -94,7 +94,7 @@ fn run() -> VMResult<()> {
 
     let vm_config = program.config.clone();
 
-    let (vm_sender, outer_receiver) = mpsc::channel::<Frame>();
+    let (vm_sender, outer_receiver) = mpsc::sync_channel::<Frame>(1);
     let (outer_sender, vm_receiver) = mpsc::channel::<Interrupt>();
 
     let vm_handle = vm::start(program, vm_sender, vm_receiver);

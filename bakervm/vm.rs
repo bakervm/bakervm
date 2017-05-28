@@ -5,10 +5,10 @@ use definitions::typedef::*;
 use error::*;
 use std::cmp::Ordering;
 use std::collections::{BTreeMap, LinkedList};
-use std::sync::mpsc::{Receiver, Sender, TryRecvError};
+use std::sync::mpsc::{Receiver, SyncSender, TryRecvError, TrySendError};
 use std::thread::{self, JoinHandle};
 
-pub fn start(program: Program, sender: Sender<Frame>, receiver: Receiver<Interrupt>)
+pub fn start(program: Program, sender: SyncSender<Frame>, receiver: Receiver<Interrupt>)
     -> JoinHandle<()> {
     thread::spawn(
         move || {
@@ -56,7 +56,7 @@ impl VM {
     // # Maintainance functions
 
     /// Executes the given program
-    pub fn exec(&mut self, program: Program, sender: Sender<Frame>, receiver: Receiver<Interrupt>)
+    pub fn exec(&mut self, program: Program, sender: SyncSender<Frame>, receiver: Receiver<Interrupt>)
         -> VMResult<()> {
         self.reset();
         self.load_program(program)?;
@@ -96,6 +96,8 @@ impl VM {
             self.flush_framebuffer(&sender)?;
 
             self.advance_pc();
+
+            thread::yield_now();
         }
 
         Ok(())
@@ -159,9 +161,11 @@ impl VM {
     }
 
     /// Flushes the internal framebuffer using the given sender
-    fn flush_framebuffer(&mut self, sender: &Sender<Frame>) -> VMResult<()> {
+    fn flush_framebuffer(&mut self, sender: &SyncSender<Frame>) -> VMResult<()> {
         if self.framebuffer_invalid {
-            sender.send(self.framebuffer.clone()).chain_err(|| "unable to flush framebuffer")?;
+            if let Err(TrySendError::Disconnected(_)) = sender.try_send(self.framebuffer.clone()) {
+                bail!("output channel disconnected");
+            }
 
             self.framebuffer_invalid = false;
         }

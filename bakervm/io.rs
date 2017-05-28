@@ -80,6 +80,15 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Interrupt
 
             canvas.present();
         } else if let Err(TryRecvError::Disconnected) = maybe_frame {
+            interrupt_sender
+                .send(
+                    Interrupt {
+                        signal_id: 0,
+                        args: Vec::new(),
+                    },
+                )
+                .chain_err(|| "unable to send interrupt")?;
+
             break 'main;
         }
 
