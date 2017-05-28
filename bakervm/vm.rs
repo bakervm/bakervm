@@ -69,7 +69,7 @@ impl VM {
 
             match current_instruction {
                 Instruction::Halt => break,
-                Instruction::Int(interrupt) => self.internal_interrupt(interrupt),
+                Instruction::Int(interrupt) => self.int(&interrupt),
 
                 Instruction::Add(dest, src) => self.add(&dest, &src)?,
                 Instruction::Sub(dest, src) => self.sub(&dest, &src)?,
@@ -120,9 +120,9 @@ impl VM {
     }
 
     /// Handles an internal interrupt
-    fn internal_interrupt(&mut self, interrupt: InternalInterrupt) {
+    fn int(&mut self, interrupt: &InternalInterrupt) {
         match interrupt {
-            InternalInterrupt::FlushFramebuffer => self.invalidate(),
+            &InternalInterrupt::FlushFramebuffer => self.invalidate(),
         }
     }
 
