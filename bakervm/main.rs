@@ -12,6 +12,7 @@ mod io;
 
 use clap::{App, Arg};
 use definitions::Value;
+use definitions::config::DisplayResolution;
 use definitions::image_builder::ImageBuilder;
 use definitions::program::*;
 use definitions::typedef::*;
@@ -59,162 +60,35 @@ fn run() -> VMResult<()> {
     } else {
         let mut builder = ImageBuilder::new();
 
-        let max = 160 * 100;
+        let res_def = DisplayResolution::default();
 
-        for _ in 0..max {
-            let random = rand::random::<usize>() % max;
-            builder.push(
-                Target::Framebuffer(random),
-                Value::Color(
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                ),
-            );
+        let max = res_def.width * res_def.height;
+
+        for x in 0..max {
+            builder.push(Target::Framebuffer(x), Value::Color(0, 0, 0));
         }
 
         builder.int(InternalInterrupt::FlushFramebuffer);
 
-        for _ in 0..max {
-            let random = rand::random::<usize>() % max;
-            builder.push(
-                Target::Framebuffer(random),
-                Value::Color(
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                ),
-            );
-        }
+        // Triangle
+        builder.push(Target::Framebuffer(161), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(Target::Framebuffer(322), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(Target::Framebuffer(483), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(Target::Framebuffer(644), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(Target::Framebuffer(803), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(Target::Framebuffer(962), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(Target::Framebuffer(1121), Value::Color(0xFF, 0xFF, 0xFF));
+
+        // Underscore
+        builder.push(Target::Framebuffer(1125), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(Target::Framebuffer(1126), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(Target::Framebuffer(1127), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(Target::Framebuffer(1128), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(Target::Framebuffer(1129), Value::Color(0xFF, 0xFF, 0xFF));
 
         builder.int(InternalInterrupt::FlushFramebuffer);
 
-        for _ in 0..max {
-            let random = rand::random::<usize>() % max;
-            builder.push(
-                Target::Framebuffer(random),
-                Value::Color(
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                ),
-            );
-        }
-
-        builder.int(InternalInterrupt::FlushFramebuffer);
-
-        for _ in 0..max {
-            let random = rand::random::<usize>() % max;
-            builder.push(
-                Target::Framebuffer(random),
-                Value::Color(
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                ),
-            );
-        }
-
-        builder.int(InternalInterrupt::FlushFramebuffer);
-
-        for _ in 0..max {
-            let random = rand::random::<usize>() % max;
-            builder.push(
-                Target::Framebuffer(random),
-                Value::Color(
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                ),
-            );
-        }
-
-        builder.int(InternalInterrupt::FlushFramebuffer);
-
-        for _ in 0..max {
-            let random = rand::random::<usize>() % max;
-            builder.push(
-                Target::Framebuffer(random),
-                Value::Color(
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                ),
-            );
-        }
-
-        builder.int(InternalInterrupt::FlushFramebuffer);
-
-        for _ in 0..max {
-            let random = rand::random::<usize>() % max;
-            builder.push(
-                Target::Framebuffer(random),
-                Value::Color(
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                ),
-            );
-        }
-
-        builder.int(InternalInterrupt::FlushFramebuffer);
-
-        for _ in 0..max {
-            let random = rand::random::<usize>() % max;
-            builder.push(
-                Target::Framebuffer(random),
-                Value::Color(
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                ),
-            );
-        }
-
-        builder.int(InternalInterrupt::FlushFramebuffer);
-
-        for _ in 0..max {
-            let random = rand::random::<usize>() % max;
-            builder.push(
-                Target::Framebuffer(random),
-                Value::Color(
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                ),
-            );
-        }
-
-        builder.int(InternalInterrupt::FlushFramebuffer);
-
-        for _ in 0..max {
-            let random = rand::random::<usize>() % max;
-            builder.push(
-                Target::Framebuffer(random),
-                Value::Color(
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                ),
-            );
-        }
-
-        builder.int(InternalInterrupt::FlushFramebuffer);
-
-        for _ in 0..max {
-            let random = rand::random::<usize>() % max;
-            builder.push(
-                Target::Framebuffer(random),
-                Value::Color(
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                    rand::random::<u8>(),
-                ),
-            );
-        }
-
-        builder.int(InternalInterrupt::FlushFramebuffer);
-        builder.jmp(0);
+        builder.jmp(max + 1);
         builder.gen_program()
     };
 
