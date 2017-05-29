@@ -72,32 +72,7 @@ impl VM {
             self.external_interrupt(&receiver)?;
 
             let current_instruction = self.image_data[self.pc].clone();
-
-            match current_instruction {
-                Instruction::Halt => break,
-                Instruction::Int(interrupt) => self.int(&interrupt),
-
-                Instruction::Add(dest, src) => self.add(&dest, &src)?,
-                Instruction::Sub(dest, src) => self.sub(&dest, &src)?,
-                Instruction::Div(dest, src) => self.div(&dest, &src)?,
-                Instruction::Mul(dest, src) => self.mul(&dest, &src)?,
-                Instruction::Rem(dest, src) => self.rem(&dest, &src)?,
-
-                Instruction::Cmp(target_a, target_b) => self.cmp(&target_a, &target_b)?,
-                Instruction::Jmp(addr) => self.jmp(&addr),
-                Instruction::JmpLt(addr) => self.jmp_lt(&addr),
-                Instruction::JmpGt(addr) => self.jmp_gt(&addr),
-                Instruction::JmpEq(addr) => self.jmp_eq(&addr),
-                Instruction::JmpLtEq(addr) => self.jmp_lt_eq(&addr),
-                Instruction::JmpGtEq(addr) => self.jmp_gt_eq(&addr),
-
-                Instruction::Push(dest, value) => self.push(&dest, value)?,
-                Instruction::Mov(dest, src) => self.mov(&dest, &src)?,
-                Instruction::Swp(target_a, target_b) => self.swp(&target_a, &target_b)?,
-
-                Instruction::Call(addr) => self.call(&addr),
-                Instruction::Ret => self.ret()?,
-            }
+            self.handle_instruction(current_instruction)?;
 
             self.flush_framebuffer(&sender)?;
 
@@ -132,6 +107,37 @@ impl VM {
         match interrupt {
             &InternalInterrupt::FlushFramebuffer => self.invalidate(),
         }
+    }
+
+    /// Handles a single instruction
+    fn handle_instruction(&mut self, instruction: Instruction) -> VMResult<()> {
+        match instruction {
+            Instruction::Halt => self.abort(),
+            Instruction::Int(interrupt) => self.int(&interrupt),
+
+            Instruction::Add(dest, src) => self.add(&dest, &src)?,
+            Instruction::Sub(dest, src) => self.sub(&dest, &src)?,
+            Instruction::Div(dest, src) => self.div(&dest, &src)?,
+            Instruction::Mul(dest, src) => self.mul(&dest, &src)?,
+            Instruction::Rem(dest, src) => self.rem(&dest, &src)?,
+
+            Instruction::Cmp(target_a, target_b) => self.cmp(&target_a, &target_b)?,
+            Instruction::Jmp(addr) => self.jmp(&addr),
+            Instruction::JmpLt(addr) => self.jmp_lt(&addr),
+            Instruction::JmpGt(addr) => self.jmp_gt(&addr),
+            Instruction::JmpEq(addr) => self.jmp_eq(&addr),
+            Instruction::JmpLtEq(addr) => self.jmp_lt_eq(&addr),
+            Instruction::JmpGtEq(addr) => self.jmp_gt_eq(&addr),
+
+            Instruction::Push(dest, value) => self.push(&dest, value)?,
+            Instruction::Mov(dest, src) => self.mov(&dest, &src)?,
+            Instruction::Swp(target_a, target_b) => self.swp(&target_a, &target_b)?,
+
+            Instruction::Call(addr) => self.call(&addr),
+            Instruction::Ret => self.ret()?,
+        }
+
+        Ok(())
     }
 
     /// Handles incoming interrupts or moves along
