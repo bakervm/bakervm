@@ -18,8 +18,10 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalI
     let window = video_subsystem
         .window(
             config.title.as_ref(),
-            (config.display.scale * (config.display.resolution.width as Float)).round() as u32,
-            (config.display.scale * (config.display.resolution.height as Float)).round() as u32,
+            (config.display.default_scale * (config.display.resolution.width as Float)).round() as
+            u32,
+            (config.display.default_scale * (config.display.resolution.height as Float))
+                .round() as u32,
         )
         .position_centered()
         .build()
@@ -32,7 +34,11 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalI
         .build()
         .chain_err(|| "unable to convert window into canvas")?;
 
-    canvas.set_scale(config.display.scale as f32, config.display.scale as f32)?;
+    canvas
+        .set_scale(
+            config.display.default_scale as f32,
+            config.display.default_scale as f32,
+        )?;
 
     let mut event_pump = sdl_context.event_pump()?;
     let mut frame_count = 0;

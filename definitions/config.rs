@@ -3,14 +3,14 @@ use typedef::*;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DisplayConfig {
     pub resolution: DisplayResolution,
-    pub scale: Float,
+    pub default_scale: Float,
 }
 
 impl Default for DisplayConfig {
     fn default() -> Self {
         DisplayConfig {
             resolution: Default::default(),
-            scale: 4.0,
+            default_scale: 4.0,
         }
     }
 }

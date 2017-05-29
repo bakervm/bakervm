@@ -51,6 +51,13 @@ fn run() -> VMResult<()> {
                 .index(1)
                 .help("Sets the image file to use. Uses a standard image if nothing is specified.")
         )
+        .arg(
+            Arg::with_name("scale")
+                .short("s")
+                .long("scale")
+                .takes_value(true)
+                .value_name("SCALE")
+                .help("Sets the scale for the display. If not specified, the default scale set by the image will be used."))
         .get_matches();
 
     let program: Program = if let Some(input) = matches.value_of("input") {
@@ -73,20 +80,56 @@ fn run() -> VMResult<()> {
         builder.int(InternalInterrupt::FlushFramebuffer);
 
         // Triangle
-        builder.push(Target::Framebuffer(161), Value::Color(0xFF, 0xFF, 0xFF));
-        builder.push(Target::Framebuffer(322), Value::Color(0xFF, 0xFF, 0xFF));
-        builder.push(Target::Framebuffer(483), Value::Color(0xFF, 0xFF, 0xFF));
-        builder.push(Target::Framebuffer(644), Value::Color(0xFF, 0xFF, 0xFF));
-        builder.push(Target::Framebuffer(803), Value::Color(0xFF, 0xFF, 0xFF));
-        builder.push(Target::Framebuffer(962), Value::Color(0xFF, 0xFF, 0xFF));
-        builder.push(Target::Framebuffer(1121), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(
+            Target::Framebuffer(res_def.width + 1),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
+        builder.push(
+            Target::Framebuffer((res_def.width * 2) + 2),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
+        builder.push(
+            Target::Framebuffer((res_def.width * 3) + 3),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
+        builder.push(
+            Target::Framebuffer((res_def.width * 4) + 4),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
+        builder.push(
+            Target::Framebuffer((res_def.width * 5) + 3),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
+        builder.push(
+            Target::Framebuffer((res_def.width * 6) + 2),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
+        builder.push(
+            Target::Framebuffer((res_def.width * 7) + 1),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
 
         // Underscore
-        builder.push(Target::Framebuffer(1125), Value::Color(0xFF, 0xFF, 0xFF));
-        builder.push(Target::Framebuffer(1126), Value::Color(0xFF, 0xFF, 0xFF));
-        builder.push(Target::Framebuffer(1127), Value::Color(0xFF, 0xFF, 0xFF));
-        builder.push(Target::Framebuffer(1128), Value::Color(0xFF, 0xFF, 0xFF));
-        builder.push(Target::Framebuffer(1129), Value::Color(0xFF, 0xFF, 0xFF));
+        builder.push(
+            Target::Framebuffer((res_def.width * 7) + 5),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
+        builder.push(
+            Target::Framebuffer((res_def.width * 7) + 6),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
+        builder.push(
+            Target::Framebuffer((res_def.width * 7) + 7),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
+        builder.push(
+            Target::Framebuffer((res_def.width * 7) + 8),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
+        builder.push(
+            Target::Framebuffer((res_def.width * 7) + 9),
+            Value::Color(0xFF, 0xFF, 0xFF),
+        );
 
         builder.int(InternalInterrupt::FlushFramebuffer);
 
@@ -94,10 +137,14 @@ fn run() -> VMResult<()> {
         builder.gen_program()
     };
 
-    let vm_config = program.config.clone();
+    let mut vm_config = program.config.clone();
 
-    let (vm_sender, outer_receiver) = mpsc::sync_channel::<Frame>(1);
-    let (outer_sender, vm_receiver) = mpsc::channel::<ExternalInterrupt>();
+    if let Some(scale) = matches.value_of("scale") {
+        vm_config.display.default_scale = scale.parse().chain_err(|| "unable to parse scale")?;
+    }
+
+    let (vm_sender, outer_receiver) = mpsc::sync_channel(1);
+    let (outer_sender, vm_receiver) = mpsc::channel();
 
     let vm_handle = vm::start(program, vm_sender, vm_receiver);
 
