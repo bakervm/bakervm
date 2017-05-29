@@ -7,7 +7,8 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
-use std::time::Instant;
+use std::thread;
+use std::time::{Duration, Instant};
 
 pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalInterrupt>, config: VMConfig)
     -> VMResult<()> {
@@ -90,11 +91,15 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalI
                 .chain_err(|| "unable to send interrupt")?;
 
             break 'main;
+        } else {
+            thread::sleep(Duration::from_millis(1));
         }
 
-        if now_before.elapsed().as_secs() >= 1 {
+        let secs_elapsed = now_before.elapsed().as_secs();
+
+        if secs_elapsed >= 1 {
+            println!("FPS: {:?}", frame_count / secs_elapsed);
             now_before = Instant::now();
-            println!("FPS: {:?}", frame_count);
             frame_count = 0;
         }
 
