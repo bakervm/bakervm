@@ -169,7 +169,7 @@ impl VM {
     /// Flushes the internal framebuffer using the given sender
     fn flush_framebuffer(&mut self, sender: &SyncSender<Frame>) -> VMResult<()> {
         if self.framebuffer_invalid {
-            if let Err(TrySendError::Disconnected(_)) = sender.try_send(self.framebuffer.clone()) {
+            if let Err(TrySendError::Disconnected(..)) = sender.try_send(self.framebuffer.clone()) {
                 bail!("output channel disconnected");
             }
 
