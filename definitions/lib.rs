@@ -8,6 +8,7 @@ pub mod image_builder;
 pub mod instruction;
 pub mod interrupt;
 pub mod program;
+pub mod signal;
 pub mod target;
 pub mod typedef;
 pub mod value;

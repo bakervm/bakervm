@@ -1,8 +1,9 @@
+use signal::Signal;
 use value::Value;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ExternalInterrupt {
-    pub signal_id: usize,
+    pub signal: Signal,
     pub args: Vec<Value>,
 }
 

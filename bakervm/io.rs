@@ -1,5 +1,6 @@
 use definitions::config::VMConfig;
 use definitions::interrupt::ExternalInterrupt;
+use definitions::signal::Signal;
 use definitions::typedef::*;
 use error::*;
 use sdl2;
@@ -53,7 +54,7 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalI
                     interrupt_sender
                         .send(
                             ExternalInterrupt {
-                                signal_id: 0,
+                                signal: Signal::Halt,
                                 args: Vec::new(),
                             },
                         )
@@ -90,7 +91,7 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalI
             interrupt_sender
                 .send(
                     ExternalInterrupt {
-                        signal_id: 0,
+                        signal: Signal::Halt,
                         args: Vec::new(),
                     },
                 )

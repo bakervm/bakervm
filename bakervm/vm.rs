@@ -1,15 +1,14 @@
-use definitions::PREAMBLE;
 use definitions::Value;
 use definitions::config::VMConfig;
 use definitions::instruction::Instruction;
 use definitions::interrupt::{ExternalInterrupt, InternalInterrupt};
 use definitions::program::Program;
+use definitions::signal::Signal;
 use definitions::target::Target;
 use definitions::typedef::*;
 use error::*;
-use std::cmp::Ordering;
-use std::collections::{BTreeMap, LinkedList};
-use std::sync::mpsc::{Receiver, SyncSender, TryRecvError, TrySendError};
+use std::collections::{BTreeMap, HashMap, LinkedList};
+use std::sync::mpsc::{Receiver, SyncSender, TrySendError};
 use std::thread::{self, JoinHandle};
 
 pub fn start(program: Program, sender: SyncSender<Frame>, receiver: Receiver<ExternalInterrupt>)
@@ -33,8 +32,17 @@ pub fn start(program: Program, sender: SyncSender<Frame>, receiver: Receiver<Ext
     )
 }
 
+/// Since rusts `std:::cmp::Ordering` doesn't implement serialization, we have
+/// to do this
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
+enum Ordering {
+    Less,
+    Greater,
+    Equal,
+}
+
 /// The whole state of the VM
-#[derive(Default, Debug)]
+#[derive(Serialize, Deserialize, Default, Debug)]
 struct VM {
     /// The instructions that are currently executed
     image_data: Vec<Instruction>,
@@ -42,10 +50,10 @@ struct VM {
     pc: Address,
     stack: LinkedList<Value>,
     val_index: BTreeMap<Address, Value>,
-    interrupt_register: BTreeMap<usize, Address>,
+    interrupt_register: HashMap<Signal, Address>,
     framebuffer: Frame,
     framebuffer_invalid: bool,
-    /// A register for holding infomation about a recent comparison
+    /// A register for holding information about a recent comparison
     cmp_register: Option<Ordering>,
     /// A stack to hold the return addresses of function calls
     call_stack: LinkedList<Address>,
@@ -86,9 +94,10 @@ impl VM {
 
     /// Loads the instructions of the given program to the VM's state
     fn load_program(&mut self, program: Program) -> VMResult<()> {
-        if program.preamble != String::from(PREAMBLE) {
+        let orig_program = Program::default();
+        if program.preamble != orig_program.preamble {
             bail!("invalid preamble");
-        } else if program.version != String::from(env!("CARGO_PKG_VERSION")) {
+        } else if program.version != orig_program.version {
             bail!("invalid version");
         } else {
             self.image_data = program.instructions;
@@ -98,7 +107,7 @@ impl VM {
     }
 
     /// Aborts the execution of the current image
-    fn abort(&mut self) {
+    fn halt(&mut self) {
         self.halted = true;
     }
 
@@ -112,7 +121,7 @@ impl VM {
     /// Handles a single instruction
     fn handle_instruction(&mut self, instruction: Instruction) -> VMResult<()> {
         match instruction {
-            Instruction::Halt => self.abort(),
+            Instruction::Halt => self.halt(),
             Instruction::Int(interrupt) => self.int(&interrupt),
 
             Instruction::Add(dest, src) => self.add(&dest, &src)?,
@@ -144,18 +153,18 @@ impl VM {
     fn external_interrupt(&mut self, receiver: &Receiver<ExternalInterrupt>) -> VMResult<()> {
         match receiver.try_recv() {
             Ok(interrupt) => {
-                if interrupt.signal_id == 0 {
-                    self.abort();
+                if interrupt.signal == Signal::Halt {
+                    self.halt();
                     return Ok(());
                 }
 
                 let call_addr = if let Some(call_addr) = self.interrupt_register
-                       .get(&interrupt.signal_id) {
+                       .get(&interrupt.signal) {
                     call_addr.clone()
                 } else {
                     bail!(
-                        "no registered interrupt found at signal_id {}",
-                        &interrupt.signal_id
+                        "no registered interrupt found at signal {:?}",
+                        &interrupt.signal
                     );
                 };
 
@@ -167,7 +176,6 @@ impl VM {
 
                 Ok(())
             }
-            Err(TryRecvError::Disconnected) => bail!("interrupt receiver disconnected"),
             _ => Ok(()),
         }
     }
@@ -189,7 +197,7 @@ impl VM {
     fn build_framebuffer(&mut self) {
         let ref resolution = self.config.display.resolution;
         let allocation_space = resolution.width * resolution.height;
-        self.framebuffer = vec![(0, 0, 0); allocation_space];
+        self.framebuffer = vec![Color::default(); allocation_space];
     }
 
     /// Resets the VM to a clean state

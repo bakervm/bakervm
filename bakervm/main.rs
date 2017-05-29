@@ -5,6 +5,9 @@ extern crate error_chain;
 extern crate definitions;
 extern crate sdl2;
 extern crate rand;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde;
 
 mod vm;
 mod error;
@@ -14,7 +17,7 @@ use clap::{App, Arg};
 use definitions::Value;
 use definitions::config::DisplayResolution;
 use definitions::image_builder::ImageBuilder;
-use definitions::interrupt::{ExternalInterrupt, InternalInterrupt};
+use definitions::interrupt::InternalInterrupt;
 use definitions::program::Program;
 use definitions::target::Target;
 use definitions::typedef::*;
