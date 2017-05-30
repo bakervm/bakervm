@@ -463,7 +463,33 @@ mod tests {
 
             let stack_value = vm.pop(&Target::Stack).unwrap();
 
-            assert_eq!(stack_value, Value::Integer(val_a + val_b));
+            assert_eq!(stack_value, Value::Integer(val_b + val_a));
+        }
+    }
+
+    #[test]
+    fn sub_stack() {
+        for _ in 0..3000 {
+            let val_a = rand::random::<Integer>() / 2;
+            let val_b = rand::random::<Integer>() / 2;
+
+            let mut vm = VM::default();
+
+            let mut builder = ImageBuilder::new();
+            builder.push(Target::Stack, Value::Integer(val_a));
+            builder.push(Target::Stack, Value::Integer(val_b));
+            builder.sub(Target::Stack, Target::Stack);
+
+            let program = builder.gen_program();
+            vm.load_program(program).unwrap();
+
+            vm.do_cycle().unwrap();
+            vm.do_cycle().unwrap();
+            vm.do_cycle().unwrap();
+
+            let stack_value = vm.pop(&Target::Stack).unwrap();
+
+            assert_eq!(stack_value, Value::Integer(val_b - val_a));
         }
     }
 }
