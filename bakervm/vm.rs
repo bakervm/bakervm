@@ -92,6 +92,38 @@ impl VM {
         Ok(())
     }
 
+    /// Handles a single instruction
+    fn handle_instruction(&mut self, instruction: Instruction) -> VMResult<()> {
+        match instruction {
+            Instruction::Halt => self.halt(),
+            Instruction::Int(interrupt) => self.int(&interrupt),
+            Instruction::Ext(signal, addr) => self.ext(signal, addr),
+
+            Instruction::Add(dest, src) => self.add(&dest, &src)?,
+            Instruction::Sub(dest, src) => self.sub(&dest, &src)?,
+            Instruction::Div(dest, src) => self.div(&dest, &src)?,
+            Instruction::Mul(dest, src) => self.mul(&dest, &src)?,
+            Instruction::Rem(dest, src) => self.rem(&dest, &src)?,
+
+            Instruction::Cmp(target_a, target_b) => self.cmp(&target_a, &target_b)?,
+            Instruction::Jmp(addr) => self.jmp(&addr),
+            Instruction::JmpLt(addr) => self.jmp_lt(&addr),
+            Instruction::JmpGt(addr) => self.jmp_gt(&addr),
+            Instruction::JmpEq(addr) => self.jmp_eq(&addr),
+            Instruction::JmpLtEq(addr) => self.jmp_lt_eq(&addr),
+            Instruction::JmpGtEq(addr) => self.jmp_gt_eq(&addr),
+
+            Instruction::Push(dest, value) => self.push(&dest, value)?,
+            Instruction::Mov(dest, src) => self.mov(&dest, &src)?,
+            Instruction::Swp(target_a, target_b) => self.swp(&target_a, &target_b)?,
+
+            Instruction::Call(addr) => self.call(&addr),
+            Instruction::Ret => self.ret()?,
+        }
+
+        Ok(())
+    }
+
     /// Loads the instructions of the given program to the VM's state
     fn load_program(&mut self, program: Program) -> VMResult<()> {
         let orig_program = Program::default();
@@ -118,35 +150,9 @@ impl VM {
         }
     }
 
-    /// Handles a single instruction
-    fn handle_instruction(&mut self, instruction: Instruction) -> VMResult<()> {
-        match instruction {
-            Instruction::Halt => self.halt(),
-            Instruction::Int(interrupt) => self.int(&interrupt),
-
-            Instruction::Add(dest, src) => self.add(&dest, &src)?,
-            Instruction::Sub(dest, src) => self.sub(&dest, &src)?,
-            Instruction::Div(dest, src) => self.div(&dest, &src)?,
-            Instruction::Mul(dest, src) => self.mul(&dest, &src)?,
-            Instruction::Rem(dest, src) => self.rem(&dest, &src)?,
-
-            Instruction::Cmp(target_a, target_b) => self.cmp(&target_a, &target_b)?,
-            Instruction::Jmp(addr) => self.jmp(&addr),
-            Instruction::JmpLt(addr) => self.jmp_lt(&addr),
-            Instruction::JmpGt(addr) => self.jmp_gt(&addr),
-            Instruction::JmpEq(addr) => self.jmp_eq(&addr),
-            Instruction::JmpLtEq(addr) => self.jmp_lt_eq(&addr),
-            Instruction::JmpGtEq(addr) => self.jmp_gt_eq(&addr),
-
-            Instruction::Push(dest, value) => self.push(&dest, value)?,
-            Instruction::Mov(dest, src) => self.mov(&dest, &src)?,
-            Instruction::Swp(target_a, target_b) => self.swp(&target_a, &target_b)?,
-
-            Instruction::Call(addr) => self.call(&addr),
-            Instruction::Ret => self.ret()?,
-        }
-
-        Ok(())
+    /// Registers an external interrupt for a specific signal
+    fn ext(&mut self, signal: Signal, addr: Address) {
+        self.interrupt_register.entry(signal).or_insert(addr);
     }
 
     /// Handles incoming interrupts or moves along

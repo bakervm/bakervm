@@ -2,6 +2,7 @@ use bincode::{self, Infinite};
 use instruction::Instruction;
 use interrupt::InternalInterrupt;
 use program::Program;
+use signal::Signal;
 use target::Target;
 use typedef::*;
 use value::Value;
@@ -85,6 +86,10 @@ impl ImageBuilder {
 
     pub fn int(&mut self, interrupt: InternalInterrupt) {
         self.add_instruction(Instruction::Int(interrupt));
+    }
+
+    pub fn ext(&mut self, signal: Signal, addr: Address) {
+        self.add_instruction(Instruction::Ext(signal, addr));
     }
 
     pub fn gen(self) -> ImageData {
