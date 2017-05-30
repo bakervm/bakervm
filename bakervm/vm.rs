@@ -79,15 +79,21 @@ impl VM {
         while (self.pc < self.image_data.len()) && !self.halted {
             self.external_interrupt(&receiver)?;
 
-            let current_instruction = self.image_data[self.pc].clone();
-            self.handle_instruction(current_instruction)?;
+            self.do_cycle()?;
 
             self.flush_framebuffer(&sender)?;
 
-            self.advance_pc();
-
             thread::yield_now();
         }
+
+        Ok(())
+    }
+
+    /// Run one instruction cycle
+    fn do_cycle(&mut self) -> VMResult<()> {
+        let current_instruction = self.image_data[self.pc].clone();
+        self.handle_instruction(current_instruction)?;
+        self.advance_pc();
 
         Ok(())
     }
@@ -437,14 +443,42 @@ impl VM {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use definitions::ImageBuilder;
+    use rand;
 
     #[test]
     fn halt() {
         let mut vm = VM::default();
-        vm.handle_instruction(Instruction::Halt);
+        vm.handle_instruction(Instruction::Halt).expect("failed to handle instruction");
 
         println!("{:#?}", vm);
 
         assert!(vm.halted);
+    }
+
+    #[test]
+    fn add_stack() {
+        for _ in 0..3000 {
+            let val_a = rand::random::<Integer>() / 2;
+            let val_b = rand::random::<Integer>() / 2;
+
+            let mut vm = VM::default();
+
+            let mut builder = ImageBuilder::new();
+            builder.push(Target::Stack, Value::Integer(val_a));
+            builder.push(Target::Stack, Value::Integer(val_b));
+            builder.add(Target::Stack, Target::Stack);
+
+            let program = builder.gen_program();
+            vm.load_program(program).expect("failed to generate program");
+
+            vm.do_cycle();
+            vm.do_cycle();
+            vm.do_cycle();
+
+            let stack_value = vm.pop(&Target::Stack).expect("failed to pop value off the stack");
+
+            assert_eq!(stack_value, Value::Integer(val_a + val_b));
+        }
     }
 }
