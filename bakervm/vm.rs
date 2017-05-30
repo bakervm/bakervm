@@ -455,13 +455,13 @@ mod tests {
             builder.add(Target::Stack, Target::Stack);
 
             let program = builder.gen_program();
-            vm.load_program(program).expect("failed to generate program");
+            vm.load_program(program).unwrap();
 
-            vm.do_cycle();
-            vm.do_cycle();
-            vm.do_cycle();
+            vm.do_cycle().unwrap();
+            vm.do_cycle().unwrap();
+            vm.do_cycle().unwrap();
 
-            let stack_value = vm.pop(&Target::Stack).expect("failed to pop value off the stack");
+            let stack_value = vm.pop(&Target::Stack).unwrap();
 
             assert_eq!(stack_value, Value::Integer(val_a + val_b));
         }
