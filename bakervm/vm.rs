@@ -433,3 +433,16 @@ impl VM {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn halt() {
+        let mut vm = VM::default();
+        vm.handle_instruction(Instruction::Halt).expect("handling instruction failed");
+
+        assert!(vm.halted);
+    }
+}
