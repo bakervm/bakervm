@@ -441,7 +441,9 @@ mod tests {
     #[test]
     fn halt() {
         let mut vm = VM::default();
-        vm.handle_instruction(Instruction::Halt).expect("handling instruction failed");
+        vm.handle_instruction(Instruction::Halt);
+
+        println!("{:#?}", vm);
 
         assert!(vm.halted);
     }
