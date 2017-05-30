@@ -1,6 +1,6 @@
 use ast::{AST, Expression};
+use definitions::Program;
 use definitions::Value;
-use definitions::program::Program;
 use error::*;
 use std::fs::File;
 use std::io::BufReader;

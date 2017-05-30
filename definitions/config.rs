@@ -31,16 +31,16 @@ impl Default for DisplayResolution {
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct VMConfig {
+pub struct Config {
     pub title: String,
     pub display: DisplayConfig,
     pub keyboard_enabled: bool,
     pub mouse_enabled: bool,
 }
 
-impl Default for VMConfig {
+impl Default for Config {
     fn default() -> Self {
-        VMConfig {
+        Config {
             title: "bakerVM".into(),
             display: Default::default(),
             keyboard_enabled: true,

@@ -1,6 +1,7 @@
-use definitions::config::VMConfig;
-use definitions::interrupt::ExternalInterrupt;
-use definitions::signal::Signal;
+
+use definitions::Config;
+use definitions::ExternalInterrupt;
+use definitions::Signal;
 use definitions::typedef::*;
 use error::*;
 use sdl2;
@@ -11,7 +12,7 @@ use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::thread;
 use std::time::{Duration, Instant};
 
-pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalInterrupt>, config: VMConfig)
+pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalInterrupt>, config: Config)
     -> VMResult<()> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;

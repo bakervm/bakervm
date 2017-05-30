@@ -1,12 +1,12 @@
 use PREAMBLE;
-use config::VMConfig;
+use config::Config;
 use instruction::Instruction;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Program {
     pub preamble: String,
     pub version: String,
-    pub config: VMConfig,
+    pub config: Config,
     pub instructions: Vec<Instruction>,
 }
 

@@ -3,16 +3,23 @@ extern crate serde_derive;
 extern crate serde;
 extern crate bincode;
 
-pub mod config;
-pub mod image_builder;
-pub mod instruction;
-pub mod interrupt;
-pub mod program;
-pub mod signal;
-pub mod target;
+mod config;
+mod image_builder;
+mod instruction;
+mod interrupt;
+mod program;
+mod signal;
+mod target;
+mod value;
 pub mod typedef;
-pub mod value;
 
-pub use value::Value;
+pub use config::*;
+pub use image_builder::*;
+pub use instruction::*;
+pub use interrupt::*;
+pub use program::*;
+pub use signal::*;
+pub use target::*;
+pub use value::*;
 
 pub const PREAMBLE: &str = "BAKERVM";

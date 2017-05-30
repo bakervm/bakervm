@@ -14,12 +14,12 @@ mod error;
 mod io;
 
 use clap::{App, Arg};
+use definitions::DisplayResolution;
+use definitions::ImageBuilder;
+use definitions::InternalInterrupt;
+use definitions::Program;
+use definitions::Target;
 use definitions::Value;
-use definitions::config::DisplayResolution;
-use definitions::image_builder::ImageBuilder;
-use definitions::interrupt::InternalInterrupt;
-use definitions::program::Program;
-use definitions::target::Target;
 use definitions::typedef::*;
 use error::*;
 use std::fs::File;

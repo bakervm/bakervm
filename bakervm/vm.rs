@@ -1,10 +1,10 @@
+use definitions::{ExternalInterrupt, InternalInterrupt};
+use definitions::Config;
+use definitions::Instruction;
+use definitions::Program;
+use definitions::Signal;
+use definitions::Target;
 use definitions::Value;
-use definitions::config::VMConfig;
-use definitions::instruction::Instruction;
-use definitions::interrupt::{ExternalInterrupt, InternalInterrupt};
-use definitions::program::Program;
-use definitions::signal::Signal;
-use definitions::target::Target;
 use definitions::typedef::*;
 use error::*;
 use std::collections::{BTreeMap, HashMap, LinkedList};
@@ -60,7 +60,7 @@ struct VM {
     /// A boolean used for locking the program counter
     pc_locked: bool,
     /// The configuration of the VM
-    config: VMConfig,
+    config: Config,
     halted: bool,
 }
 
