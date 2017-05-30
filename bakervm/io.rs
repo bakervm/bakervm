@@ -56,6 +56,16 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalI
 
                     break 'main;
                 }
+                Event::KeyDown { keycode: Some(key), .. } => {
+                    interrupt_sender
+                        .send(ExternalInterrupt::KeyDown(key as Integer))
+                        .chain_err(|| "unable to send interrupt")?;
+                }
+                Event::KeyDown { .. } => {
+                    interrupt_sender
+                        .send(ExternalInterrupt::KeyUp)
+                        .chain_err(|| "unable to send interrupt")?;
+                }
                 _ => {
                     // TODO: Send interrupt here
                 }
