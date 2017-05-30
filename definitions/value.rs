@@ -13,6 +13,12 @@ pub enum Value {
     Undefined, // The Undefined value symbolizes an internal error or a wrong use of the bytecode
 }
 
+impl Default for Value {
+    fn default() -> Self {
+        Value::Undefined
+    }
+}
+
 impl Value {
     pub fn is_undefined(&self) -> bool {
         match self {

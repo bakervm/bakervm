@@ -1,5 +1,4 @@
 use interrupt::InternalInterrupt;
-use signal::Signal;
 use target::Target;
 use typedef::*;
 use value::Value;
@@ -29,5 +28,4 @@ pub enum Instruction {
 
     Halt,
     Int(InternalInterrupt),
-    Ext(Signal, Address),
 }

@@ -2,12 +2,11 @@ use definitions::{ExternalInterrupt, InternalInterrupt};
 use definitions::Config;
 use definitions::Instruction;
 use definitions::Program;
-use definitions::Signal;
 use definitions::Target;
 use definitions::Value;
 use definitions::typedef::*;
 use error::*;
-use std::collections::{BTreeMap, HashMap, LinkedList};
+use std::collections::{BTreeMap, LinkedList};
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError};
 use std::thread::{self, JoinHandle};
 
@@ -50,7 +49,7 @@ struct VM {
     pc: Address,
     stack: LinkedList<Value>,
     val_index: BTreeMap<Address, Value>,
-    interrupt_register: HashMap<Signal, Address>,
+    input_register: Integer,
     framebuffer: Frame,
     framebuffer_invalid: bool,
     /// A register for holding information about a recent comparison
@@ -103,7 +102,6 @@ impl VM {
         match instruction {
             Instruction::Halt => self.halt(),
             Instruction::Int(interrupt) => self.int(&interrupt),
-            Instruction::Ext(signal, addr) => self.ext(signal, addr),
 
             Instruction::Add(dest, src) => self.add(&dest, &src)?,
             Instruction::Sub(dest, src) => self.sub(&dest, &src)?,
@@ -152,39 +150,22 @@ impl VM {
     /// Handles an internal interrupt
     fn int(&mut self, interrupt: &InternalInterrupt) {
         match interrupt {
-            &InternalInterrupt::FlushFramebuffer => self.invalidate(),
+            &InternalInterrupt::FlushFramebuffer => self.invalidate_framebuffer(),
         }
-    }
-
-    /// Registers an external interrupt for a specific signal
-    fn ext(&mut self, signal: Signal, addr: Address) {
-        self.interrupt_register.entry(signal).or_insert(addr);
     }
 
     /// Handles incoming interrupts or moves along
     fn external_interrupt(&mut self, receiver: &Receiver<ExternalInterrupt>) -> VMResult<()> {
         match receiver.try_recv() {
             Ok(interrupt) => {
-                if interrupt.signal == Signal::Halt {
-                    self.halt();
-                    return Ok(());
+                match interrupt {
+                    ExternalInterrupt::Halt => self.halt(),
+                    ExternalInterrupt::KeyDown(value) => {
+                        self.input_register = value;
+                    }
+                    ExternalInterrupt::KeyUp => self.input_register = 0,
+                    _ => {}
                 }
-
-                let call_addr = if let Some(call_addr) = self.interrupt_register
-                       .get(&interrupt.signal) {
-                    call_addr.clone()
-                } else {
-                    bail!(
-                        "no registered interrupt found at signal {:?}",
-                        &interrupt.signal
-                    );
-                };
-
-                for value in interrupt.args {
-                    self.push(&Target::Stack, value)?;
-                }
-
-                self.call(&call_addr);
 
                 Ok(())
             }
@@ -233,7 +214,7 @@ impl VM {
 
     /// Invalidates the frambuffer causing it to be resent to the display
     /// receiver
-    fn invalidate(&mut self) {
+    fn invalidate_framebuffer(&mut self) {
         self.framebuffer_invalid = true;
     }
 
@@ -262,6 +243,7 @@ impl VM {
                     bail!("no value found in framebuffer at index {}", index);
                 }
             }
+            &Target::InputRegister => Ok(Value::Integer(self.input_register)),
         }
     }
 
@@ -398,6 +380,9 @@ impl VM {
                 } else {
                     bail!("unable push a non-color value to the framebuffer");
                 }
+            }
+            &Target::InputRegister => {
+                bail!("unable push to read-only input register");
             }
         }
     }

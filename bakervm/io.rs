@@ -1,7 +1,5 @@
-
 use definitions::Config;
 use definitions::ExternalInterrupt;
-use definitions::Signal;
 use definitions::typedef::*;
 use error::*;
 use sdl2;
@@ -53,12 +51,7 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalI
                 Event::Quit { .. } |
                 Event::KeyDown { keycode: Some(Keycode::Escape), .. } => {
                     interrupt_sender
-                        .send(
-                            ExternalInterrupt {
-                                signal: Signal::Halt,
-                                args: Vec::new(),
-                            },
-                        )
+                        .send(ExternalInterrupt::Halt)
                         .chain_err(|| "unable to send interrupt")?;
 
                     break 'main;
@@ -90,12 +83,7 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalI
             canvas.present();
         } else if let Err(TryRecvError::Disconnected) = maybe_frame {
             interrupt_sender
-                .send(
-                    ExternalInterrupt {
-                        signal: Signal::Halt,
-                        args: Vec::new(),
-                    },
-                )
+                .send(ExternalInterrupt::Halt)
                 .chain_err(|| "unable to send interrupt")?;
 
             break 'main;

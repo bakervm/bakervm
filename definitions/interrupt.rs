@@ -1,10 +1,13 @@
-use signal::Signal;
-use value::Value;
+use Value;
+use typedef::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct ExternalInterrupt {
-    pub signal: Signal,
-    pub args: Vec<Value>,
+pub enum ExternalInterrupt {
+    KeyDown(Integer),
+    KeyUp,
+    MouseDown(Integer),
+    MouseUp(Integer),
+    Halt,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

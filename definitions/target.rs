@@ -4,5 +4,6 @@ use typedef::*;
 pub enum Target {
     Framebuffer(Address),
     ValueIndex(Address),
+    InputRegister,
     Stack,
 }

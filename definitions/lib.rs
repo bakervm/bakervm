@@ -8,7 +8,6 @@ mod image_builder;
 mod instruction;
 mod interrupt;
 mod program;
-mod signal;
 mod target;
 mod value;
 pub mod typedef;
@@ -18,7 +17,6 @@ pub use image_builder::*;
 pub use instruction::*;
 pub use interrupt::*;
 pub use program::*;
-pub use signal::*;
 pub use target::*;
 pub use value::*;
 
