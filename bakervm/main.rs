@@ -24,7 +24,7 @@ use definitions::typedef::*;
 use error::*;
 use std::fs::File;
 use std::io::Read;
-use std::sync::mpsc;
+use std::sync::{Arc, Barrier, mpsc};
 
 fn main() {
     if let Err(ref e) = run() {
@@ -149,9 +149,11 @@ fn run() -> VMResult<()> {
     let (vm_sender, outer_receiver) = mpsc::sync_channel(1);
     let (outer_sender, vm_receiver) = mpsc::channel();
 
-    let vm_handle = vm::start(program, vm_sender, vm_receiver);
+    let barrier = Arc::new(Barrier::new(2));
 
-    io::start(outer_receiver, outer_sender, vm_config)?;
+    let vm_handle = vm::start(program, vm_sender, vm_receiver, barrier.clone());
+
+    io::start(outer_receiver, outer_sender, vm_config, barrier.clone())?;
 
     if let Err(err) = vm_handle.join() {
         bail!("unable to join: {:?}", err);

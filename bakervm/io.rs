@@ -6,12 +6,15 @@ use sdl2;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
+use std::sync::{Arc, Barrier};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::thread;
 use std::time::{Duration, Instant};
 
-pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalInterrupt>, config: Config)
-    -> VMResult<()> {
+pub fn start(
+    frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalInterrupt>, config: Config,
+    barrier: Arc<Barrier>
+) -> VMResult<()> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
@@ -42,6 +45,9 @@ pub fn start(frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalI
 
     let mut event_pump = sdl_context.event_pump()?;
     let mut frame_count = 0;
+
+    barrier.wait();
+
     let mut now_before = Instant::now();
 
     'main: loop {

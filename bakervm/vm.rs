@@ -7,13 +7,18 @@ use definitions::Value;
 use definitions::typedef::*;
 use error::*;
 use std::collections::{BTreeMap, LinkedList};
+use std::sync::{Arc, Barrier};
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError};
 use std::thread::{self, JoinHandle};
+use std::time::Instant;
 
-pub fn start(program: Program, sender: SyncSender<Frame>, receiver: Receiver<ExternalInterrupt>)
-    -> JoinHandle<()> {
+pub fn start(
+    program: Program, sender: SyncSender<Frame>, receiver: Receiver<ExternalInterrupt>,
+    barrier: Arc<Barrier>
+) -> JoinHandle<()> {
     thread::spawn(
         move || {
+            barrier.wait();
             if let Err(ref e) = VM::default().exec(program, sender, receiver) {
                 println!("error: {}", e);
 
@@ -75,6 +80,9 @@ impl VM {
         self.load_program(program)?;
         self.build_framebuffer();
 
+        let mut instruction_count = 0;
+        let mut now_before = Instant::now();
+
         while (self.pc < self.image_data.len()) && !self.halted {
             self.external_interrupt(&receiver)?;
 
@@ -83,6 +91,19 @@ impl VM {
             self.flush_framebuffer(&sender)?;
 
             thread::yield_now();
+
+            let secs_elapsed = now_before.elapsed().as_secs();
+
+            if secs_elapsed >= 1 {
+                println!(
+                    "Instructions per second: {:?}",
+                    instruction_count / secs_elapsed
+                );
+                now_before = Instant::now();
+                instruction_count = 0;
+            }
+
+            instruction_count += 1;
         }
 
         Ok(())
