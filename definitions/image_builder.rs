@@ -83,6 +83,10 @@ impl ImageBuilder {
         self.add_instruction(Instruction::Halt);
     }
 
+    pub fn pause(&mut self) {
+        self.add_instruction(Instruction::Pause);
+    }
+
     pub fn int(&mut self, interrupt: InternalInterrupt) {
         self.add_instruction(Instruction::Int(interrupt));
     }

@@ -66,6 +66,7 @@ struct VM {
     /// The configuration of the VM
     config: Config,
     halted: bool,
+    paused: bool,
 }
 
 impl VM {
@@ -95,10 +96,7 @@ impl VM {
             let secs_elapsed = now_before.elapsed().as_secs();
 
             if secs_elapsed >= 1 {
-                println!(
-                    "Instructions per second: {:?}",
-                    instruction_count / secs_elapsed
-                );
+                println!("IPS: {:?}", instruction_count / secs_elapsed);
                 now_before = Instant::now();
                 instruction_count = 0;
             }
@@ -121,9 +119,6 @@ impl VM {
     /// Handles a single instruction
     fn handle_instruction(&mut self, instruction: Instruction) -> VMResult<()> {
         match instruction {
-            Instruction::Halt => self.halt(),
-            Instruction::Int(interrupt) => self.int(&interrupt),
-
             Instruction::Add(dest, src) => self.add(&dest, &src)?,
             Instruction::Sub(dest, src) => self.sub(&dest, &src)?,
             Instruction::Div(dest, src) => self.div(&dest, &src)?,
@@ -144,6 +139,10 @@ impl VM {
 
             Instruction::Call(addr) => self.call(&addr),
             Instruction::Ret => self.ret()?,
+
+            Instruction::Halt => self.halt(),
+            Instruction::Pause => self.pause(),
+            Instruction::Int(interrupt) => self.int(&interrupt),
         }
 
         Ok(())
@@ -168,6 +167,11 @@ impl VM {
         self.halted = true;
     }
 
+    /// Pauses the execution of the program until an interrupt is received
+    fn pause(&mut self) {
+        self.paused = true;
+    }
+
     /// Handles an internal interrupt
     fn int(&mut self, interrupt: &InternalInterrupt) {
         match interrupt {
@@ -177,21 +181,32 @@ impl VM {
 
     /// Handles incoming interrupts or moves along
     fn external_interrupt(&mut self, receiver: &Receiver<ExternalInterrupt>) -> VMResult<()> {
-        match receiver.try_recv() {
-            Ok(interrupt) => {
-                match interrupt {
-                    ExternalInterrupt::Halt => self.halt(),
-                    ExternalInterrupt::KeyDown(value) => {
-                        self.input_register = value;
-                    }
-                    ExternalInterrupt::KeyUp => self.input_register = 0,
-                    _ => {}
-                }
-
-                Ok(())
+        let interrupt = if self.paused {
+            self.paused = false;
+            if let Ok(interrupt) = receiver.recv() {
+                interrupt
+            } else {
+                return Ok(());
             }
-            _ => Ok(()),
+        } else {
+            if let Ok(interrupt) = receiver.try_recv() {
+                interrupt
+            } else {
+                return Ok(());
+            }
+        };
+
+        match interrupt {
+            ExternalInterrupt::Halt => self.halt(),
+            ExternalInterrupt::KeyDown(value) => {
+                self.input_register = value;
+            }
+            ExternalInterrupt::KeyUp => self.input_register = 0,
+            _ => {}
         }
+
+        Ok(())
+
     }
 
     /// Flushes the internal framebuffer using the given sender
@@ -200,7 +215,6 @@ impl VM {
             if let Err(TrySendError::Disconnected(..)) = sender.try_send(self.framebuffer.clone()) {
                 bail!("output channel disconnected");
             }
-
             self.framebuffer_invalid = false;
         }
 
@@ -455,7 +469,7 @@ mod tests {
     #[test]
     fn halt() {
         let mut vm = VM::default();
-        vm.handle_instruction(Instruction::Halt).expect("failed to handle instruction");
+        vm.handle_instruction(Instruction::Halt).unwrap();
 
         println!("{:#?}", vm);
 

@@ -27,5 +27,6 @@ pub enum Instruction {
     Ret,
 
     Halt,
+    Pause,
     Int(InternalInterrupt),
 }

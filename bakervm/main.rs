@@ -80,8 +80,6 @@ fn run() -> VMResult<()> {
             builder.push(Target::Framebuffer(x), Value::Color(0, 0, 0));
         }
 
-        builder.int(InternalInterrupt::FlushFramebuffer);
-
         // Triangle
         builder.push(
             Target::Framebuffer(res_def.width + 1),
@@ -136,6 +134,7 @@ fn run() -> VMResult<()> {
 
         builder.int(InternalInterrupt::FlushFramebuffer);
 
+        builder.pause();
         builder.jmp(max + 1);
         builder.gen_program()
     };

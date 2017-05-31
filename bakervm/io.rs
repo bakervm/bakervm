@@ -67,7 +67,7 @@ pub fn start(
                         .send(ExternalInterrupt::KeyDown(key as Integer))
                         .chain_err(|| "unable to send interrupt")?;
                 }
-                Event::KeyDown { .. } => {
+                Event::KeyUp { .. } => {
                     interrupt_sender
                         .send(ExternalInterrupt::KeyUp)
                         .chain_err(|| "unable to send interrupt")?;
@@ -98,13 +98,9 @@ pub fn start(
 
             canvas.present();
         } else if let Err(TryRecvError::Disconnected) = maybe_frame {
-            interrupt_sender
-                .send(ExternalInterrupt::Halt)
-                .chain_err(|| "unable to send interrupt")?;
-
             break 'main;
         } else {
-            thread::sleep(Duration::from_millis(1));
+            thread::sleep(Duration::from_millis(10));
         }
 
         let secs_elapsed = now_before.elapsed().as_secs();
