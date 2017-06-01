@@ -14,12 +14,7 @@ mod error;
 mod io;
 
 use clap::{App, Arg};
-use definitions::DisplayResolution;
-use definitions::ImageBuilder;
-use definitions::InternalInterrupt;
 use definitions::Program;
-use definitions::Target;
-use definitions::Value;
 use definitions::typedef::*;
 use error::*;
 use std::fs::File;
@@ -70,73 +65,9 @@ fn run() -> VMResult<()> {
 
         bincode::deserialize(&buf[..]).chain_err(|| "unable to decode image file")?
     } else {
-        let mut builder = ImageBuilder::new();
+        let program_data = include_bytes!("stock.img");
 
-        let res_def = DisplayResolution::default();
-
-        let max = res_def.width * res_def.height;
-
-        for x in 0..max {
-            builder.push(Target::Framebuffer(x), Value::Color(0, 0, 0));
-        }
-
-        // Triangle
-        builder.push(
-            Target::Framebuffer(res_def.width + 1),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-        builder.push(
-            Target::Framebuffer((res_def.width * 2) + 2),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-        builder.push(
-            Target::Framebuffer((res_def.width * 3) + 3),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-        builder.push(
-            Target::Framebuffer((res_def.width * 4) + 4),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-        builder.push(
-            Target::Framebuffer((res_def.width * 5) + 3),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-        builder.push(
-            Target::Framebuffer((res_def.width * 6) + 2),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-        builder.push(
-            Target::Framebuffer((res_def.width * 7) + 1),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-
-        // Underscore
-        builder.push(
-            Target::Framebuffer((res_def.width * 7) + 5),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-        builder.push(
-            Target::Framebuffer((res_def.width * 7) + 6),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-        builder.push(
-            Target::Framebuffer((res_def.width * 7) + 7),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-        builder.push(
-            Target::Framebuffer((res_def.width * 7) + 8),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-        builder.push(
-            Target::Framebuffer((res_def.width * 7) + 9),
-            Value::Color(0xFF, 0xFF, 0xFF),
-        );
-
-        builder.int(InternalInterrupt::FlushFramebuffer);
-
-        builder.pause();
-        builder.jmp(max + 1);
-        builder.gen_program()
+        bincode::deserialize(program_data).chain_err(|| "unable to decode image file")?
     };
 
     let mut vm_config = program.config.clone();
