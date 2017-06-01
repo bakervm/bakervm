@@ -78,7 +78,7 @@ impl VM {
         receiver: Receiver<ExternalInterrupt>
     ) -> VMResult<()> {
         self.reset();
-        self.load_program(program)?;
+        self.load_program(program).chain_err(|| "invalid program container")?;
         self.build_framebuffer();
 
         let mut instruction_count = 0;
