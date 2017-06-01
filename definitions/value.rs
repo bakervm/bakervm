@@ -30,18 +30,10 @@ impl Add for Value {
     type Output = Value;
 
     fn add(self, rhs: Self) -> Self::Output {
-        match self {
-            Value::Float(lhs_float) => {
-                match rhs {
-                    Value::Float(rhs_float) => Value::Float(lhs_float + rhs_float),
-                    _ => Value::Undefined,
-                }
-            }
-            Value::Integer(lhs_integer) => {
-                match rhs {
-                    Value::Integer(rhs_integer) => Value::Integer(lhs_integer + rhs_integer),
-                    _ => Value::Undefined,
-                }
+        match (self, rhs) {
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Value::Float(lhs_float + rhs_float,),
+            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
+                Value::Integer(lhs_integer + rhs_integer)
             }
             _ => Value::Undefined,
         }
@@ -66,19 +58,10 @@ impl Mul for Value {
     type Output = Value;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        match self {
-            Value::Float(lhs_float) => {
-                match rhs {
-                    Value::Float(rhs_float) => Value::Float(lhs_float * rhs_float),
-                    _ => Value::Undefined,
-                }
-            }
-
-            Value::Integer(lhs_integer) => {
-                match rhs {
-                    Value::Integer(rhs_integer) => Value::Integer(lhs_integer * rhs_integer),
-                    _ => Value::Undefined,
-                }
+        match (self, rhs) {
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Value::Float(lhs_float * rhs_float,),
+            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
+                Value::Integer(lhs_integer * rhs_integer)
             }
             _ => Value::Undefined,
         }
