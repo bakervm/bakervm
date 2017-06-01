@@ -527,4 +527,56 @@ mod tests {
             assert_eq!(stack_value, Value::Integer(val_b - val_a));
         }
     }
+
+    #[test]
+    fn mul_stack() {
+        for _ in 0..3000 {
+            let val_a = rand::random::<Float>() % 3037000499.0;
+            let val_b = rand::random::<Float>() % 3037000499.0;
+
+            let mut vm = VM::default();
+
+            let mut builder = ImageBuilder::new();
+            builder.push(Target::Stack, Value::Float(val_a));
+            builder.push(Target::Stack, Value::Float(val_b));
+            builder.mul(Target::Stack, Target::Stack);
+
+            let program = builder.gen_program();
+            vm.load_program(program).unwrap();
+
+            vm.do_cycle().unwrap();
+            vm.do_cycle().unwrap();
+            vm.do_cycle().unwrap();
+
+            let stack_value = vm.pop(&Target::Stack).unwrap();
+
+            assert_eq!(stack_value, Value::Float(val_b * val_a));
+        }
+    }
+
+    #[test]
+    fn div_stack() {
+        for _ in 0..3000 {
+            let val_a = rand::random::<Float>();
+            let val_b = rand::random::<Float>();
+
+            let mut vm = VM::default();
+
+            let mut builder = ImageBuilder::new();
+            builder.push(Target::Stack, Value::Float(val_a));
+            builder.push(Target::Stack, Value::Float(val_b));
+            builder.div(Target::Stack, Target::Stack);
+
+            let program = builder.gen_program();
+            vm.load_program(program).unwrap();
+
+            vm.do_cycle().unwrap();
+            vm.do_cycle().unwrap();
+            vm.do_cycle().unwrap();
+
+            let stack_value = vm.pop(&Target::Stack).unwrap();
+
+            assert_eq!(stack_value, Value::Float(val_b / val_a));
+        }
+    }
 }
