@@ -6,8 +6,6 @@ pub enum Value {
     Boolean(bool), // true | false
     Float(Float), // -1.33 | 0.23114 | 3.141 | ...
     Integer(Integer), // 12 | 42 | 1 | 0 | 24 | ...
-    Symbol(Address), // :hello | :test | :symbol | ...
-    String(String), // "hello world" | "hello!" | "yellow \"blue\" or red" | ...
     Color(u8, u8, u8), // #FF00FF | #bd37b3 | ...
     Char(char), // 'a' | 'b' | 'c' | 'd' | ...
     Undefined, // The Undefined value symbolizes an internal error or a wrong use of the bytecode
@@ -36,24 +34,12 @@ impl Add for Value {
             Value::Float(lhs_float) => {
                 match rhs {
                     Value::Float(rhs_float) => Value::Float(lhs_float + rhs_float),
-                    Value::String(rhs_string) => Value::String(format!("{}{}", lhs_float, rhs_string),),
                     _ => Value::Undefined,
                 }
             }
-
             Value::Integer(lhs_integer) => {
                 match rhs {
                     Value::Integer(rhs_integer) => Value::Integer(lhs_integer + rhs_integer),
-                    Value::String(rhs_string) => Value::String(format!("{}{}", lhs_integer, rhs_string),),
-                    _ => Value::Undefined,
-                }
-            }
-
-            Value::String(lhs_string) => {
-                match rhs {
-                    Value::Float(rhs_float) => Value::String(format!("{}{}", lhs_string, rhs_float),),
-                    Value::Integer(rhs_integer) => Value::String(format!("{}{}", lhs_string, rhs_integer),),
-                    Value::String(rhs_string) => Value::String(format!("{}{}", lhs_string, rhs_string),),
                     _ => Value::Undefined,
                 }
             }
