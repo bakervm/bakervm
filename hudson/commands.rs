@@ -63,11 +63,6 @@ pub fn stock(_matches: &ArgMatches) -> CompilationResult<()> {
     // Underscore
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 7) + 5) as Integer),
-    );
-    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
-    builder.push(
-        Target::ValueIndex(0),
         Value::Integer(((res_def.width * 7) + 6) as Integer),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
@@ -89,6 +84,11 @@ pub fn stock(_matches: &ArgMatches) -> CompilationResult<()> {
     builder.push(
         Target::ValueIndex(0),
         Value::Integer(((res_def.width * 7) + 10) as Integer),
+    );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
+    builder.push(
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 7) + 11) as Integer),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
