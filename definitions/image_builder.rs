@@ -4,7 +4,7 @@ use interrupt::InternalInterrupt;
 use program::Program;
 use target::Target;
 use typedef::*;
-use value::Value;
+use value::{Type, Value};
 
 pub struct ImageBuilder {
     instructions: Vec<Instruction>,
@@ -39,6 +39,9 @@ impl ImageBuilder {
         self.add_instruction(Instruction::Rem(dest, src));
     }
 
+
+
+
     pub fn cmp(&mut self, target_a: Target, target_b: Target) {
         self.add_instruction(Instruction::Cmp(target_a, target_b));
     }
@@ -59,6 +62,24 @@ impl ImageBuilder {
         self.add_instruction(Instruction::JmpEq(addr));
     }
 
+    pub fn jmp_lt_eq(&mut self, addr: Address) {
+        self.add_instruction(Instruction::JmpLtEq(addr));
+    }
+
+    pub fn jmp_gt_eq(&mut self, addr: Address) {
+        self.add_instruction(Instruction::JmpGtEq(addr));
+    }
+
+
+
+
+    pub fn cast(&mut self, target: Target, val_type: Type) {
+        self.add_instruction(Instruction::Cast(target, val_type));
+    }
+
+
+
+
     pub fn push(&mut self, dest: Target, value: Value) {
         self.add_instruction(Instruction::Push(dest, value));
     }
@@ -71,6 +92,9 @@ impl ImageBuilder {
         self.add_instruction(Instruction::Swp(src_a, src_b));
     }
 
+
+
+
     pub fn call(&mut self, addr: Address) {
         self.add_instruction(Instruction::Call(addr));
     }
@@ -78,6 +102,9 @@ impl ImageBuilder {
     pub fn ret(&mut self) {
         self.add_instruction(Instruction::Ret);
     }
+
+
+
 
     pub fn halt(&mut self) {
         self.add_instruction(Instruction::Halt);
@@ -90,6 +117,9 @@ impl ImageBuilder {
     pub fn int(&mut self, interrupt: InternalInterrupt) {
         self.add_instruction(Instruction::Int(interrupt));
     }
+
+
+
 
     pub fn gen(self) -> ImageData {
         let program = self.gen_program();
