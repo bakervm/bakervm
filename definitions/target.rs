@@ -2,8 +2,7 @@ use typedef::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Target {
-    Framebuffer(Address),
+    Framebuffer,
     ValueIndex(Address),
-    InputRegister,
     Stack,
 }

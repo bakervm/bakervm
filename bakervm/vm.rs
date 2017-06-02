@@ -50,7 +50,6 @@ struct VM {
     pc: Address,
     stack: LinkedList<Value>,
     val_index: BTreeMap<Address, Value>,
-    input_register: Integer,
     framebuffer: Frame,
     framebuffer_invalid: bool,
     /// A register for holding information about a recent comparison
@@ -197,9 +196,9 @@ impl VM {
         match interrupt {
             ExternalInterrupt::Halt => self.halt(),
             ExternalInterrupt::KeyDown(value) => {
-                self.input_register = value;
+                self.push(&Target::ValueIndex(1), Value::Integer(value))?;
             }
-            ExternalInterrupt::KeyUp => self.input_register = 0,
+            ExternalInterrupt::KeyUp => self.push(&Target::ValueIndex(1), Value::Integer(0))?,
             _ => {}
         }
 
@@ -236,6 +235,17 @@ impl VM {
         self.pc_locked = true;
     }
 
+    fn get_framebuffer_index(&mut self) -> VMResult<Address> {
+        let index = if let &mut Value::Integer(integer) =
+            self.val_index.entry(0).or_insert(Value::Integer(0)) {
+            integer
+        } else {
+            bail!("unable to access a non-integer index");
+        };
+
+        Ok(index as Address)
+    }
+
     /// Advances the program counter
     fn advance_pc(&mut self) {
         if self.pc_locked {
@@ -269,14 +279,15 @@ impl VM {
                     bail!("unable to pop value off an empty stack");
                 }
             }
-            &Target::Framebuffer(index) => {
+            &Target::Framebuffer => {
+                let index = self.get_framebuffer_index()?;
+
                 if let Some(&(r, g, b)) = self.framebuffer.get(index) {
                     Ok(Value::Color(r, g, b))
                 } else {
                     bail!("no value found in framebuffer at index {}", index);
                 }
             }
-            &Target::InputRegister => Ok(Value::Integer(self.input_register)),
         }
     }
 
@@ -410,23 +421,24 @@ impl VM {
     fn push(&mut self, dest: &Target, value: Value) -> VMResult<()> {
         match dest {
             &Target::ValueIndex(index) => {
-                self.val_index.entry(index).or_insert(value);
+                let mut index_value = self.val_index.entry(index).or_insert(Value::Integer(0));
+                *index_value = value;
+
                 Ok(())
             }
             &Target::Stack => {
                 self.stack.push_front(value);
                 Ok(())
             }
-            &Target::Framebuffer(index) => {
+            &Target::Framebuffer => {
+                let index = self.get_framebuffer_index()?;
+
                 if let Value::Color(r, g, b) = value {
                     self.framebuffer[index] = (r, g, b);
                     Ok(())
                 } else {
                     bail!("unable push a non-color value to the framebuffer");
                 }
-            }
-            &Target::InputRegister => {
-                bail!("unable push to read-only input register");
             }
         }
     }

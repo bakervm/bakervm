@@ -1,6 +1,6 @@
 use clap::ArgMatches;
-use definitions::{DisplayResolution, InternalInterrupt, Target, Value};
-use definitions::ImageBuilder;
+use definitions::{DisplayResolution, ImageBuilder, InternalInterrupt, Target, Value};
+use definitions::typedef::*;
 use error::*;
 use std::fs::File;
 use std::io::Write;
@@ -13,64 +13,84 @@ pub fn stock(_matches: &ArgMatches) -> CompilationResult<()> {
     let max = res_def.width * res_def.height;
 
     for x in 0..max {
-        builder.push(Target::Framebuffer(x), Value::Color(0, 0, 0));
+        builder.push(Target::ValueIndex(0), Value::Integer(x as Integer));
+        builder.push(Target::Framebuffer, Value::Color(0, 0, 0));
     }
 
     // Triangle
     builder.push(
-        Target::Framebuffer(res_def.width + 1),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer((res_def.width + 1) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
+
     builder.push(
-        Target::Framebuffer((res_def.width * 2) + 2),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 2) + 2) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
+
     builder.push(
-        Target::Framebuffer((res_def.width * 3) + 3),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 3) + 3) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
+
     builder.push(
-        Target::Framebuffer((res_def.width * 4) + 4),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 4) + 4) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
+
     builder.push(
-        Target::Framebuffer((res_def.width * 5) + 3),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 5) + 3) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
+
     builder.push(
-        Target::Framebuffer((res_def.width * 6) + 2),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 6) + 2) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
+
     builder.push(
-        Target::Framebuffer((res_def.width * 7) + 1),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 7) + 1) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
     // Underscore
     builder.push(
-        Target::Framebuffer((res_def.width * 7) + 6),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 7) + 5) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
     builder.push(
-        Target::Framebuffer((res_def.width * 7) + 7),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 7) + 6) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
     builder.push(
-        Target::Framebuffer((res_def.width * 7) + 8),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 7) + 7) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
     builder.push(
-        Target::Framebuffer((res_def.width * 7) + 9),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 7) + 8) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
     builder.push(
-        Target::Framebuffer((res_def.width * 7) + 10),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 7) + 9) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
     builder.push(
-        Target::Framebuffer((res_def.width * 7) + 11),
-        Value::Color(0xFF, 0xFF, 0xFF),
+        Target::ValueIndex(0),
+        Value::Integer(((res_def.width * 7) + 10) as Integer),
     );
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
     builder.int(InternalInterrupt::FlushFramebuffer);
 
