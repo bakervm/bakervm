@@ -1,9 +1,5 @@
-use definitions::{ExternalInterrupt, InternalInterrupt};
-use definitions::Config;
-use definitions::Instruction;
-use definitions::Program;
-use definitions::Target;
-use definitions::Value;
+use definitions::{Config, ExternalInterrupt, Instruction, InternalInterrupt, Program, Target,
+                  Type, Value};
 use definitions::typedef::*;
 use error::*;
 use std::collections::{BTreeMap, LinkedList};
@@ -132,6 +128,8 @@ impl VM {
             Instruction::JmpEq(addr) => self.jmp_eq(&addr),
             Instruction::JmpLtEq(addr) => self.jmp_lt_eq(&addr),
             Instruction::JmpGtEq(addr) => self.jmp_gt_eq(&addr),
+
+            Instruction::Cast(target, val_type) => self.cast(&target, &val_type)?,
 
             Instruction::Push(dest, value) => self.push(&dest, value)?,
             Instruction::Mov(dest, src) => self.mov(&dest, &src)?,
@@ -395,6 +393,16 @@ impl VM {
            (self.cmp_register == Some(Ordering::Equal)) {
             self.jmp(addr);
         }
+    }
+
+    fn cast(&mut self, target: &Target, val_type: &Type) -> VMResult<()> {
+        let value = self.pop(target)?;
+
+        let new_value = value.convert_to(val_type);
+
+        self.push(target, new_value)?;
+
+        Ok(())
     }
 
     /// Pushes the given value to the given target

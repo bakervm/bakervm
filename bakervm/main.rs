@@ -70,10 +70,14 @@ fn run() -> VMResult<()> {
         bincode::deserialize(program_data).chain_err(|| "unable to decode image file")?
     };
 
-    let mut vm_config = program.config.clone();
+    let mut config = program.config.clone();
 
     if let Some(scale) = matches.value_of("scale") {
-        vm_config.display.default_scale = scale.parse().chain_err(|| "unable to parse scale")?;
+        config.display.default_scale = scale.parse().chain_err(|| "unable to parse scale")?;
+    }
+
+    if config.display.default_scale < 1.0 {
+        bail!("Display scale can't be less than 1");
     }
 
     let (vm_sender, outer_receiver) = mpsc::sync_channel(1);
@@ -83,7 +87,7 @@ fn run() -> VMResult<()> {
 
     let vm_handle = vm::start(program, vm_sender, vm_receiver, barrier.clone());
 
-    io::start(outer_receiver, outer_sender, vm_config, barrier.clone())?;
+    io::start(outer_receiver, outer_sender, config, barrier.clone())?;
 
     if let Err(err) = vm_handle.join() {
         bail!("unable to join: {:?}", err);

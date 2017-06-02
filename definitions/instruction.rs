@@ -1,7 +1,7 @@
 use interrupt::InternalInterrupt;
 use target::Target;
 use typedef::*;
-use value::Value;
+use value::{Type, Value};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Instruction {
@@ -18,6 +18,8 @@ pub enum Instruction {
     JmpEq(Address),
     JmpLtEq(Address),
     JmpGtEq(Address),
+
+    Cast(Target, Type),
 
     Push(Target, Value),
     Mov(Target, Target),
