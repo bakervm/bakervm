@@ -191,4 +191,14 @@ mod tests {
         assert!(Value::Integer(4) > Value::Integer(1));
         assert!(Value::Integer(839) == Value::Integer(839));
     }
+
+    #[test]
+    fn conversion() {
+        let initial_color = Value::Integer(0xFF4422).convert_to(&Type::Color);
+
+        assert_eq!(
+            Value::Integer(0xFF4422),
+            initial_color.convert_to(&Type::Integer)
+        );
+    }
 }
