@@ -395,6 +395,7 @@ impl VM {
         }
     }
 
+    /// Casts a value in-place to the specified type
     fn cast(&mut self, target: &Target, val_type: &Type) -> VMResult<()> {
         let value = self.pop(target)?;
 
