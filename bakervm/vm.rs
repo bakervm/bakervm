@@ -484,6 +484,7 @@ impl VM {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bincode;
     use definitions::ImageBuilder;
     use rand;
 
@@ -598,6 +599,22 @@ mod tests {
             let stack_value = vm.pop(&Target::Stack).unwrap();
 
             assert_eq!(stack_value, Value::Float(val_b / val_a));
+        }
+    }
+
+    #[test]
+    fn load_stock_image() {
+        let program_data = include_bytes!("stock.img");
+
+        let program = bincode::deserialize(program_data).unwrap();
+
+        let mut vm = VM::default();
+
+        let res = vm.load_program(program);
+
+        if let Ok(()) = res {
+        } else {
+            panic!("program loading failed: {:?}", res);
         }
     }
 }
