@@ -108,6 +108,6 @@ pub fn stock(_matches: &ArgMatches) -> CompilationResult<()> {
     Ok(())
 }
 
-pub fn build(_matches: &ArgMatches) -> CompilationResult<()> {
+pub fn compile(_matches: &ArgMatches) -> CompilationResult<()> {
     unimplemented!()
 }
