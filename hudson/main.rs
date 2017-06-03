@@ -36,9 +36,11 @@ fn run() -> CompilationResult<()> {
         .about("The bakervm toolkit")
         .subcommand(SubCommand::with_name("stock").about("Generate the default image"),)
         .subcommand(
-            SubCommand::with_name("build")
+            SubCommand::with_name("compile")
                 .arg(Arg::with_name("input").index(1).required(true).help("Sets the source file to use."),)
                 .arg(Arg::with_name("output")
+                .short("o")
+                .long("output")
                 .takes_value(true)
                 .value_name("FILE")
                 .help("Sets the destination file.")),
@@ -47,7 +49,7 @@ fn run() -> CompilationResult<()> {
 
 
     match matches.subcommand() {
-        ("build", Some(sub_match)) => commands::build(sub_match)?,
+        ("compile", Some(sub_match)) => commands::compile(sub_match)?,
         ("stock", Some(sub_match)) => commands::stock(sub_match)?,
         _ => {}
     }
