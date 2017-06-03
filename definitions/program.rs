@@ -1,3 +1,5 @@
+//! The program container holding the instructions and all configuration options
+
 use PREAMBLE;
 use config::Config;
 use instruction::Instruction;

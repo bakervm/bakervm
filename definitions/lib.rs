@@ -1,3 +1,5 @@
+//! A crate for defining the core of the bakerVM
+
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;

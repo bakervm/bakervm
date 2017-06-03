@@ -1,3 +1,5 @@
+//! The configuration format for the program container
+
 use typedef::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

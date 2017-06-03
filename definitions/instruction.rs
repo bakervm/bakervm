@@ -1,3 +1,5 @@
+//! The instructions, the VM is able to interpret.
+
 use interrupt::InternalInterrupt;
 use target::Target;
 use typedef::*;

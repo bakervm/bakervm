@@ -1,3 +1,5 @@
+//! A helpful image builder used in tests and for generating the stock image
+
 use bincode::{self, Infinite};
 use instruction::Instruction;
 use interrupt::InternalInterrupt;

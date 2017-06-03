@@ -1,3 +1,5 @@
+//! The value and type definitions
+
 use std::ops::{Add, Div, Mul, Rem, Sub};
 use typedef::*;
 

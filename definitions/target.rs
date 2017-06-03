@@ -1,3 +1,5 @@
+//! A Target is an abstract representation of a memory section inside the VM
+
 use typedef::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

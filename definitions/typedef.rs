@@ -1,3 +1,10 @@
+//! All common type definitions through the bakerVM ecosystem
+//!
+//! # Example
+//! ```
+//! use definitions::typedef::*;
+//! ```
+
 pub type Byte = u8;
 pub type Float = f64;
 pub type Integer = i64;
