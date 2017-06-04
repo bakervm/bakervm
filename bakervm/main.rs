@@ -39,7 +39,7 @@ fn main() {
     }
 }
 
-fn run() -> VMResult<()> {
+fn run() -> Result<()> {
     let matches = App::new("bakerVM")
         .version(env!("CARGO_PKG_VERSION"))
         .author("Julian Laubstein <contact@julianlaubstein.de>")

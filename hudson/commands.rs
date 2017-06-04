@@ -5,7 +5,7 @@ use error::*;
 use std::fs::File;
 use std::io::Write;
 
-pub fn stock(_matches: &ArgMatches) -> CompilationResult<()> {
+pub fn stock(_matches: &ArgMatches) -> Result<()> {
     let mut builder = ImageBuilder::new();
 
     let res_def = DisplayResolution::default();
@@ -108,6 +108,6 @@ pub fn stock(_matches: &ArgMatches) -> CompilationResult<()> {
     Ok(())
 }
 
-pub fn compile(_matches: &ArgMatches) -> CompilationResult<()> {
+pub fn compile(_matches: &ArgMatches) -> Result<()> {
     unimplemented!()
 }

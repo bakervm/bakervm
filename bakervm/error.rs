@@ -1,5 +1,1 @@
-error_chain! {
-    types {
-        VMError, VMErrorKind, VMResultExt, VMResult;
-    }
-}
+error_chain!{}

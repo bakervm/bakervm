@@ -13,7 +13,7 @@ use std::time::{Duration, Instant};
 pub fn start(
     frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalInterrupt>, config: Config,
     barrier: Arc<Barrier>
-) -> VMResult<()> {
+) -> Result<()> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
