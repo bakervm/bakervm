@@ -123,7 +123,7 @@ impl Value {
 }
 
 impl FromStr for Value {
-    type Err = Result<Self, &'static str>;
+    type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if BOOLEAN_RE.is_match(s) {
@@ -145,7 +145,7 @@ impl FromStr for Value {
             let real_char: char = character[1].chars().next().unwrap();
             Ok(Value::Char(real_char))
         } else {
-            Ok(Value::Undefined)
+            Err("failed to parse value")
         }
     }
 }
