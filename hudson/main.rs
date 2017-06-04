@@ -29,7 +29,7 @@ fn main() {
     }
 }
 
-fn run() -> CompilationResult<()> {
+fn run() -> Result<()> {
     let matches = App::new("hudson")
         .version(env!("CARGO_PKG_VERSION"))
         .author("Julian Laubstein <contact@julianlaubstein.de>")

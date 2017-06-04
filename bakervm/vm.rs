@@ -71,7 +71,7 @@ impl VM {
     pub fn exec(
         &mut self, program: Program, sender: SyncSender<Frame>,
         receiver: Receiver<ExternalInterrupt>
-    ) -> VMResult<()> {
+    ) -> Result<()> {
         self.reset();
         self.load_program(program).chain_err(|| "invalid program container")?;
         self.build_framebuffer();
@@ -103,7 +103,7 @@ impl VM {
     }
 
     /// Run one instruction cycle
-    fn do_cycle(&mut self) -> VMResult<()> {
+    fn do_cycle(&mut self) -> Result<()> {
         let current_instruction = self.image_data[self.pc].clone();
         self.handle_instruction(current_instruction)?;
         self.advance_pc();
@@ -112,7 +112,7 @@ impl VM {
     }
 
     /// Handles a single instruction
-    fn handle_instruction(&mut self, instruction: Instruction) -> VMResult<()> {
+    fn handle_instruction(&mut self, instruction: Instruction) -> Result<()> {
         match instruction {
             Instruction::Add(dest, src) => self.add(&dest, &src)?,
             Instruction::Sub(dest, src) => self.sub(&dest, &src)?,
@@ -146,7 +146,7 @@ impl VM {
     }
 
     /// Loads the instructions of the given program to the VM's state
-    fn load_program(&mut self, program: Program) -> VMResult<()> {
+    fn load_program(&mut self, program: Program) -> Result<()> {
         let orig_program = Program::default();
         if program.preamble != orig_program.preamble {
             bail!("invalid preamble");
@@ -177,7 +177,7 @@ impl VM {
     }
 
     /// Handles incoming interrupts or moves along
-    fn external_interrupt(&mut self, receiver: &Receiver<ExternalInterrupt>) -> VMResult<()> {
+    fn external_interrupt(&mut self, receiver: &Receiver<ExternalInterrupt>) -> Result<()> {
         let interrupt = if self.paused {
             self.paused = false;
             if let Ok(interrupt) = receiver.recv() {
@@ -207,7 +207,7 @@ impl VM {
     }
 
     /// Flushes the internal framebuffer using the given sender
-    fn flush_framebuffer(&mut self, sender: &SyncSender<Frame>) -> VMResult<()> {
+    fn flush_framebuffer(&mut self, sender: &SyncSender<Frame>) -> Result<()> {
         if self.framebuffer_invalid {
             if let Err(TrySendError::Disconnected(..)) = sender.try_send(self.framebuffer.clone()) {
                 bail!("output channel disconnected");
@@ -235,7 +235,7 @@ impl VM {
         self.pc_locked = true;
     }
 
-    fn get_framebuffer_index(&mut self) -> VMResult<Address> {
+    fn get_framebuffer_index(&mut self) -> Result<Address> {
         let index = if let &mut Value::Integer(integer) =
             self.val_index.entry(0).or_insert(Value::Integer(0)) {
             integer
@@ -263,7 +263,7 @@ impl VM {
 
     /// Return the value at the specified target. The value of the target will
     /// be consumed
-    fn pop(&mut self, target: &Target) -> VMResult<Value> {
+    fn pop(&mut self, target: &Target) -> Result<Value> {
         match target {
             &Target::ValueIndex(index) => {
                 if let Some(value) = self.val_index.remove(&index) {
@@ -294,7 +294,7 @@ impl VM {
     // # Instruction functions
 
     /// Adds the value of the src target to the value of the dest target
-    fn add(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
+    fn add(&mut self, dest: &Target, src: &Target) -> Result<()> {
         let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
 
@@ -304,7 +304,7 @@ impl VM {
     }
 
     /// Subtracts the value of the src target from the value of the dest target
-    fn sub(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
+    fn sub(&mut self, dest: &Target, src: &Target) -> Result<()> {
         let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
 
@@ -314,7 +314,7 @@ impl VM {
     }
 
     /// Divides the value of the dest target through the value of the src target
-    fn div(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
+    fn div(&mut self, dest: &Target, src: &Target) -> Result<()> {
         let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
 
@@ -324,7 +324,7 @@ impl VM {
     }
 
     /// Multiplies the value of the dest target with the value of the src target
-    fn mul(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
+    fn mul(&mut self, dest: &Target, src: &Target) -> Result<()> {
         let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
 
@@ -335,7 +335,7 @@ impl VM {
 
     /// Applies the modulo operator on the value of the dest target using the
     /// value of the src target
-    fn rem(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
+    fn rem(&mut self, dest: &Target, src: &Target) -> Result<()> {
         let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
 
@@ -346,7 +346,7 @@ impl VM {
 
     /// Compares the top values of the two targets and saves the result to
     /// `self.cmp_register`
-    fn cmp(&mut self, target_a: &Target, target_b: &Target) -> VMResult<()> {
+    fn cmp(&mut self, target_a: &Target, target_b: &Target) -> Result<()> {
         let target_a_value = self.pop(target_a)?;
         let target_b_value = self.pop(target_b)?;
 
@@ -407,7 +407,7 @@ impl VM {
     }
 
     /// Casts a value in-place to the specified type
-    fn cast(&mut self, target: &Target, val_type: &Type) -> VMResult<()> {
+    fn cast(&mut self, target: &Target, val_type: &Type) -> Result<()> {
         let value = self.pop(target)?;
 
         let new_value = value.convert_to(val_type);
@@ -418,7 +418,7 @@ impl VM {
     }
 
     /// Pushes the given value to the given target
-    fn push(&mut self, dest: &Target, value: Value) -> VMResult<()> {
+    fn push(&mut self, dest: &Target, value: Value) -> Result<()> {
         match dest {
             &Target::ValueIndex(index) => {
                 let mut index_value = self.val_index.entry(index).or_insert(Value::Integer(0));
@@ -444,7 +444,7 @@ impl VM {
     }
 
     /// Moves the top value of the src target to the dest target
-    fn mov(&mut self, dest: &Target, src: &Target) -> VMResult<()> {
+    fn mov(&mut self, dest: &Target, src: &Target) -> Result<()> {
         let src_value = self.pop(src)?;
         self.push(dest, src_value)?;
 
@@ -452,7 +452,7 @@ impl VM {
     }
 
     /// Swaps the top values of the targets
-    fn swp(&mut self, target_a: &Target, target_b: &Target) -> VMResult<()> {
+    fn swp(&mut self, target_a: &Target, target_b: &Target) -> Result<()> {
         let a_value = self.pop(target_a)?;
         let b_value = self.pop(target_b)?;
 
@@ -470,7 +470,7 @@ impl VM {
     }
 
     /// Returns from an ongoing function call
-    fn ret(&mut self) -> VMResult<()> {
+    fn ret(&mut self) -> Result<()> {
         if let Some(retur_addr) = self.call_stack.pop_front() {
             self.jmp(&retur_addr);
         } else {

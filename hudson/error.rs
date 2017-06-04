@@ -1,5 +1,1 @@
-error_chain! {
-    types {
-        CompilationError, CompilationErrorKind, CompilationResultExt, CompilationResult;
-    }
-}
+error_chain!{}
