@@ -493,8 +493,6 @@ mod tests {
         let mut vm = VM::default();
         vm.handle_instruction(Instruction::Halt).unwrap();
 
-        println!("{:#?}", vm);
-
         assert!(vm.halted);
     }
 
@@ -612,9 +610,8 @@ mod tests {
 
         let res = vm.load_program(program);
 
-        if let Ok(()) = res {
-        } else {
-            panic!("program loading failed: {:?}", res);
+        if let Err(err) = res {
+            panic!("program loading failed: {:?}", err);
         }
     }
 }
