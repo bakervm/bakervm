@@ -3,9 +3,6 @@ extern crate error_chain;
 extern crate clap;
 extern crate definitions;
 extern crate bincode;
-extern crate regex;
-#[macro_use]
-extern crate lazy_static;
 
 mod error;
 mod commands;
