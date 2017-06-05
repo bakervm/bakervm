@@ -178,7 +178,7 @@ impl VM {
             self.paused = false;
             // We don't know how long this is going to take... better tell I/O what's going
             // on
-            self.flush_framebuffer(sender)?;
+            self.wait_flush_framebuffer(sender)?;
             if let Ok(interrupt) = receiver.recv() {
                 interrupt
             } else {
@@ -215,6 +215,20 @@ impl VM {
             } else if let Ok(()) = res {
                 self.framebuffer_invalid = false;
             }
+        }
+
+        Ok(())
+    }
+
+    /// Waits for the channel to be available, then flushes the internal
+    /// framebuffer using the given sender
+    fn wait_flush_framebuffer(&mut self, sender: &SyncSender<Frame>) -> Result<()> {
+        if self.framebuffer_invalid {
+            let res = sender.send(self.framebuffer.clone());
+            if let Err(..) = res {
+                self.halt();
+            }
+            self.framebuffer_invalid = false;
         }
 
         Ok(())
