@@ -107,7 +107,12 @@ impl VM {
 
     /// Run one instruction cycle
     fn do_cycle(&mut self) -> Result<()> {
-        let current_instruction = self.image_data[self.pc].clone();
+        let current_instruction = if let Some(current_instruction) = self.image_data.get(self.pc) {
+            current_instruction.clone()
+        } else {
+            bail!("no instruction found at index {}", self.pc);
+        };
+
         self.handle_instruction(current_instruction)?;
         self.advance_pc();
 
