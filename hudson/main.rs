@@ -40,11 +40,12 @@ fn run() -> Result<()> {
             SubCommand::with_name("compile")
                 .arg(Arg::with_name("input").index(1).required(true).help("Sets the source file to use."),)
                 .arg(Arg::with_name("output")
-                .short("o")
-                .long("output")
-                .takes_value(true)
-                .value_name("FILE")
-                .help("Sets the destination file.")),
+                    .short("o")
+                    .long("output")
+                    .takes_value(true)
+                    .value_name("FILE")
+                    .help("Sets the destination file."))
+                .arg(Arg::with_name("basm").long("basm"))
         )
         .get_matches();
 

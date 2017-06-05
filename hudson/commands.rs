@@ -1,3 +1,4 @@
+use basm;
 use clap::ArgMatches;
 use definitions::{DisplayResolution, ImageBuilder, InternalInterrupt, Target, Value};
 use definitions::typedef::*;
@@ -108,6 +109,30 @@ pub fn stock(_matches: &ArgMatches) -> Result<()> {
     Ok(())
 }
 
-pub fn compile(_matches: &ArgMatches) -> Result<()> {
-    unimplemented!()
+pub fn compile(matches: &ArgMatches) -> Result<()> {
+    let input_file_name = if let Some(file_name) = matches.value_of("input") {
+        file_name
+    } else {
+        bail!("no file name given");
+    };
+
+    let file = File::open(input_file_name).chain_err(|| "unable to open file")?;
+
+    if matches.is_present("basm") {
+        let program = basm::compile(file).chain_err(|| "unable to compile file")?;
+
+        let output_file_name = if let Some(file_name) = matches.value_of("output") {
+            file_name.to_owned()
+        } else {
+            format!("{}.bin", input_file_name)
+        };
+
+        let mut file = File::create(output_file_name).chain_err(|| "unable to create file")?;
+
+        file.write_all(&program[..]).chain_err(|| "unable to write program data")?;
+
+        file.sync_all().chain_err(|| "unable to sync output file to file system")?;
+    }
+
+    Ok(())
 }

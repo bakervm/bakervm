@@ -3,6 +3,7 @@
 use regex::Regex;
 use std::ops::{Add, Div, Mul, Rem, Sub};
 use std::str::FromStr;
+use type_t::Type;
 use typedef::*;
 
 lazy_static! {
@@ -11,16 +12,6 @@ lazy_static! {
     static ref INTEGER_RE: Regex = Regex::new("^(-?\\d+)?$").unwrap();
     static ref COLOR_RE: Regex = Regex::new("^#([0-9abcdefABCDEF]{6})$").unwrap();
     static ref CHAR_RE: Regex = Regex::new("^'(.)'$").unwrap();
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
-pub enum Type {
-    Boolean,
-    Float,
-    Integer,
-    Color,
-    Char,
-    Undefined,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]

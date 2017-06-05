@@ -15,6 +15,7 @@ mod interrupt;
 mod program;
 mod target;
 mod value;
+mod type_t;
 pub mod typedef;
 
 pub use config::*;
@@ -23,6 +24,7 @@ pub use instruction::*;
 pub use interrupt::*;
 pub use program::*;
 pub use target::*;
+pub use type_t::*;
 pub use value::*;
 
 pub const PREAMBLE: &str = "BAKERVM";

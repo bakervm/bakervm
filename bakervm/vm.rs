@@ -133,12 +133,14 @@ impl VM {
             Instruction::Push(dest, value) => self.push(&dest, value)?,
             Instruction::Mov(dest, src) => self.mov(&dest, &src)?,
             Instruction::Swp(target_a, target_b) => self.swp(&target_a, &target_b)?,
+            Instruction::Dup(target) => self.dup(&target)?,
 
             Instruction::Call(addr) => self.call(&addr),
             Instruction::Ret => self.ret()?,
 
             Instruction::Halt => self.halt(),
             Instruction::Pause => self.pause(),
+            Instruction::Nop => {}
             Instruction::Int(interrupt) => self.int(&interrupt),
         }
 
@@ -358,6 +360,9 @@ impl VM {
             self.cmp_register = Some(Ordering::Equal);
         }
 
+        self.push(target_a, target_a_value)?;
+        self.push(target_b, target_b_value)?;
+
         Ok(())
     }
 
@@ -458,6 +463,16 @@ impl VM {
 
         self.push(target_a, b_value)?;
         self.push(target_b, a_value)?;
+
+        Ok(())
+    }
+
+    fn dup(&mut self, target: &Target) -> Result<()> {
+        let value = self.pop(target)?;
+
+        self.push(&Target::Stack, value.clone())?;
+
+        self.push(target, value)?;
 
         Ok(())
     }

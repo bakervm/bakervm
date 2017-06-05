@@ -2,8 +2,9 @@
 
 use interrupt::InternalInterrupt;
 use target::Target;
+use type_t::Type;
 use typedef::*;
-use value::{Type, Value};
+use value::Value;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Instruction {
@@ -26,11 +27,13 @@ pub enum Instruction {
     Push(Target, Value),
     Mov(Target, Target),
     Swp(Target, Target),
+    Dup(Target),
 
     Call(Address),
     Ret,
 
     Halt,
     Pause,
+    Nop,
     Int(InternalInterrupt),
 }
