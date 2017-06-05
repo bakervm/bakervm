@@ -5,8 +5,8 @@ add $st, $st
 dup $st
 mov $vi(0), $st
 push $fb, #FFFFFF
+int 0
 cmp $vi(20), $st
 jmpgt 2
 int 0
 pause
-nop
