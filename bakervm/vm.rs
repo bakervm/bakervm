@@ -75,18 +75,28 @@ impl VM {
         receiver: Receiver<ExternalInterrupt>
     ) -> Result<()> {
         self.reset();
-        self.load_program(program).chain_err(|| "invalid program container")?;
+        self.load_program(&program).chain_err(|| "invalid program container")?;
         self.build_framebuffer();
 
-        let mut now_before = Instant::now();
+        self.push(
+                &Target::ValueIndex(2),
+                Value::Integer(program.config.display.resolution.width.clone() as Integer),
+            )?;
+
+        self.push(
+                &Target::ValueIndex(3),
+                Value::Integer(program.config.display.resolution.height.clone() as Integer),
+            )?;
+
+        let mut now = Instant::now();
 
         while (self.pc < self.image_data.len()) && !self.halted {
             self.do_cycle()?;
 
-            let elapsed_time = now_before.elapsed();
+            let elapsed_time = now.elapsed();
             if elapsed_time >= Duration::from_millis(16) {
                 self.flush_framebuffer(&sender)?;
-                now_before = Instant::now();
+                now = Instant::now();
             }
 
             self.external_interrupt(&receiver, &sender)?;
@@ -141,15 +151,16 @@ impl VM {
     }
 
     /// Loads the instructions of the given program to the VM's state
-    fn load_program(&mut self, program: Program) -> Result<()> {
+    fn load_program(&mut self, program: &Program) -> Result<()> {
         let orig_program = Program::default();
         if program.preamble != orig_program.preamble {
             bail!("invalid preamble");
         } else if program.version != orig_program.version {
             bail!("invalid version");
         } else {
-            self.image_data = program.instructions;
-            self.config = program.config;
+            self.image_data = program.instructions.clone();
+            self.config = program.config.clone();
+
             Ok(())
         }
     }
@@ -543,7 +554,7 @@ mod tests {
             builder.add(Target::Stack, Target::Stack);
 
             let program = builder.gen_program();
-            vm.load_program(program).unwrap();
+            vm.load_program(&program).unwrap();
 
             vm.do_cycle().unwrap();
             vm.do_cycle().unwrap();
@@ -569,7 +580,7 @@ mod tests {
             builder.sub(Target::Stack, Target::Stack);
 
             let program = builder.gen_program();
-            vm.load_program(program).unwrap();
+            vm.load_program(&program).unwrap();
 
             vm.do_cycle().unwrap();
             vm.do_cycle().unwrap();
@@ -595,7 +606,7 @@ mod tests {
             builder.mul(Target::Stack, Target::Stack);
 
             let program = builder.gen_program();
-            vm.load_program(program).unwrap();
+            vm.load_program(&program).unwrap();
 
             vm.do_cycle().unwrap();
             vm.do_cycle().unwrap();
@@ -621,7 +632,7 @@ mod tests {
             builder.div(Target::Stack, Target::Stack);
 
             let program = builder.gen_program();
-            vm.load_program(program).unwrap();
+            vm.load_program(&program).unwrap();
 
             vm.do_cycle().unwrap();
             vm.do_cycle().unwrap();
@@ -641,7 +652,7 @@ mod tests {
 
         let mut vm = VM::default();
 
-        let res = vm.load_program(program);
+        let res = vm.load_program(&program);
 
         if let Err(err) = res {
             panic!("program loading failed: {:?}", err);
