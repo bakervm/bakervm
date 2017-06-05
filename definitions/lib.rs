@@ -1,6 +1,8 @@
 //! A crate for defining the core of the bakerVM
 
 #[macro_use]
+extern crate error_chain;
+#[macro_use]
 extern crate serde_derive;
 extern crate serde;
 extern crate bincode;
@@ -16,6 +18,7 @@ mod program;
 mod target;
 mod value;
 mod type_t;
+pub mod error;
 pub mod typedef;
 
 pub use config::*;

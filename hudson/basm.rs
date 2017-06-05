@@ -1,6 +1,6 @@
 use definitions::ImageBuilder;
+use definitions::error::*;
 use definitions::typedef::*;
-use error::*;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
@@ -18,7 +18,7 @@ pub fn compile(file: File) -> Result<ImageData> {
             continue;
         }
 
-        if let Some(first_half) = line.split(';').next() {
+        if let Some(first_half) = line.rsplitn(2, ';').next() {
             let first_half = first_half.trim();
 
             let mut first_half_split = first_half.splitn(2, ' ');
@@ -36,10 +36,10 @@ pub fn compile(file: File) -> Result<ImageData> {
                 println!("Compiling {} with args: {:?}", opcode, args);
                 compile_instruction(&mut builder, opcode, args)?;
             } else {
-                bail!("opcode expected");
+                bail!("opcode expected. Found {:?}", first_half_split);
             }
         } else {
-            bail!("instruction expected");
+            bail!("instruction expected. Found {:?}", line.to_string());
         }
     }
 

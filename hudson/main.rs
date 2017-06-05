@@ -4,12 +4,11 @@ extern crate clap;
 extern crate definitions;
 extern crate bincode;
 
-mod error;
 mod commands;
 mod basm;
 
 use clap::{App, AppSettings, Arg, SubCommand};
-use error::*;
+use definitions::error::*;
 
 fn main() {
     if let Err(ref e) = run() {
