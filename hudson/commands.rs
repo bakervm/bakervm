@@ -124,7 +124,7 @@ pub fn compile(matches: &ArgMatches) -> Result<()> {
         let output_file_name = if let Some(file_name) = matches.value_of("output") {
             file_name.to_owned()
         } else {
-            format!("{}.bin", input_file_name)
+            format!("{}.img", input_file_name)
         };
 
         let mut file = File::create(output_file_name).chain_err(|| "unable to create file")?;
