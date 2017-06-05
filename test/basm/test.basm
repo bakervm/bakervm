@@ -1,0 +1,12 @@
+push $vi(20), 15999
+push $st, -1
+push $st, 1
+add $st, $st
+dup $st
+mov $vi(0), $st
+push $fb, #FFFFFF
+cmp $vi(20), $st
+jmpgt 2
+int 0
+pause
+nop
