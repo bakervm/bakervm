@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, LinkedList};
 use std::sync::{Arc, Barrier};
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError};
 use std::thread::{self, JoinHandle};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 pub fn start(
     program: Program, sender: SyncSender<Frame>, receiver: Receiver<ExternalInterrupt>,
@@ -27,6 +27,8 @@ pub fn start(
                 if let Some(backtrace) = e.backtrace() {
                     println!("backtrace: {:?}", backtrace);
                 }
+
+                ::std::process::exit(1);
             }
         },
     )
@@ -76,27 +78,18 @@ impl VM {
         self.load_program(program).chain_err(|| "invalid program container")?;
         self.build_framebuffer();
 
-        let mut instruction_count = 0;
         let mut now_before = Instant::now();
 
         while (self.pc < self.image_data.len()) && !self.halted {
-            self.external_interrupt(&receiver)?;
-
             self.do_cycle()?;
 
-            self.flush_framebuffer(&sender)?;
-
-            thread::yield_now();
-
-            let secs_elapsed = now_before.elapsed().as_secs();
-
-            if secs_elapsed >= 1 {
-                println!("IPS: {:?}", instruction_count / secs_elapsed);
+            let elapsed_time = now_before.elapsed();
+            if elapsed_time >= Duration::from_millis(16) {
+                self.flush_framebuffer(&sender)?;
                 now_before = Instant::now();
-                instruction_count = 0;
             }
 
-            instruction_count += 1;
+            self.external_interrupt(&receiver, &sender)?;
         }
 
         Ok(())
@@ -179,12 +172,17 @@ impl VM {
     }
 
     /// Handles incoming interrupts or moves along
-    fn external_interrupt(&mut self, receiver: &Receiver<ExternalInterrupt>) -> Result<()> {
+    fn external_interrupt(&mut self, receiver: &Receiver<ExternalInterrupt>, sender: &SyncSender<Frame>)
+        -> Result<()> {
         let interrupt = if self.paused {
             self.paused = false;
+            // We don't know how long this is going to take... better tell I/O what's going
+            // on
+            self.flush_framebuffer(sender)?;
             if let Ok(interrupt) = receiver.recv() {
                 interrupt
             } else {
+                self.halt();
                 return Ok(());
             }
         } else {
@@ -211,10 +209,12 @@ impl VM {
     /// Flushes the internal framebuffer using the given sender
     fn flush_framebuffer(&mut self, sender: &SyncSender<Frame>) -> Result<()> {
         if self.framebuffer_invalid {
-            if let Err(TrySendError::Disconnected(..)) = sender.try_send(self.framebuffer.clone()) {
-                bail!("output channel disconnected");
+            let res = sender.try_send(self.framebuffer.clone());
+            if let Err(TrySendError::Disconnected(..)) = res {
+                self.halt();
+            } else if let Ok(()) = res {
+                self.framebuffer_invalid = false;
             }
-            self.framebuffer_invalid = false;
         }
 
         Ok(())
@@ -437,6 +437,10 @@ impl VM {
             }
             &Target::Framebuffer => {
                 let index = self.get_framebuffer_index()?;
+
+                if index >= self.framebuffer.len() {
+                    bail!("framebuffer index {:?} is out of bounds", index);
+                }
 
                 if let Value::Color(r, g, b) = value {
                     self.framebuffer[index] = (r, g, b);
