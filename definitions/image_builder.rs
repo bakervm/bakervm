@@ -5,8 +5,9 @@ use instruction::Instruction;
 use interrupt::InternalInterrupt;
 use program::Program;
 use target::Target;
+use type_t::Type;
 use typedef::*;
-use value::{Type, Value};
+use value::Value;
 
 pub struct ImageBuilder {
     instructions: Vec<Instruction>,
@@ -94,6 +95,10 @@ impl ImageBuilder {
         self.add_instruction(Instruction::Swp(src_a, src_b));
     }
 
+    pub fn dup(&mut self, dest: Target) {
+        self.add_instruction(Instruction::Dup(dest));
+    }
+
 
 
 
@@ -114,6 +119,10 @@ impl ImageBuilder {
 
     pub fn pause(&mut self) {
         self.add_instruction(Instruction::Pause);
+    }
+
+    pub fn nop(&mut self) {
+        self.add_instruction(Instruction::Nop);
     }
 
     pub fn int(&mut self, interrupt: InternalInterrupt) {
