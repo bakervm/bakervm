@@ -1,8 +1,8 @@
 use basm;
 use clap::ArgMatches;
 use definitions::{DisplayResolution, ImageBuilder, InternalInterrupt, Target, Value};
+use definitions::error::*;
 use definitions::typedef::*;
-use error::*;
 use std::fs::File;
 use std::io::Write;
 

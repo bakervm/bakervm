@@ -10,13 +10,12 @@ extern crate serde_derive;
 extern crate serde;
 
 mod vm;
-mod error;
 mod io;
 
 use clap::{App, Arg};
 use definitions::Program;
+use definitions::error::*;
 use definitions::typedef::*;
-use error::*;
 use std::fs::File;
 use std::io::Read;
 use std::sync::{Arc, Barrier, mpsc};

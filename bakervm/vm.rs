@@ -1,7 +1,7 @@
 use definitions::{Config, ExternalInterrupt, Instruction, InternalInterrupt, Program, Target,
                   Type, Value};
+use definitions::error::*;
 use definitions::typedef::*;
-use error::*;
 use std::collections::{BTreeMap, LinkedList};
 use std::sync::{Arc, Barrier};
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError};

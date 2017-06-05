@@ -1,7 +1,7 @@
 use definitions::Config;
 use definitions::ExternalInterrupt;
+use definitions::error::*;
 use definitions::typedef::*;
-use error::*;
 use sdl2;
 use sdl2::event::Event;
 use sdl2::pixels::Color;
