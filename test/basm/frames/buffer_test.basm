@@ -1,0 +1,29 @@
+call start
+halt
+
+.start
+  push $st, 0
+  push $vi(0), 0
+  call loop
+  ret
+
+.draw
+  push $st, 2048
+  add $st, $st
+  dup $st
+  mov $vi(20), $st
+  cast $vi(20), color
+  mov $fb, $vi(20)
+  push $vi(21), 1
+  add $vi(0), $vi(21)
+  ret
+
+.loop
+  push $vi(30), 15999
+  cmp $vi(0), $vi(30)
+  call draw
+  jmplt loop
+  int 0
+  push $vi(0), 0
+  jmp loop
+  ret
