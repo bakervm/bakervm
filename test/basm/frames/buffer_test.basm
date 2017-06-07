@@ -2,7 +2,7 @@ call start
 halt
 
 .start
-  push $st, 0
+  push $st, -2048
   push $vi(0), 0
   call loop
   ret
