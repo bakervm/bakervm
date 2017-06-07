@@ -48,7 +48,7 @@ fn run() -> Result<()> {
                     .takes_value(true)
                     .value_name("FILE")
                     .help("Sets the destination file."))
-                .arg(Arg::with_name("basm").long("basm"))
+                .arg(Arg::with_name("basm").long("basm").help("compile the specified file as BASM"))
         )
         .get_matches();
 

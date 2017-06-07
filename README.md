@@ -6,13 +6,47 @@ A virtual machine for building and running retro games
 ## Introduction
 The bakerVM is a virtual machine that executes bakerVM bytecode.
 
-A builder-like compiler backend for the vm can be found in `definitions/image_builder.rs`. Since this project doesn't ship a sensible compiler yet, I recommend using it to create some form of assembler :grin:.
+A builder-like compiler backend for the vm can be found in `definitions/image_builder.rs`.
 
 The executable images of the vm are encoded and decoded using the [bincode crate][bincode]
 
 **NOTE THAT THIS SOFTWARE IS STILL UNDER HEAVY DEVELOPMENT AND IN NO WAY STABLE OR COMPLETE.**
 
-**I HIGHLY RECOMMEND TO NOT USE IT IN PRODUCTION!**
+## Installation
+
+### Install sdl2
+
+On Ubuntu:
+```shell
+sudo apt install libsdl2-dev
+```
+
+On macOS:
+```shell
+brew install sdl2
+```
+
+The toolchain doesn't support Windows *yet*
+
+### Install the toolchain
+
+To get the newest version of the bakerVM toolchain, first you have to install Rust. The Project is currently tracking stable Rust. After you installed Rust and Cargo correctly, install the toolchain using the following command:
+```shell
+cargo install bakervm
+```
+If you already installed an older version you have to *force* the installation:
+```shell
+cargo install bakervm -f
+```
+
+After the installation, you should have the following binaries installed: `bakervm` and `hudson`.
+
+`hudson` is the bakervm toolkit. It is currently only able to compile `*.basm` files.
+
+`bakervm` is the VM itself. On startup it loads the stock image by default. But you can specify any bakerVM image:
+```shell
+bakervm path/to/my/image/game.img
+```
 
 [crate-image]: https://img.shields.io/crates/v/bakervm.svg
 [crate-link]: https://crates.io/crates/bakervm
