@@ -132,7 +132,7 @@ fn text_to_mnemonic(opcode: String, args: Vec<String>) -> Result<Mnemonic> {
     }
 }
 
-fn compile_mnemonic(builder: &mut ImageBuilder, mnemonic: Mnemonic, lookup: &HashMap<String, Address>)
+fn compile_mnemonic(builder: &mut ImageBuilder, mnemonic: Mnemonic, lookup_map: &HashMap<String, Address>)
     -> Result<()> {
 
     println!("Compiling mnemonic {:?}", mnemonic);
@@ -145,12 +145,12 @@ fn compile_mnemonic(builder: &mut ImageBuilder, mnemonic: Mnemonic, lookup: &Has
         Mnemonic::Rem(dest, src) => builder.rem(dest, src),
 
         Mnemonic::Cmp(target_a, target_b) => builder.cmp(target_a, target_b),
-        Mnemonic::Jmp(label) => builder.jmp(lookup[&label]),
-        Mnemonic::JmpLt(label) => builder.jmp_lt(lookup[&label]),
-        Mnemonic::JmpGt(label) => builder.jmp_gt(lookup[&label]),
-        Mnemonic::JmpEq(label) => builder.jmp_eq(lookup[&label]),
-        Mnemonic::JmpLtEq(label) => builder.jmp_lt_eq(lookup[&label]),
-        Mnemonic::JmpGtEq(label) => builder.jmp_gt(lookup[&label]),
+        Mnemonic::Jmp(label) => builder.jmp(lookup(lookup_map, &label)?),
+        Mnemonic::JmpLt(label) => builder.jmp_lt(lookup(lookup_map, &label)?),
+        Mnemonic::JmpGt(label) => builder.jmp_gt(lookup(lookup_map, &label)?),
+        Mnemonic::JmpEq(label) => builder.jmp_eq(lookup(lookup_map, &label)?),
+        Mnemonic::JmpLtEq(label) => builder.jmp_lt_eq(lookup(lookup_map, &label)?),
+        Mnemonic::JmpGtEq(label) => builder.jmp_gt(lookup(lookup_map, &label)?),
 
         Mnemonic::Cast(target, type_t) => builder.cast(target, type_t),
 
@@ -159,7 +159,7 @@ fn compile_mnemonic(builder: &mut ImageBuilder, mnemonic: Mnemonic, lookup: &Has
         Mnemonic::Swp(target_a, target_b) => builder.swp(target_a, target_b),
         Mnemonic::Dup(target) => builder.dup(target),
 
-        Mnemonic::Call(label) => builder.call(lookup[&label]),
+        Mnemonic::Call(label) => builder.call(lookup(lookup_map, &label)?),
         Mnemonic::Ret => builder.ret(),
 
         Mnemonic::Halt => builder.halt(),
@@ -169,6 +169,14 @@ fn compile_mnemonic(builder: &mut ImageBuilder, mnemonic: Mnemonic, lookup: &Has
     }
 
     Ok(())
+}
+
+fn lookup(lookup: &HashMap<String, Address>, input: &String) -> Result<Address> {
+    if let Some(addr) = lookup.get(input) {
+        Ok(*addr)
+    } else {
+        bail!("label {:?} not found", input);
+    }
 }
 
 #[cfg(test)]
