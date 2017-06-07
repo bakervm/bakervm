@@ -95,9 +95,14 @@ impl VM {
             self.do_cycle()?;
 
             let elapsed_time = now.elapsed();
-            if elapsed_time >= Duration::from_millis(16) {
-                self.flush_framebuffer(&sender)?;
-                now = Instant::now();
+            if self.framebuffer_invalid && elapsed_time >= Duration::from_millis(16) {
+                let res = sender.try_send(self.next_frame.clone());
+                if let Err(TrySendError::Disconnected(..)) = res {
+                    self.halt();
+                } else if let Ok(()) = res {
+                    self.framebuffer_invalid = false;
+                    now = Instant::now();
+                }
             }
 
             self.external_interrupt(&receiver, &sender)?;
@@ -224,20 +229,6 @@ impl VM {
 
         Ok(())
 
-    }
-
-    /// Flushes the internal framebuffer using the given sender
-    fn flush_framebuffer(&mut self, sender: &SyncSender<Frame>) -> Result<()> {
-        if self.framebuffer_invalid {
-            let res = sender.try_send(self.next_frame.clone());
-            if let Err(TrySendError::Disconnected(..)) = res {
-                self.halt();
-            } else if let Ok(()) = res {
-                self.framebuffer_invalid = false;
-            }
-        }
-
-        Ok(())
     }
 
     /// Waits for the channel to be available, then flushes the internal
