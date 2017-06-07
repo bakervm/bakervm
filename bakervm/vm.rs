@@ -54,6 +54,7 @@ struct VM {
     val_index: BTreeMap<Address, Value>,
     framebuffer: Frame,
     framebuffer_invalid: bool,
+    next_frame: Frame,
     /// A register for holding information about a recent comparison
     cmp_register: Option<Ordering>,
     /// A stack to hold the return addresses of function calls
@@ -183,7 +184,10 @@ impl VM {
     /// Handles an internal interrupt
     fn int(&mut self, interrupt: &InternalInterrupt) {
         match interrupt {
-            &InternalInterrupt::FlushFramebuffer => self.invalidate_framebuffer(),
+            &InternalInterrupt::FlushFramebuffer => {
+                self.next_frame = self.framebuffer.clone();
+                self.invalidate_framebuffer();
+            }
         }
     }
 
@@ -225,7 +229,7 @@ impl VM {
     /// Flushes the internal framebuffer using the given sender
     fn flush_framebuffer(&mut self, sender: &SyncSender<Frame>) -> Result<()> {
         if self.framebuffer_invalid {
-            let res = sender.try_send(self.framebuffer.clone());
+            let res = sender.try_send(self.next_frame.clone());
             if let Err(TrySendError::Disconnected(..)) = res {
                 self.halt();
             } else if let Ok(()) = res {
@@ -240,11 +244,12 @@ impl VM {
     /// framebuffer using the given sender
     fn wait_flush_framebuffer(&mut self, sender: &SyncSender<Frame>) -> Result<()> {
         if self.framebuffer_invalid {
-            let res = sender.send(self.framebuffer.clone());
+            let res = sender.send(self.next_frame.clone());
             if let Err(..) = res {
                 self.halt();
+            } else {
+                self.framebuffer_invalid = false;
             }
-            self.framebuffer_invalid = false;
         }
 
         Ok(())
