@@ -7,11 +7,11 @@ use type_t::Type;
 use typedef::*;
 
 lazy_static! {
-    static ref BOOLEAN_RE: Regex = Regex::new("^true|false$").unwrap();
-    static ref FLOAT_RE: Regex = Regex::new("^(-?\\d+)?\\.[0-9]+$").unwrap();
-    static ref INTEGER_RE: Regex = Regex::new("^(-?\\d+)?$").unwrap();
-    static ref COLOR_RE: Regex = Regex::new("^#([0-9abcdefABCDEF]{6})$").unwrap();
-    static ref CHAR_RE: Regex = Regex::new("^'(.)'$").unwrap();
+    static ref BOOLEAN_RE: Regex = Regex::new(r"^true|false$").unwrap();
+    static ref FLOAT_RE: Regex = Regex::new(r"^(-?\d+)?\.[0-9]+$").unwrap();
+    static ref INTEGER_RE: Regex = Regex::new(r"^(-?\d+)?$").unwrap();
+    static ref COLOR_RE: Regex = Regex::new(r"^#([0-9abcdefABCDEF]{6})$").unwrap();
+    static ref CHAR_RE: Regex = Regex::new(r"^'(.)'$").unwrap();
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]

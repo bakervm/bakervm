@@ -1,0 +1,23 @@
+jmp start
+
+.start
+  push $vi(20), 15999
+  push $st, -1
+  jmp loop
+
+.loop
+  push $st, 1
+  add $st, $st
+  dup $st
+  mov $vi(0), $st
+  push $fb, #FFFFFF
+  int 0
+  cmp $st, $vi(20)
+  jmplt loop
+  call flush
+  pause
+  halt
+
+.flush
+  int 0
+  ret
