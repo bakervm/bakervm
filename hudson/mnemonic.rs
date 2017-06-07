@@ -1,5 +1,5 @@
 use definitions::{InternalInterrupt, Target, Type, Value};
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Mnemonic {
     Add(Target, Target),
     Sub(Target, Target),

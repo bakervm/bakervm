@@ -67,8 +67,6 @@ pub fn compile(file: File) -> Result<ImageData> {
                 first_half.to_owned()
             };
 
-            println!("Input instruction {:?}", first_half);
-
             let mut first_half_split = first_half.splitn(2, ' ');
 
             if let Some(opcode) = first_half_split.next() {
@@ -81,7 +79,7 @@ pub fn compile(file: File) -> Result<ImageData> {
                     Vec::new()
                 };
 
-                println!("Compiling {} with args: {:?}", opcode, args);
+                println!("Adding mnemonic {} with args: {:?}", opcode, args);
 
                 mnemonic_vector.push(text_to_mnemonic(opcode, args)?);
 
@@ -136,6 +134,8 @@ fn text_to_mnemonic(opcode: String, args: Vec<String>) -> Result<Mnemonic> {
 
 fn compile_mnemonic(builder: &mut ImageBuilder, mnemonic: Mnemonic, lookup: &HashMap<String, Address>)
     -> Result<()> {
+
+    println!("Compiling mnemonic {:?}", mnemonic);
 
     match mnemonic {
         Mnemonic::Add(dest, src) => builder.add(dest, src),
