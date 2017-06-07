@@ -3,7 +3,8 @@ jmp start
 .start
   push $vi(20), 15999
   push $st, -1
-  jmp loop
+  call loop
+  halt
 
 .loop
   push $st, 1
@@ -16,7 +17,7 @@ jmp start
   jmplt loop
   call flush
   pause
-  halt
+  ret
 
 .flush
   int 0
