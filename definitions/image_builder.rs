@@ -18,7 +18,11 @@ impl ImageBuilder {
         ImageBuilder { instructions: Vec::new() }
     }
 
-    fn add_instruction(&mut self, instruction: Instruction) {
+    pub fn len(&mut self) -> usize {
+        self.instructions.len()
+    }
+
+    pub fn add_instruction(&mut self, instruction: Instruction) {
         self.instructions.push(instruction);
     }
 
