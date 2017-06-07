@@ -11,3 +11,7 @@ rust:
 matrix:
   allow_failures:
     - rust: nightly
+notifications:
+  email:
+    on_success: never
+    on_failure: always
