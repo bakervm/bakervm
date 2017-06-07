@@ -1,6 +1,7 @@
-pause
-dup $vi(1)
-mov $vi(0), $st
-push $fb, #2d858d
-int 0
-jmp 0
+.start
+  pause
+  dup $vi(1)
+  mov $vi(0), $st
+  push $fb, #2d858d
+  int 0
+  jmp start
