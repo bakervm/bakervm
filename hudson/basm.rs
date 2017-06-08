@@ -29,40 +29,48 @@ impl BASMCompiler {
         self.label_addr_map.entry(label).or_insert(self.mnemonics.len());
     }
 
+    fn base_path(&mut self, orig_path: &Path) -> Result<PathBuf> {
+        let file_name = if let Some(ref file_name) = orig_path.file_name() {
+            if let Some(..) = self.last_base_dir {
+                PathBuf::from(orig_path)
+            } else {
+                PathBuf::from(file_name.clone())
+            }
+        } else {
+            bail!("unable to obtain file name");
+        };
+
+        let absolute_path = if let Some(ref base_dir) = self.last_base_dir {
+            base_dir.clone()
+        } else {
+            let current_dir = if orig_path.is_relative() {
+                env::current_dir().chain_err(|| "unable to get current directory")?
+            } else {
+                if let Some(ref parent) = orig_path.parent() {
+                    parent.to_path_buf().clone()
+                } else {
+                    bail!("unable to get parent directory")
+                }
+            };
+
+            let base_file = current_dir.join(orig_path);
+            let base_dir = if let Some(ref dir) = base_file.parent() {
+                dir.clone()
+            } else {
+                bail!("unable to get parent directory")
+            };
+
+            self.last_base_dir = Some(base_dir.to_path_buf().clone());
+            base_dir.to_path_buf()
+        };
+
+        Ok(absolute_path.join(file_name))
+    }
+
     fn compile_mnemonics(&mut self, file_name: String) -> Result<()> {
         let orig_path = Path::new(&file_name);
 
-        let path = if orig_path.is_relative() {
-            let file_name = if let Some(ref file_name) = orig_path.file_name() {
-                if let Some(..) = self.last_base_dir {
-                    PathBuf::from(orig_path)
-                } else {
-                    PathBuf::from(file_name.clone())
-                }
-            } else {
-                bail!("unable to obtain file name");
-            };
-
-            let absolute_path = if let Some(ref base_dir) = self.last_base_dir {
-                base_dir.clone()
-            } else {
-                let current_dir = env::current_dir()
-                    .chain_err(|| "unable to get current directory")?;
-                let base_file = current_dir.join(orig_path);
-                let base_dir = if let Some(ref dir) = base_file.parent() {
-                    dir.clone()
-                } else {
-                    bail!("unable to get parent directory")
-                };
-
-                self.last_base_dir = Some(base_dir.to_path_buf().clone());
-                base_dir.to_path_buf()
-            };
-
-            absolute_path.join(file_name)
-        } else {
-            orig_path.clone().to_path_buf()
-        };
+        let path = self.base_path(orig_path)?;
 
         let file = File::open(path).chain_err(|| "unable to open file")?;
 
