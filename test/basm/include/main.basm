@@ -1,0 +1,21 @@
+call start
+halt
+
+include! paint/paint
+
+.start
+  push $st, 5
+  push $st, 5
+  call paint_white_dot
+  push $st, 6
+  push $st, 5
+  call paint_white_dot
+  push $st, 7
+  push $st, 5
+  call paint_white_dot
+  push $st, 8
+  push $st, 5
+  call paint_white_dot
+  int 0
+  pause
+  ret

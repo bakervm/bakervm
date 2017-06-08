@@ -1,0 +1,14 @@
+.paint_white_dot
+  mov $vi(40), $st    ; y-coord (future-index)
+  mov $vi(41), $st    ; x-coord
+  dup $vi(2)
+  mov $vi(42), $st    ; display-width
+
+  mul $vi(40), $vi(42)
+  add $vi(40), $vi(41)   ; vi(40) = index
+
+  mov $vi(0), $vi(40)
+
+  push $fb, #FFFFFF
+
+  ret

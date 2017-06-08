@@ -9,6 +9,7 @@ use type_t::Type;
 use typedef::*;
 use value::Value;
 
+#[derive(Default, Clone)]
 pub struct ImageBuilder {
     instructions: Vec<Instruction>,
 }
