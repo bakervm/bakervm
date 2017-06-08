@@ -1,6 +1,6 @@
 # BASM - The bakerVM assembly language
 
-The bakerVM has a very simple architecture and ships its own very simple assembly language. The main part of the VM is the stack, where most of the computation should happen. Apart from that the bakerVM has a separate call-stack, so function calls won't pollute the data stack. In addition to that contains the bakerVM a so-called value-index, which is basically indexed RAM. It also has a framebuffer. The types and symbols used in the bakerVM assembly language are shown here.
+The bakerVM has a very simple architecture and ships its own very simple assembly language. The main part of the VM is the stack, where most of the computation should happen. Apart from that the bakerVM has a separate call-stack, so function calls won't pollute the data stack. In addition to that the bakerVM contains a so-called value-index, which is basically indexed RAM. It also has a framebuffer. The types and symbols used in the bakerVM assembly language are shown here.
 
 ## Target
 
