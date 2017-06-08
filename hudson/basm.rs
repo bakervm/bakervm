@@ -4,99 +4,243 @@ use definitions::typedef::*;
 use mnemonic::Mnemonic;
 use regex::Regex;
 use std::collections::HashMap;
+use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
+use std::path::{Path, PathBuf};
 
 lazy_static! {
     static ref LABELED_MNEMONIC_RE: Regex = Regex::new(r"^\.(.+?) +?(.+)$").unwrap();
     static ref LABEL_RE: Regex = Regex::new(r"^\.([^\s]+)$").unwrap();
+    static ref INCLUDE_RE: Regex = Regex::new(r"^include! +([^\s]+)$").unwrap();
 }
 
+#[derive(Default)]
+struct BASMCompiler {
+    label_addr_map: HashMap<String, Address>,
+    mnemonics: Vec<Mnemonic>,
+    builder: ImageBuilder,
+    last_base_dir: Option<PathBuf>,
+}
 
-pub fn compile(file: File) -> Result<ImageData> {
-    let reader = BufReader::new(file);
+impl BASMCompiler {
+    fn add_label(&mut self, label: String) {
+        self.label_addr_map.entry(label).or_insert(self.mnemonics.len());
+    }
 
-    let mut builder = ImageBuilder::new();
+    fn compile_mnemonics(&mut self, file_name: String) -> Result<()> {
+        let orig_path = Path::new(&file_name);
 
-    let mut label_addr_map = HashMap::new();
+        let path = if orig_path.is_relative() {
+            let file_name = if let Some(ref file_name) = orig_path.file_name() {
+                if let Some(..) = self.last_base_dir {
+                    PathBuf::from(orig_path)
+                } else {
+                    PathBuf::from(file_name.clone())
+                }
+            } else {
+                bail!("unable to obtain file name");
+            };
 
-    let mut mnemonic_vector = Vec::new();
+            let absolute_path = if let Some(ref base_dir) = self.last_base_dir {
+                base_dir.clone()
+            } else {
+                let current_dir = env::current_dir()
+                    .chain_err(|| "unable to get current directory")?;
+                let base_file = current_dir.join(orig_path);
+                let base_dir = if let Some(ref dir) = base_file.parent() {
+                    dir.clone()
+                } else {
+                    bail!("unable to get parent directory")
+                };
 
-    let mut instruction_count = 0;
+                self.last_base_dir = Some(base_dir.to_path_buf().clone());
+                base_dir.to_path_buf()
+            };
 
-    for line in reader.lines() {
-        let line = line.chain_err(|| "unable to read line")?;
+            absolute_path.join(file_name)
+        } else {
+            orig_path.clone().to_path_buf()
+        };
 
-        if line.is_empty() {
-            continue;
-        }
+        println!("{:?}", path);
 
-        if let Some(first_half) = line.rsplitn(2, ';').next() {
-            let first_half = first_half.trim();
+        let file = File::open(path).chain_err(|| "unable to open file")?;
 
-            let first_half: String = if LABELED_MNEMONIC_RE.is_match(first_half) {
-                let captures =
-                    if let Some(captures) = LABELED_MNEMONIC_RE.captures_iter(first_half).next() {
+        let reader = BufReader::new(file);
+
+        for line in reader.lines() {
+            let line = line.chain_err(|| "unable to read line")?;
+
+            if line.is_empty() {
+                continue;
+            }
+
+            let mut r_split = line.rsplitn(2, ';');
+
+            if r_split.clone().count() > 1 {
+                r_split.next();
+            }
+
+            if let Some(first_half) = r_split.next() {
+                let first_half = first_half.trim();
+
+                let first_half: String = if LABELED_MNEMONIC_RE.is_match(first_half) {
+                    let captures = if let Some(captures) = LABELED_MNEMONIC_RE
+                           .captures_iter(first_half)
+                           .next() {
                         captures
                     } else {
                         bail!("no label capture found")
                     };
 
-                let label = captures[1].trim();
+                    let label = captures[1].trim();
 
-                println!("Label {:?} found at address {}", label, instruction_count);
+                    println!(
+                        "Label {:?} found at address {}",
+                        label,
+                        self.mnemonics.len()
+                    );
 
-                label_addr_map.entry(label.to_owned()).or_insert(instruction_count);
+                    self.add_label(label.to_owned());
 
-                captures[2].trim().to_owned()
-            } else if LABEL_RE.is_match(first_half) {
-                let captures = if let Some(captures) = LABEL_RE.captures_iter(first_half).next() {
-                    captures
+                    captures[2].trim().to_owned()
+                } else if LABEL_RE.is_match(first_half) {
+                    let captures =
+                        if let Some(captures) = LABEL_RE.captures_iter(first_half).next() {
+                            captures
+                        } else {
+                            bail!("no label capture found")
+                        };
+
+                    let label = captures[1].trim();
+
+                    println!(
+                        "Label {:?} found at address {}",
+                        label,
+                        self.mnemonics.len()
+                    );
+
+                    self.add_label(label.to_owned());
+                    continue;
+                } else if INCLUDE_RE.is_match(first_half) {
+                    let captures =
+                        if let Some(captures) = INCLUDE_RE.captures_iter(first_half).next() {
+                            captures
+                        } else {
+                            bail!("no include capture found")
+                        };
+
+                    self.compile_mnemonics(captures[1].trim().to_owned() + ".basm")?;
+
+                    continue;
                 } else {
-                    bail!("no label capture found")
+                    first_half.to_owned()
                 };
 
-                let label = captures[1].trim();
+                let mut first_half_split = first_half.splitn(2, ' ');
 
-                println!("Label {:?} found at address {}", label, instruction_count);
-
-                label_addr_map.entry(label.to_owned()).or_insert(instruction_count);
-                continue;
-            } else {
-                first_half.to_owned()
-            };
-
-            let mut first_half_split = first_half.splitn(2, ' ');
-
-            if let Some(opcode) = first_half_split.next() {
-                let opcode = opcode.trim().to_lowercase();
+                if let Some(opcode) = first_half_split.next() {
+                    let opcode = opcode.trim().to_lowercase();
 
 
-                let args: Vec<String> = if let Some(args) = first_half_split.next() {
-                    args.split(',').map(|arg| arg.trim().to_owned()).collect()
+                    let args: Vec<String> = if let Some(args) = first_half_split.next() {
+                        args.split(',').map(|arg| arg.trim().to_owned()).collect()
+                    } else {
+                        Vec::new()
+                    };
+
+                    println!("Adding mnemonic {:?} with args: {:?}", opcode, args);
+
+                    self.mnemonics.push(text_to_mnemonic(opcode, args)?);
                 } else {
-                    Vec::new()
-                };
-
-                println!("Adding mnemonic {} with args: {:?}", opcode, args);
-
-                mnemonic_vector.push(text_to_mnemonic(opcode, args)?);
-
-                instruction_count += 1;
+                    bail!("opcode expected. Found {:?}", first_half_split);
+                }
             } else {
-                bail!("opcode expected. Found {:?}", first_half_split);
+                bail!("instruction expected. Found {:?}", line.to_string());
             }
+        }
+
+        Ok(())
+    }
+
+    fn compile_mnemonic(&mut self, mnemonic: Mnemonic) -> Result<()> {
+
+        println!("Compiling mnemonic {:?}", mnemonic);
+
+        match mnemonic {
+            Mnemonic::Add(dest, src) => self.builder.add(dest, src),
+            Mnemonic::Sub(dest, src) => self.builder.sub(dest, src),
+            Mnemonic::Div(dest, src) => self.builder.div(dest, src),
+            Mnemonic::Mul(dest, src) => self.builder.mul(dest, src),
+            Mnemonic::Rem(dest, src) => self.builder.rem(dest, src),
+
+            Mnemonic::Cmp(target_a, target_b) => self.builder.cmp(target_a, target_b),
+            Mnemonic::Jmp(label) => {
+                let addr = self.lookup(&label)?;
+                self.builder.jmp(addr);
+            }
+            Mnemonic::JmpLt(label) => {
+                let addr = self.lookup(&label)?;
+                self.builder.jmp_lt(addr);
+            }
+            Mnemonic::JmpGt(label) => {
+                let addr = self.lookup(&label)?;
+                self.builder.jmp_gt(addr);
+            }
+            Mnemonic::JmpEq(label) => {
+                let addr = self.lookup(&label)?;
+                self.builder.jmp_eq(addr);
+            }
+            Mnemonic::JmpLtEq(label) => {
+                let addr = self.lookup(&label)?;
+                self.builder.jmp_lt_eq(addr);
+            }
+            Mnemonic::JmpGtEq(label) => {
+                let addr = self.lookup(&label)?;
+                self.builder.jmp_gt_eq(addr);
+            }
+
+            Mnemonic::Cast(target, type_t) => self.builder.cast(target, type_t),
+
+            Mnemonic::Push(target, value) => self.builder.push(target, value),
+            Mnemonic::Mov(dest, src) => self.builder.mov(dest, src),
+            Mnemonic::Swp(target_a, target_b) => self.builder.swp(target_a, target_b),
+            Mnemonic::Dup(target) => self.builder.dup(target),
+
+            Mnemonic::Call(label) => {
+                let addr = self.lookup(&label)?;
+                self.builder.call(addr);
+            }
+            Mnemonic::Ret => self.builder.ret(),
+
+            Mnemonic::Halt => self.builder.halt(),
+            Mnemonic::Pause => self.builder.pause(),
+            Mnemonic::Nop => self.builder.nop(),
+            Mnemonic::Int(int) => self.builder.int(int),
+        }
+
+        Ok(())
+    }
+
+    fn lookup(&mut self, input: &String) -> Result<Address> {
+        if let Some(addr) = self.label_addr_map.get(input) {
+            Ok(*addr)
         } else {
-            bail!("instruction expected. Found {:?}", line.to_string());
+            bail!("label {:?} not found", input);
         }
     }
 
-    for mnemonic in mnemonic_vector {
-        compile_mnemonic(&mut builder, mnemonic.clone(), &label_addr_map)?;
-    }
+    pub fn compile(&mut self, file_name: String) -> Result<ImageData> {
+        self.compile_mnemonics(file_name)?;
 
-    Ok(builder.gen())
+        for mnemonic in self.mnemonics.clone() {
+            self.compile_mnemonic(mnemonic)?;
+        }
+
+        Ok(self.builder.clone().gen())
+    }
 }
 
 fn text_to_mnemonic(opcode: String, args: Vec<String>) -> Result<Mnemonic> {
@@ -132,51 +276,8 @@ fn text_to_mnemonic(opcode: String, args: Vec<String>) -> Result<Mnemonic> {
     }
 }
 
-fn compile_mnemonic(builder: &mut ImageBuilder, mnemonic: Mnemonic, lookup_map: &HashMap<String, Address>)
-    -> Result<()> {
-
-    println!("Compiling mnemonic {:?}", mnemonic);
-
-    match mnemonic {
-        Mnemonic::Add(dest, src) => builder.add(dest, src),
-        Mnemonic::Sub(dest, src) => builder.sub(dest, src),
-        Mnemonic::Div(dest, src) => builder.div(dest, src),
-        Mnemonic::Mul(dest, src) => builder.mul(dest, src),
-        Mnemonic::Rem(dest, src) => builder.rem(dest, src),
-
-        Mnemonic::Cmp(target_a, target_b) => builder.cmp(target_a, target_b),
-        Mnemonic::Jmp(label) => builder.jmp(lookup(lookup_map, &label)?),
-        Mnemonic::JmpLt(label) => builder.jmp_lt(lookup(lookup_map, &label)?),
-        Mnemonic::JmpGt(label) => builder.jmp_gt(lookup(lookup_map, &label)?),
-        Mnemonic::JmpEq(label) => builder.jmp_eq(lookup(lookup_map, &label)?),
-        Mnemonic::JmpLtEq(label) => builder.jmp_lt_eq(lookup(lookup_map, &label)?),
-        Mnemonic::JmpGtEq(label) => builder.jmp_gt(lookup(lookup_map, &label)?),
-
-        Mnemonic::Cast(target, type_t) => builder.cast(target, type_t),
-
-        Mnemonic::Push(target, value) => builder.push(target, value),
-        Mnemonic::Mov(dest, src) => builder.mov(dest, src),
-        Mnemonic::Swp(target_a, target_b) => builder.swp(target_a, target_b),
-        Mnemonic::Dup(target) => builder.dup(target),
-
-        Mnemonic::Call(label) => builder.call(lookup(lookup_map, &label)?),
-        Mnemonic::Ret => builder.ret(),
-
-        Mnemonic::Halt => builder.halt(),
-        Mnemonic::Pause => builder.pause(),
-        Mnemonic::Nop => builder.nop(),
-        Mnemonic::Int(int) => builder.int(int),
-    }
-
-    Ok(())
-}
-
-fn lookup(lookup: &HashMap<String, Address>, input: &String) -> Result<Address> {
-    if let Some(addr) = lookup.get(input) {
-        Ok(*addr)
-    } else {
-        bail!("label {:?} not found", input);
-    }
+pub fn compile(file_name: String) -> Result<ImageData> {
+    BASMCompiler::default().compile(file_name)
 }
 
 #[cfg(test)]
@@ -207,6 +308,19 @@ mod tests {
             let captures = LABEL_RE.captures_iter(input).next().unwrap();
 
             assert_eq!(captures[1].trim(), "start");
+        }
+    }
+
+    #[test]
+    fn include_regex() {
+        let input = "include! std";
+
+        if !INCLUDE_RE.is_match(input) {
+            panic!("input doesn't match an include statement");
+        } else {
+            let captures = INCLUDE_RE.captures_iter(input).next().unwrap();
+
+            assert_eq!(captures[1].trim(), "std");
         }
     }
 }

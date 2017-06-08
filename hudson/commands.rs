@@ -116,10 +116,9 @@ pub fn compile(matches: &ArgMatches) -> Result<()> {
         bail!("no file name given");
     };
 
-    let file = File::open(input_file_name).chain_err(|| "unable to open file")?;
-
     if matches.is_present("basm") {
-        let program = basm::compile(file).chain_err(|| "unable to compile file")?;
+        let program = basm::compile(input_file_name.to_owned())
+            .chain_err(|| "unable to compile file")?;
 
         let output_file_name = if let Some(file_name) = matches.value_of("output") {
             file_name.to_owned()
