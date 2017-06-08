@@ -64,8 +64,6 @@ impl BASMCompiler {
             orig_path.clone().to_path_buf()
         };
 
-        println!("{:?}", path);
-
         let file = File::open(path).chain_err(|| "unable to open file")?;
 
         let reader = BufReader::new(file);
