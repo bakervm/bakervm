@@ -2,13 +2,14 @@ call start
 halt
 
 .start
-  push $st, -2048
+  push $st, -1024
+  push $vi(30), 15999
   push $vi(0), 0
   call loop
   ret
 
 .draw
-  push $st, 2048
+  push $st, 1024
   add $st, $st
   dup $st
   mov $vi(20), $st
@@ -19,9 +20,8 @@ halt
   ret
 
 .loop
-  push $vi(30), 15999
-  cmp $vi(0), $vi(30)
   call draw
+  cmp $vi(0), $vi(30)
   jmplt loop
   int 0
   push $vi(0), 0
