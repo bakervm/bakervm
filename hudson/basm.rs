@@ -22,6 +22,7 @@ struct BASMCompiler {
     mnemonics: Vec<Mnemonic>,
     builder: ImageBuilder,
     last_base_dir: Option<PathBuf>,
+    deep: usize,
 }
 
 impl BASMCompiler {
@@ -70,6 +71,9 @@ impl BASMCompiler {
     fn compile_mnemonics(&mut self, file_name: String) -> Result<()> {
         let orig_path = Path::new(&file_name);
 
+        let padding = (0..self.deep).map(|_| " ").collect::<String>();
+        println!("BASM\t{}{}", padding, file_name);
+
         let path = self.base_path(orig_path)?;
 
         let file = File::open(path).chain_err(|| "unable to open file")?;
@@ -103,12 +107,6 @@ impl BASMCompiler {
 
                     let label = captures[1].trim();
 
-                    println!(
-                        "Label {:?} found at address {}",
-                        label,
-                        self.mnemonics.len()
-                    );
-
                     self.add_label(label.to_owned());
 
                     captures[2].trim().to_owned()
@@ -122,12 +120,6 @@ impl BASMCompiler {
 
                     let label = captures[1].trim();
 
-                    println!(
-                        "Label {:?} found at address {}",
-                        label,
-                        self.mnemonics.len()
-                    );
-
                     self.add_label(label.to_owned());
                     continue;
                 } else if INCLUDE_RE.is_match(first_half) {
@@ -138,7 +130,9 @@ impl BASMCompiler {
                             bail!("no include capture found")
                         };
 
+                    self.deep += 2;
                     self.compile_mnemonics(captures[1].trim().to_owned() + ".basm")?;
+                    self.deep -= 2;
 
                     continue;
                 } else {
@@ -157,8 +151,6 @@ impl BASMCompiler {
                         Vec::new()
                     };
 
-                    println!("Adding mnemonic {:?} with args: {:?}", opcode, args);
-
                     self.mnemonics.push(text_to_mnemonic(opcode, args)?);
                 } else {
                     bail!("opcode expected. Found {:?}", first_half_split);
@@ -172,9 +164,6 @@ impl BASMCompiler {
     }
 
     fn compile_mnemonic(&mut self, mnemonic: Mnemonic) -> Result<()> {
-
-        println!("Compiling mnemonic {:?}", mnemonic);
-
         match mnemonic {
             Mnemonic::Add(dest, src) => self.builder.add(dest, src),
             Mnemonic::Sub(dest, src) => self.builder.sub(dest, src),
