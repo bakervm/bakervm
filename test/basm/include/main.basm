@@ -4,17 +4,26 @@ halt
 include! paint/paint
 
 .start
+  push $st, 0
+  push $st, 0
+  call paint_white_dot
+  push $st, 1
+  push $st, 1
+  call paint_white_dot
+  push $st, 2
+  push $st, 2
+  call paint_white_dot
+  push $st, 3
+  push $st, 3
+  call paint_white_dot
+  push $st, 4
+  push $st, 4
+  call paint_white_dot
   push $st, 5
   push $st, 5
   call paint_white_dot
   push $st, 6
-  push $st, 5
-  call paint_white_dot
-  push $st, 7
-  push $st, 5
-  call paint_white_dot
-  push $st, 8
-  push $st, 5
+  push $st, 6
   call paint_white_dot
   int 0
   pause
