@@ -71,8 +71,8 @@ impl BASMCompiler {
     fn compile_mnemonics(&mut self, file_name: String) -> Result<()> {
         let orig_path = Path::new(&file_name);
 
-        let padding = (0..self.deep).map(|_| " ").collect::<String>();
-        println!("BASM\t{}{}", padding, file_name);
+        let padding = (0..self.deep).map(|_| "  ").collect::<String>();
+        println!("BASM    {}{}", padding, file_name);
 
         let path = self.base_path(orig_path)?;
 
@@ -130,9 +130,9 @@ impl BASMCompiler {
                             bail!("no include capture found")
                         };
 
-                    self.deep += 2;
+                    self.deep += 1;
                     self.compile_mnemonics(captures[1].trim().to_owned() + ".basm")?;
-                    self.deep -= 2;
+                    self.deep -= 1;
 
                     continue;
                 } else {
