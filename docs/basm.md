@@ -1,8 +1,16 @@
 # BASM - The bakerVM assembly language
 
-The bakerVM has a very simple architecture and ships its own very simple assembly language. The main part of the VM is the stack, where most of the computation should happen. Apart from that the bakerVM has a separate call-stack, so function calls won't pollute the data stack. In addition to that the bakerVM contains a so-called value-index, which is basically indexed RAM. It also has a framebuffer. The types and symbols used in the bakerVM assembly language are shown here.
+The bakerVM has a very simple architecture and ships its own very simple assembly language. The main part of the VM is the stack, where most of the computation should happen. Apart from that the bakerVM has a separate call-stack, so function calls won't pollute the data stack. In addition to that the bakerVM contains a so-called value-index, which is basically indexed RAM. It also has a framebuffer.
+To start compiling a BASM file you use `hudson`:
+```
+hudson compile --basm path/to/main.basm
+```
 
-## Target
+## Types
+
+The types and symbols used in the bakerVM assembly language are shown here.
+
+### Target
 
 | Mnemonic | Description                                                         |
 |---------:|---------------------------------------------------------------------|
@@ -10,7 +18,7 @@ The bakerVM has a very simple architecture and ships its own very simple assembl
 |    `$fb` | Framebuffer                                                         |
 | `$vi(#)` | The value index, where the # represents a constant positive integer |
 
-## Value
+### Value
 
 |                          Mnemonic | Description |
 |----------------------------------:|-------------|
@@ -20,7 +28,7 @@ The bakerVM has a very simple architecture and ships its own very simple assembl
 |              `#23bb11`, `#774466` | Color       |
 | `'a'`, `'b'`, `'/'`, `'\'`, `'@'` | Char        |
 
-## Type
+### Type
 
 | Mnemonic | Description |
 |---------:|-------------|
@@ -30,13 +38,13 @@ The bakerVM has a very simple architecture and ships its own very simple assembl
 |  `color` | Color       |
 |   `char` | Char        |
 
-## InternalInterrupt
+### InternalInterrupt
 
 | Mnemonic | Description      |
 |---------:|------------------|
 |      `0` | FlushFramebuffer |
 
-## Label
+## Labels
 A label is a marker in the source code that symbolizes an address in the instruction stream. Labels begin with a `.`, for example:
 ```
 .start
@@ -63,8 +71,20 @@ jmpeq loop
 call function_name
 ```
 
+## Including files
+In BASM, files can be included using the `include!` statement:
+```
+include! std/io
+```
+The example shown above will search for the file `std/io.basm` relative to the base file. The base file is the file, the compilation starts with e.g:
+```
+hudson compile --basm path/to/main.basm
+```
 
-## Instruction
+
+
+
+## Instructions
 
 |                 Mnemonic | Arguments                          | Description                                                                                              |
 |-------------------------:|------------------------------------|----------------------------------------------------------------------------------------------------------|
