@@ -2,6 +2,7 @@ use std::str::FromStr;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub enum Type {
+    Address,
     Boolean,
     Float,
     Integer,

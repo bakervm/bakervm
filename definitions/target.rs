@@ -13,6 +13,7 @@ pub enum Target {
     Framebuffer,
     ValueIndex(Address),
     Stack,
+    BasePointer,
 }
 
 impl FromStr for Target {
@@ -28,6 +29,8 @@ impl FromStr for Target {
             Ok(Target::Framebuffer)
         } else if s == "$st" {
             Ok(Target::Stack)
+        } else if s == "$bp" {
+            Ok(Target::BasePointer)
         } else {
             Err("unable to parse target")
         }

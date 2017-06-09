@@ -6,6 +6,8 @@ To start compiling a BASM file you use `hudson`:
 hudson compile --basm path/to/main.basm
 ```
 
+You can find documentation about the reserved memory of the VM in `docs/reserved_memory.md`.
+
 ## Types
 
 The types and symbols used in the bakerVM assembly language are shown here.
@@ -22,6 +24,7 @@ The types and symbols used in the bakerVM assembly language are shown here.
 
 |                          Mnemonic | Description |
 |----------------------------------:|-------------|
+|        `@12`, `@0`, `@43`, `@723` | Address     |
 |                   `true`, `false` | Boolean     |
 |           `1.3`, `4.7`, `-43.338` | Float       |
 |            `1`, `2`, `43`, `-567` | Integer     |
