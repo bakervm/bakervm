@@ -16,6 +16,7 @@ impl FromStr for Type {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "addr" => Ok(Type::Address),
             "bool" => Ok(Type::Boolean),
             "float" => Ok(Type::Float),
             "int" => Ok(Type::Integer),

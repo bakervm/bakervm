@@ -264,6 +264,7 @@ impl VM {
     /// Resets the VM to a clean state
     fn reset(&mut self) {
         *self = VM::default();
+        self.base_ptr = NUM_RESERVED_MEM_SLOTS;
     }
 
     /// Locks the program counter in place
@@ -309,7 +310,7 @@ impl VM {
                         bail!("no value found at system-reserved index {}", index);
                     }
                 } else {
-                    let bp_enhanced_index = self.base_ptr - index;
+                    let bp_enhanced_index = self.base_ptr - (index - NUM_RESERVED_MEM_SLOTS);
 
                     if bp_enhanced_index < NUM_RESERVED_MEM_SLOTS {
                         bail!("cannot access value without further allocation");
@@ -480,7 +481,7 @@ impl VM {
                         self.value_index.entry(index).or_insert(Value::Integer(0));
                     *index_value = value;
                 } else {
-                    let bp_enhanced_index = self.base_ptr - index;
+                    let bp_enhanced_index = self.base_ptr - (index - NUM_RESERVED_MEM_SLOTS);
 
                     if bp_enhanced_index < NUM_RESERVED_MEM_SLOTS {
                         bail!("cannot access value without further allocation");

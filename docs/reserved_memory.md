@@ -4,7 +4,7 @@ In generell the first 20 slots of the value-index are reserved by the system. Th
 push $st, @7
 add $bp, $st
 ```
-you are allocating 7 safe slots in the user value-index. Allocation should be already done, when using the value-index. Otherwise you risk corrupting the memory.
+you are allocating 7 safe slots in the user value-index. Allocation should be already done, when using the value-index. Otherwise you risk corrupting the memory. So in that case you would be able to use `$vi(20)` to `$vi(26)`.
 
 
 | index address | usage                                                  |
