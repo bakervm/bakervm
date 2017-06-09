@@ -43,6 +43,8 @@ enum Ordering {
     Equal,
 }
 
+const NUM_RESERVED_MEM_SLOTS: usize = 20;
+
 /// The whole state of the VM
 #[derive(Serialize, Deserialize, Default, Debug)]
 struct VM {
@@ -50,8 +52,9 @@ struct VM {
     image_data: Vec<Instruction>,
     /// The current program counter
     pc: Address,
+    base_ptr: Address,
     stack: LinkedList<Value>,
-    val_index: BTreeMap<Address, Value>,
+    value_index: BTreeMap<Address, Value>,
     framebuffer: Frame,
     framebuffer_invalid: bool,
     next_frame: Frame,
@@ -111,13 +114,18 @@ impl VM {
         Ok(())
     }
 
-    /// Run one instruction cycle
-    fn do_cycle(&mut self) -> Result<()> {
-        let current_instruction = if let Some(current_instruction) = self.image_data.get(self.pc) {
-            current_instruction.clone()
+    /// Returns the instruction at the current program counter
+    fn current_instruction(&mut self) -> Result<Instruction> {
+        if let Some(current_instruction) = self.image_data.get(self.pc) {
+            Ok(current_instruction.clone())
         } else {
             bail!("no instruction found at index {}", self.pc);
-        };
+        }
+    }
+
+    /// Run one instruction cycle
+    fn do_cycle(&mut self) -> Result<()> {
+        let current_instruction = self.current_instruction()?;
 
         self.handle_instruction(current_instruction)?;
         self.advance_pc();
@@ -264,11 +272,11 @@ impl VM {
     }
 
     fn get_framebuffer_index(&mut self) -> Result<Address> {
-        let index = if let &mut Value::Integer(integer) =
-            self.val_index.entry(0).or_insert(Value::Integer(0)) {
-            integer
+        let index = if let &mut Value::Address(addr) =
+            self.value_index.entry(0).or_insert(Value::Address(0)) {
+            addr
         } else {
-            bail!("unable to access a non-integer index");
+            bail!("unable to access a non-address index");
         };
 
         Ok(index as Address)
@@ -294,10 +302,24 @@ impl VM {
     fn pop(&mut self, target: &Target) -> Result<Value> {
         match target {
             &Target::ValueIndex(index) => {
-                if let Some(value) = self.val_index.remove(&index) {
-                    Ok(value)
+                if index < NUM_RESERVED_MEM_SLOTS {
+                    if let Some(value) = self.value_index.remove(&index) {
+                        Ok(value)
+                    } else {
+                        bail!("no value found at system-reserved index {}", index);
+                    }
                 } else {
-                    bail!("no value found at index {}", index);
+                    let bp_enhanced_index = self.base_ptr - index;
+
+                    if bp_enhanced_index < NUM_RESERVED_MEM_SLOTS {
+                        bail!("cannot access value without further allocation");
+                    }
+
+                    if let Some(value) = self.value_index.remove(&bp_enhanced_index) {
+                        Ok(value)
+                    } else {
+                        bail!("no value found at index {}", bp_enhanced_index);
+                    }
                 }
             }
             &Target::Stack => {
@@ -316,6 +338,7 @@ impl VM {
                     bail!("no value found in framebuffer at index {}", index);
                 }
             }
+            &Target::BasePointer => Ok(Value::Address(self.base_ptr)),
         }
     }
 
@@ -326,7 +349,7 @@ impl VM {
         let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
 
-        self.push(dest, dest_value + src_value)?;
+        self.push(dest, (dest_value + src_value)?)?;
 
         Ok(())
     }
@@ -336,7 +359,7 @@ impl VM {
         let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
 
-        self.push(dest, dest_value - src_value)?;
+        self.push(dest, (dest_value - src_value)?)?;
 
         Ok(())
     }
@@ -346,7 +369,7 @@ impl VM {
         let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
 
-        self.push(dest, dest_value / src_value)?;
+        self.push(dest, (dest_value / src_value)?)?;
 
         Ok(())
     }
@@ -356,7 +379,7 @@ impl VM {
         let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
 
-        self.push(dest, dest_value * src_value)?;
+        self.push(dest, (dest_value * src_value)?)?;
 
         Ok(())
     }
@@ -367,7 +390,7 @@ impl VM {
         let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
 
-        self.push(dest, dest_value * src_value)?;
+        self.push(dest, (dest_value * src_value)?)?;
 
         Ok(())
     }
@@ -452,8 +475,21 @@ impl VM {
     fn push(&mut self, dest: &Target, value: Value) -> Result<()> {
         match dest {
             &Target::ValueIndex(index) => {
-                let mut index_value = self.val_index.entry(index).or_insert(Value::Integer(0));
-                *index_value = value;
+                if index < NUM_RESERVED_MEM_SLOTS {
+                    let mut index_value =
+                        self.value_index.entry(index).or_insert(Value::Integer(0));
+                    *index_value = value;
+                } else {
+                    let bp_enhanced_index = self.base_ptr - index;
+
+                    if bp_enhanced_index < NUM_RESERVED_MEM_SLOTS {
+                        bail!("cannot access value without further allocation");
+                    }
+
+                    let mut index_value =
+                        self.value_index.entry(bp_enhanced_index).or_insert(Value::Integer(0));
+                    *index_value = value;
+                }
 
                 Ok(())
             }
@@ -473,6 +509,14 @@ impl VM {
                     Ok(())
                 } else {
                     bail!("unable push a non-color value to the framebuffer");
+                }
+            }
+            &Target::BasePointer => {
+                if let Value::Address(addr) = value {
+                    self.base_ptr = addr;
+                    Ok(())
+                } else {
+                    bail!("unable push a non-address value to the framebuffer");
                 }
             }
         }
@@ -653,9 +697,7 @@ mod tests {
 
         let mut vm = VM::default();
 
-        let res = vm.load_program(&program);
-
-        if let Err(err) = res {
+        if let Err(err) = vm.load_program(&program) {
             panic!("program loading failed: {:?}", err);
         }
     }

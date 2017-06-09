@@ -1,12 +1,15 @@
 //! The value and type definitions
 
+use error::*;
 use regex::Regex;
 use std::ops::{Add, Div, Mul, Rem, Sub};
+use std::result;
 use std::str::FromStr;
 use type_t::Type;
 use typedef::*;
 
 lazy_static! {
+    static ref ADDRESS_RE: Regex = Regex::new(r"^@(\d+)$").unwrap();
     static ref BOOLEAN_RE: Regex = Regex::new(r"^true|false$").unwrap();
     static ref FLOAT_RE: Regex = Regex::new(r"^(-?\d+)?\.[0-9]+$").unwrap();
     static ref INTEGER_RE: Regex = Regex::new(r"^(-?\d+)?$").unwrap();
@@ -16,36 +19,23 @@ lazy_static! {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub enum Value {
+    Address(Address), // @12 | @54 | @0 | @1 | ...
     Boolean(bool), // true | false
     Float(Float), // -1.33 | 0.23114 | 3.141 | ...
     Integer(Integer), // 12 | 42 | 1 | 0 | 24 | ...
     Color(u8, u8, u8), // #FF00FF | #bd37b3 | ...
     Char(char), // 'a' | 'b' | 'c' | 'd' | ...
-    Undefined, // The Undefined value symbolizes an internal error or a wrong use of the bytecode
-}
-
-impl Default for Value {
-    fn default() -> Self {
-        Value::Undefined
-    }
 }
 
 impl Value {
-    pub fn is_undefined(&self) -> bool {
-        match self {
-            &Value::Undefined => true,
-            _ => false,
-        }
-    }
-
     pub fn get_type(&self) -> Type {
         match *self {
+            Value::Address(..) => Type::Address,
             Value::Boolean(..) => Type::Boolean,
             Value::Float(..) => Type::Float,
             Value::Integer(..) => Type::Integer,
             Value::Color(..) => Type::Color,
             Value::Char(..) => Type::Char,
-            _ => Type::Undefined,
         }
     }
 
@@ -55,12 +45,19 @@ impl Value {
 
     pub fn convert_to(&self, val_type: &Type) -> Self {
         match *self {
+            Value::Address(addr) => Self::address_to(addr, val_type),
             Value::Boolean(boolean) => Value::Boolean(boolean),
             Value::Float(float) => Self::float_to(float, val_type),
             Value::Integer(integer) => Self::integer_to(integer, val_type),
             Value::Color(r, g, b) => Self::color_to((r, g, b), val_type),
             Value::Char(character) => Self::char_to(character, val_type),
-            _ => Value::Undefined,
+        }
+    }
+
+    fn address_to(addr: Address, val_type: &Type) -> Value {
+        match *val_type {
+            Type::Integer => Value::Integer(addr as Integer),
+            _ => Value::Address(addr),
         }
     }
 
@@ -116,8 +113,12 @@ impl Value {
 impl FromStr for Value {
     type Err = &'static str;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if BOOLEAN_RE.is_match(s) {
+    fn from_str(s: &str) -> result::Result<Self, Self::Err> {
+        if ADDRESS_RE.is_match(s) {
+            let address_cap = ADDRESS_RE.captures_iter(s).next().unwrap();
+
+            Ok(Value::Address(address_cap[1].parse().unwrap()))
+        } else if BOOLEAN_RE.is_match(s) {
             Ok(Value::Boolean(s.parse().unwrap()))
         } else if FLOAT_RE.is_match(s) {
             Ok(Value::Float(s.parse().unwrap()))
@@ -142,68 +143,78 @@ impl FromStr for Value {
 }
 
 impl Add for Value {
-    type Output = Value;
+    type Output = Result<Value>;
 
     fn add(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Float(lhs_float), Value::Float(rhs_float)) => Value::Float(lhs_float + rhs_float,),
+        match (self.clone(), rhs.clone()) {
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float + rhs_float,),),
             (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
-                Value::Integer(lhs_integer + rhs_integer)
+                Ok(Value::Integer(lhs_integer + rhs_integer))
             }
-            _ => Value::Undefined,
+            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => Ok(Value::Address(lhs_addr + rhs_addr,),),
+            _ => bail!("unable to add values {:?} and {:?}", self, rhs),
         }
     }
 }
 
 impl Sub for Value {
-    type Output = Value;
+    type Output = Result<Value>;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Float(lhs_float), Value::Float(rhs_float)) => Value::Float(lhs_float - rhs_float,),
+        match (self.clone(), rhs.clone()) {
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float - rhs_float,),),
             (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
-                Value::Integer(lhs_integer - rhs_integer)
+                Ok(Value::Integer(lhs_integer - rhs_integer))
             }
-            _ => Value::Undefined,
+            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => Ok(Value::Address(lhs_addr - rhs_addr,),),
+            _ => bail!("unable to subtract values {:?} and {:?}", self, rhs),
         }
     }
 }
 
 impl Mul for Value {
-    type Output = Value;
+    type Output = Result<Value>;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Float(lhs_float), Value::Float(rhs_float)) => Value::Float(lhs_float * rhs_float,),
+        match (self.clone(), rhs.clone()) {
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float * rhs_float,),),
             (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
-                Value::Integer(lhs_integer * rhs_integer)
+                Ok(Value::Integer(lhs_integer * rhs_integer))
             }
-            _ => Value::Undefined,
+            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => Ok(Value::Address(lhs_addr * rhs_addr,),),
+            _ => bail!("unable to multiply values {:?} and {:?}", self, rhs),
         }
     }
 }
 
 impl Div for Value {
-    type Output = Value;
+    type Output = Result<Value>;
 
     fn div(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Float(lhs_float), Value::Float(rhs_float)) => Value::Float(lhs_float / rhs_float,),
-            _ => Value::Undefined,
+        match (self.clone(), rhs.clone()) {
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float / rhs_float,),),
+            _ => bail!("unable to divide values {:?} and {:?}", self, rhs),
         }
     }
 }
 
 impl Rem for Value {
-    type Output = Value;
+    type Output = Result<Value>;
 
     fn rem(self, rhs: Self) -> Self::Output {
-        match (self, rhs) {
-            (Value::Float(lhs_float), Value::Float(rhs_float)) => Value::Float(lhs_float % rhs_float,),
+        match (self.clone(), rhs.clone()) {
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float % rhs_float,),),
             (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
-                Value::Integer(lhs_integer % rhs_integer)
+                Ok(Value::Integer(lhs_integer % rhs_integer))
             }
-            _ => Value::Undefined,
+            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => Ok(Value::Address(lhs_addr % rhs_addr,),),
+            _ => {
+                bail!(
+                    "unable to calculate the remainder of values {:?} and {:?}",
+                    self,
+                    rhs
+                )
+            }
         }
     }
 }
