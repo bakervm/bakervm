@@ -70,6 +70,7 @@ impl Value {
 
     fn integer_to(integer: Integer, val_type: &Type) -> Value {
         match *val_type {
+            Type::Address => Value::Address(integer as Address),
             Type::Float => Value::Float(integer as Float),
             Type::Color => {
                 let integer = integer as u32;

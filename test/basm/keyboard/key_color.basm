@@ -1,6 +1,7 @@
 .start
   pause
   dup $vi(1)
+  cast $st, addr
   mov $vi(0), $st
   push $fb, #2d858d
   int 0
