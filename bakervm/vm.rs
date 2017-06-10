@@ -45,6 +45,14 @@ enum Ordering {
 
 const NUM_RESERVED_MEM_SLOTS: usize = 20;
 
+// const FRAMEBUFFER_CURSOR_INDEX: Target = Target::ValueIndex(0);
+const CURRENT_KEYCODE_INDEX: Target = Target::ValueIndex(1);
+const DISPLAY_WIDTH_INDEX: Target = Target::ValueIndex(2);
+const DISPLAY_HEIGHT_INDEX: Target = Target::ValueIndex(3);
+const MOUSE_BUTTON_INDEX: Target = Target::ValueIndex(4);
+const MOUSE_X_INDEX: Target = Target::ValueIndex(5);
+const MOUSE_Y_INDEX: Target = Target::ValueIndex(6);
+
 /// The whole state of the VM
 #[derive(Serialize, Deserialize, Default, Debug)]
 struct VM {
@@ -83,13 +91,13 @@ impl VM {
         self.build_framebuffer();
 
         self.push(
-                &Target::ValueIndex(2),
-                Value::Integer(program.config.display.resolution.width.clone() as Integer),
+                &DISPLAY_WIDTH_INDEX,
+                Value::Address(program.config.display.resolution.width.clone()),
             )?;
 
         self.push(
-                &Target::ValueIndex(3),
-                Value::Integer(program.config.display.resolution.height.clone() as Integer),
+                &DISPLAY_HEIGHT_INDEX,
+                Value::Address(program.config.display.resolution.height.clone()),
             )?;
 
         let mut now = Instant::now();
@@ -211,7 +219,7 @@ impl VM {
             self.paused = false;
             // We don't know how long this is going to take... better tell I/O what's going
             // on
-            self.wait_flush_framebuffer(sender)?;
+            self.wait_flush_framebuffer(sender);
             if let Ok(interrupt) = receiver.recv() {
                 interrupt
             } else {
@@ -229,10 +237,19 @@ impl VM {
         match interrupt {
             ExternalInterrupt::Halt => self.halt(),
             ExternalInterrupt::KeyDown(value) => {
-                self.push(&Target::ValueIndex(1), Value::Integer(value))?;
+                self.push(&CURRENT_KEYCODE_INDEX, Value::Address(value))?;
             }
-            ExternalInterrupt::KeyUp => self.push(&Target::ValueIndex(1), Value::Integer(0))?,
-            _ => {}
+            ExternalInterrupt::KeyUp => self.push(&CURRENT_KEYCODE_INDEX, Value::Address(0))?,
+            ExternalInterrupt::MouseDown { button, x, y } => {
+                self.push(&MOUSE_BUTTON_INDEX, Value::Address(button))?;
+                self.push(&MOUSE_X_INDEX, Value::Address(x))?;
+                self.push(&MOUSE_Y_INDEX, Value::Address(y))?;
+            }
+            ExternalInterrupt::MouseUp { x, y } => {
+                self.push(&MOUSE_BUTTON_INDEX, Value::Address(0))?;
+                self.push(&MOUSE_X_INDEX, Value::Address(x))?;
+                self.push(&MOUSE_Y_INDEX, Value::Address(y))?;
+            }
         }
 
         Ok(())
@@ -241,7 +258,7 @@ impl VM {
 
     /// Waits for the channel to be available, then flushes the internal
     /// framebuffer using the given sender
-    fn wait_flush_framebuffer(&mut self, sender: &SyncSender<Frame>) -> Result<()> {
+    fn wait_flush_framebuffer(&mut self, sender: &SyncSender<Frame>) {
         if self.framebuffer_invalid {
             let res = sender.send(self.next_frame.clone());
             if let Err(..) = res {
@@ -250,8 +267,6 @@ impl VM {
                 self.framebuffer_invalid = false;
             }
         }
-
-        Ok(())
     }
 
     /// Allocates all the needed space in the framebuffer
@@ -298,6 +313,11 @@ impl VM {
         self.framebuffer_invalid = true;
     }
 
+    /// Calculates the internal index
+    fn internal_index(&mut self, index: Address) -> Address {
+        self.base_ptr - (index - NUM_RESERVED_MEM_SLOTS)
+    }
+
     /// Return the value at the specified target. The value of the target will
     /// be consumed
     fn pop(&mut self, target: &Target) -> Result<Value> {
@@ -310,7 +330,7 @@ impl VM {
                         bail!("no value found at system-reserved index {}", index);
                     }
                 } else {
-                    let bp_enhanced_index = self.base_ptr - (index - NUM_RESERVED_MEM_SLOTS);
+                    let bp_enhanced_index = self.internal_index(index);
 
                     if bp_enhanced_index < NUM_RESERVED_MEM_SLOTS {
                         bail!("cannot access value without further allocation");
@@ -478,17 +498,17 @@ impl VM {
             &Target::ValueIndex(index) => {
                 if index < NUM_RESERVED_MEM_SLOTS {
                     let mut index_value =
-                        self.value_index.entry(index).or_insert(Value::Integer(0));
+                        self.value_index.entry(index).or_insert(Value::Address(0));
                     *index_value = value;
                 } else {
-                    let bp_enhanced_index = self.base_ptr - (index - NUM_RESERVED_MEM_SLOTS);
+                    let bp_enhanced_index = self.internal_index(index);
 
                     if bp_enhanced_index < NUM_RESERVED_MEM_SLOTS {
                         bail!("cannot access value without further allocation");
                     }
 
                     let mut index_value =
-                        self.value_index.entry(bp_enhanced_index).or_insert(Value::Integer(0));
+                        self.value_index.entry(bp_enhanced_index).or_insert(Value::Address(0));
                     *index_value = value;
                 }
 

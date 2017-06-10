@@ -6,10 +6,14 @@ use typedef::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum ExternalInterrupt {
-    KeyDown(Integer),
+    KeyDown(Address),
     KeyUp,
-    MouseDown(Integer),
-    MouseUp(Integer),
+    MouseDown {
+        button: Address,
+        x: Address,
+        y: Address,
+    },
+    MouseUp { x: Address, y: Address },
     Halt,
 }
 
