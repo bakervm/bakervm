@@ -62,7 +62,7 @@ pub fn start(
                 }
                 Event::KeyDown { keycode: Some(key), .. } => {
                     interrupt_sender
-                        .send(ExternalInterrupt::KeyDown(key as Integer))
+                        .send(ExternalInterrupt::KeyDown(key as Address))
                         .chain_err(|| "unable to send interrupt")?;
                 }
                 Event::KeyUp { .. } => {
@@ -70,9 +70,28 @@ pub fn start(
                         .send(ExternalInterrupt::KeyUp)
                         .chain_err(|| "unable to send interrupt")?;
                 }
-                _ => {
-                    // TODO: Send interrupt here
+                Event::MouseButtonDown { x, y, mouse_btn, .. } => {
+                    interrupt_sender
+                        .send(
+                            ExternalInterrupt::MouseDown {
+                                x: (x as Float / config.display.default_scale).floor() as Address,
+                                y: (y as Float / config.display.default_scale).floor() as Address,
+                                button: mouse_btn as Address,
+                            },
+                        )
+                        .chain_err(|| "unable to send interrupt")?;
                 }
+                Event::MouseButtonUp { x, y, .. } => {
+                    interrupt_sender
+                        .send(
+                            ExternalInterrupt::MouseUp {
+                                x: (x as Float / config.display.default_scale).floor() as Address,
+                                y: (y as Float / config.display.default_scale).floor() as Address,
+                            },
+                        )
+                        .chain_err(|| "unable to send interrupt")?;
+                }
+                _ => {}
             }
         }
 
@@ -101,10 +120,10 @@ pub fn start(
             thread::sleep(Duration::from_millis(10));
         }
 
-        let secs_elapsed = now_before.elapsed().as_secs();
+        let secs_elapsed = now_before.elapsed();
 
-        if secs_elapsed >= 1 {
-            println!("FPS: {:?}", frame_count / secs_elapsed);
+        if secs_elapsed >= Duration::from_millis(1000) {
+            println!("FPS: {:?}", frame_count / secs_elapsed.as_secs());
             now_before = Instant::now();
             frame_count = 0;
         }
