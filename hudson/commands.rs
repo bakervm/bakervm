@@ -2,7 +2,6 @@ use basm;
 use clap::ArgMatches;
 use definitions::{DisplayResolution, ImageBuilder, InternalInterrupt, Target, Value};
 use definitions::error::*;
-use definitions::typedef::*;
 use std::fs::File;
 use std::io::Write;
 
@@ -14,82 +13,79 @@ pub fn stock(_matches: &ArgMatches) -> Result<()> {
     let max = res_def.width * res_def.height;
 
     for x in 0..max {
-        builder.push(Target::ValueIndex(0), Value::Integer(x as Integer));
+        builder.push(Target::ValueIndex(0), Value::Address(x));
         builder.push(Target::Framebuffer, Value::Color(0, 0, 0));
     }
 
     // Triangle
+    builder.push(Target::ValueIndex(0), Value::Address(res_def.width + 1));
+    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
+
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer((res_def.width + 1) as Integer),
+        Value::Address((res_def.width * 2) + 2),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 2) + 2) as Integer),
+        Value::Address((res_def.width * 3) + 3),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 3) + 3) as Integer),
+        Value::Address((res_def.width * 4) + 4),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 4) + 4) as Integer),
+        Value::Address((res_def.width * 5) + 3),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 5) + 3) as Integer),
+        Value::Address((res_def.width * 6) + 2),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 6) + 2) as Integer),
-    );
-    builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
-
-    builder.push(
-        Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 7) + 1) as Integer),
+        Value::Address((res_def.width * 7) + 1),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
     // Underscore
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 7) + 6) as Integer),
+        Value::Address((res_def.width * 7) + 6),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 7) + 7) as Integer),
+        Value::Address((res_def.width * 7) + 7),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 7) + 8) as Integer),
+        Value::Address((res_def.width * 7) + 8),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 7) + 9) as Integer),
+        Value::Address((res_def.width * 7) + 9),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 7) + 10) as Integer),
+        Value::Address((res_def.width * 7) + 10),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
     builder.push(
         Target::ValueIndex(0),
-        Value::Integer(((res_def.width * 7) + 11) as Integer),
+        Value::Address((res_def.width * 7) + 11),
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
