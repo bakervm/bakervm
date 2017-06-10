@@ -17,6 +17,7 @@ The types and symbols used in the bakerVM assembly language are shown here.
 | Mnemonic | Description                                                         |
 |---------:|---------------------------------------------------------------------|
 |    `$st` | Stack                                                               |
+|    `$bp` | Base pointer                                                        |
 |    `$fb` | Framebuffer                                                         |
 | `$vi(#)` | The value index, where the # represents a constant positive integer |
 
