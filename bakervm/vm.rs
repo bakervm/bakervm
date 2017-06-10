@@ -641,8 +641,8 @@ mod tests {
     #[test]
     fn mul_stack() {
         for _ in 0..3000 {
-            let val_a = rand::random::<Float>() % 3037000499.0;
-            let val_b = rand::random::<Float>() % 3037000499.0;
+            let val_a = rand::random::<Float>() / 2.0;
+            let val_b = rand::random::<Float>() / 2.0;
 
             let mut vm = VM::default();
 
