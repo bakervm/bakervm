@@ -1,5 +1,5 @@
 # Reserved memory
-In generell the first 20 slots of the value-index are reserved by the system. That that the user value-index begins at `$vi(20)`. Space in the user value-index has to be allocated. To allocate space in the user value-index, you have to advance the base pointer `$bp` by adding an address to it. So by writing:
+In general the first 20 slots of the value-index are reserved by the system. That that the user value-index begins at `$vi(20)`. Space in the user value-index has to be allocated. To allocate space in the user value-index, you have to advance the base pointer `$bp` by adding an address to it. So by writing:
 ```
 push $st, @7
 add $bp, $st
