@@ -314,8 +314,18 @@ impl VM {
     }
 
     /// Calculates the internal index
-    fn internal_index(&mut self, index: Address) -> Address {
-        self.base_ptr - (index - NUM_RESERVED_MEM_SLOTS)
+    fn internal_index(&mut self, index: Address) -> Result<Address> {
+        if index < NUM_RESERVED_MEM_SLOTS {
+            Ok(index)
+        } else {
+            let internal_index = self.base_ptr - (index - NUM_RESERVED_MEM_SLOTS);
+
+            if internal_index < NUM_RESERVED_MEM_SLOTS {
+                bail!("cannot access value without further allocation");
+            }
+
+            Ok(internal_index)
+        }
     }
 
     /// Return the value at the specified target. The value of the target will
@@ -323,24 +333,12 @@ impl VM {
     fn pop(&mut self, target: &Target) -> Result<Value> {
         match target {
             &Target::ValueIndex(index) => {
-                if index < NUM_RESERVED_MEM_SLOTS {
-                    if let Some(value) = self.value_index.remove(&index) {
-                        Ok(value)
-                    } else {
-                        bail!("no value found at system-reserved index {}", index);
-                    }
+                let internal_index = self.internal_index(index)?;
+
+                if let Some(value) = self.value_index.remove(&internal_index) {
+                    Ok(value)
                 } else {
-                    let bp_enhanced_index = self.internal_index(index);
-
-                    if bp_enhanced_index < NUM_RESERVED_MEM_SLOTS {
-                        bail!("cannot access value without further allocation");
-                    }
-
-                    if let Some(value) = self.value_index.remove(&bp_enhanced_index) {
-                        Ok(value)
-                    } else {
-                        bail!("no value found at index {}", bp_enhanced_index);
-                    }
+                    bail!("no value found at index {}", internal_index);
                 }
             }
             &Target::Stack => {
@@ -496,21 +494,11 @@ impl VM {
     fn push(&mut self, dest: &Target, value: Value) -> Result<()> {
         match dest {
             &Target::ValueIndex(index) => {
-                if index < NUM_RESERVED_MEM_SLOTS {
-                    let mut index_value =
-                        self.value_index.entry(index).or_insert(Value::Address(0));
-                    *index_value = value;
-                } else {
-                    let bp_enhanced_index = self.internal_index(index);
+                let internal_index = self.internal_index(index)?;
 
-                    if bp_enhanced_index < NUM_RESERVED_MEM_SLOTS {
-                        bail!("cannot access value without further allocation");
-                    }
-
-                    let mut index_value =
-                        self.value_index.entry(bp_enhanced_index).or_insert(Value::Address(0));
-                    *index_value = value;
-                }
+                let mut index_value =
+                    self.value_index.entry(internal_index).or_insert(Value::Address(0));
+                *index_value = value;
 
                 Ok(())
             }
