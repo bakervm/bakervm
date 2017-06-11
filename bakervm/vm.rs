@@ -46,12 +46,8 @@ enum Ordering {
 const NUM_RESERVED_MEM_SLOTS: usize = 20;
 
 // const FRAMEBUFFER_CURSOR_INDEX: Target = Target::ValueIndex(0);
-const CURRENT_KEYCODE_INDEX: Target = Target::ValueIndex(1);
-const DISPLAY_WIDTH_INDEX: Target = Target::ValueIndex(2);
-const DISPLAY_HEIGHT_INDEX: Target = Target::ValueIndex(3);
-const MOUSE_BUTTON_INDEX: Target = Target::ValueIndex(4);
-const MOUSE_X_INDEX: Target = Target::ValueIndex(5);
-const MOUSE_Y_INDEX: Target = Target::ValueIndex(6);
+const DISPLAY_WIDTH_INDEX: Target = Target::ValueIndex(1);
+const DISPLAY_HEIGHT_INDEX: Target = Target::ValueIndex(2);
 
 /// The whole state of the VM
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -236,20 +232,10 @@ impl VM {
 
         match interrupt {
             ExternalInterrupt::Halt => self.halt(),
-            ExternalInterrupt::KeyDown(value) => {
-                self.push(&CURRENT_KEYCODE_INDEX, Value::Address(value))?;
-            }
-            ExternalInterrupt::KeyUp(..) => self.push(&CURRENT_KEYCODE_INDEX, Value::Address(0))?,
-            ExternalInterrupt::MouseDown { button, x, y } => {
-                self.push(&MOUSE_BUTTON_INDEX, Value::Address(button))?;
-                self.push(&MOUSE_X_INDEX, Value::Address(x))?;
-                self.push(&MOUSE_Y_INDEX, Value::Address(y))?;
-            }
-            ExternalInterrupt::MouseUp { x, y, .. } => {
-                self.push(&MOUSE_BUTTON_INDEX, Value::Address(0))?;
-                self.push(&MOUSE_X_INDEX, Value::Address(x))?;
-                self.push(&MOUSE_Y_INDEX, Value::Address(y))?;
-            }
+            ExternalInterrupt::KeyDown(..) => {}
+            ExternalInterrupt::KeyUp(..) => {}
+            ExternalInterrupt::MouseDown { .. } => {}
+            ExternalInterrupt::MouseUp { .. } => {}
         }
 
         Ok(())
