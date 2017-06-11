@@ -65,9 +65,9 @@ pub fn start(
                         .send(ExternalInterrupt::KeyDown(key as Address))
                         .chain_err(|| "unable to send interrupt")?;
                 }
-                Event::KeyUp { .. } => {
+                Event::KeyUp { keycode: Some(key), .. } => {
                     interrupt_sender
-                        .send(ExternalInterrupt::KeyUp)
+                        .send(ExternalInterrupt::KeyUp(key as Address))
                         .chain_err(|| "unable to send interrupt")?;
                 }
                 Event::MouseButtonDown { x, y, mouse_btn, .. } => {
@@ -81,12 +81,13 @@ pub fn start(
                         )
                         .chain_err(|| "unable to send interrupt")?;
                 }
-                Event::MouseButtonUp { x, y, .. } => {
+                Event::MouseButtonUp { x, y, mouse_btn, .. } => {
                     interrupt_sender
                         .send(
                             ExternalInterrupt::MouseUp {
                                 x: (x as Float / config.display.default_scale).floor() as Address,
                                 y: (y as Float / config.display.default_scale).floor() as Address,
+                                button: mouse_btn as Address,
                             },
                         )
                         .chain_err(|| "unable to send interrupt")?;
