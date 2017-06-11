@@ -239,13 +239,13 @@ impl VM {
             ExternalInterrupt::KeyDown(value) => {
                 self.push(&CURRENT_KEYCODE_INDEX, Value::Address(value))?;
             }
-            ExternalInterrupt::KeyUp => self.push(&CURRENT_KEYCODE_INDEX, Value::Address(0))?,
+            ExternalInterrupt::KeyUp(..) => self.push(&CURRENT_KEYCODE_INDEX, Value::Address(0))?,
             ExternalInterrupt::MouseDown { button, x, y } => {
                 self.push(&MOUSE_BUTTON_INDEX, Value::Address(button))?;
                 self.push(&MOUSE_X_INDEX, Value::Address(x))?;
                 self.push(&MOUSE_Y_INDEX, Value::Address(y))?;
             }
-            ExternalInterrupt::MouseUp { x, y } => {
+            ExternalInterrupt::MouseUp { x, y, .. } => {
                 self.push(&MOUSE_BUTTON_INDEX, Value::Address(0))?;
                 self.push(&MOUSE_X_INDEX, Value::Address(x))?;
                 self.push(&MOUSE_Y_INDEX, Value::Address(y))?;
