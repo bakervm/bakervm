@@ -10,9 +10,5 @@ you are allocating 7 safe slots in the user value-index. Allocation should be al
 | index address | data type | usage                                                         |
 |--------------:|:---------:|---------------------------------------------------------------|
 |             0 |  Address  | framebuffer cursor: Set by writing an address to vi(0)        |
-|             1 |  Address  | current keycode ( 0 if not pressed, > 0 if pressed)           |
-|             2 |  Address  | display width                                                 |
-|             3 |  Address  | display height                                                |
-|             4 |  Address  | mouse button (1 = left, 3 = right, 0 = not pressed/ released) |
-|             5 |  Address  | mouse x                                                       |
-|             6 |  Address  | mouse y                                                       |
+|             1 |  Address  | display width                                                 |
+|             2 |  Address  | display height                                                |
