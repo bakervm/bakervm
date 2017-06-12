@@ -17,5 +17,5 @@ jmp start
   ret
 
 .flush
-  int 0
+  int %flush_frame%
   ret
