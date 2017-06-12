@@ -43,11 +43,21 @@ The types and symbols used in the bakerVM assembly language are shown here.
 |  `color` | Color       |
 |   `char` | Char        |
 
-### InternalInterrupt
+### Signal
 
-| Mnemonic | Description      |
-|---------:|------------------|
-|      `0` | FlushFramebuffer |
+|        Mnemonic | Description |
+|----------------:|-------------|
+| `%flush_frame%` | FlushFrame  |
+
+### VMEventType
+
+|       Mnemonic | Description |
+|---------------:|-------------|
+|   `%key_down%` | KeyDown     |
+|     `%key_up%` | KeyUp       |
+| `%mouse_down%` | MouseDown   |
+|   `%mouse_up%` | MouseUp     |
+|       `%halt%` | Halt        |
 
 ## Labels
 A label is a marker in the source code that symbolizes an address in the instruction stream. Labels begin with a `.`, for example:
@@ -112,7 +122,8 @@ hudson compile --basm path/to/main.basm
 |             `dup target` | target: Target                     | Duplicates the value at the given target and pushes it to the stack                                      |
 |             `call label` | label: Label                       | Calls the function at the given label, pushing the return address to the call-stack                      |
 |                    `ret` | -                                  | Returns from a function call                                                                             |
+|       `rev event, label` | event: VMEventType, label: Label   | Registers a handler that is called when the given event is fired                                         |
 |                   `halt` | -                                  | Halts the execution of the current program and causes the VM to shut down                                |
 |                  `pause` | -                                  | Pauses the execution of the current program until an interrupt is received                               |
 |                    `nop` | -                                  | Does nothing. Good for optimizing code                                                                   |
-|          `int interrupt` | interrupt: InternalInterrupt       | Triggers the given internal interrupt                                                                    |
+|             `int signal` | signal: Signal                     | Triggers the given internal signal                                                                       |

@@ -1,4 +1,5 @@
-use definitions::{InternalInterrupt, Target, Type, Value};
+use definitions::{Signal, Target, Type, VMEventType, Value};
+
 #[derive(Clone, Debug)]
 pub enum Mnemonic {
     Add(Target, Target),
@@ -24,9 +25,10 @@ pub enum Mnemonic {
 
     Call(String),
     Ret,
+    Rev(VMEventType, String),
 
     Halt,
     Pause,
     Nop,
-    Int(InternalInterrupt),
+    Int(Signal),
 }
