@@ -1,10 +1,11 @@
 //! The instructions, the VM is able to interpret.
 
-use interrupt::InternalInterrupt;
+use signal::Signal;
 use target::Target;
 use type_t::Type;
 use typedef::*;
 use value::Value;
+use vm_event::VMEventType;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Instruction {
@@ -31,9 +32,10 @@ pub enum Instruction {
 
     Call(Address),
     Ret,
+    Rev(VMEventType, Address),
 
     Halt,
     Pause,
     Nop,
-    Int(InternalInterrupt),
+    Int(Signal),
 }
