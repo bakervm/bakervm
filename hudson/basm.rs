@@ -213,6 +213,7 @@ impl BASMCompiler {
                 let addr = self.lookup(&label)?;
                 self.builder.rev(vm_event, addr);
             }
+            Mnemonic::Drop(target) => self.builder.drop(target),
 
             Mnemonic::Halt => self.builder.halt(),
             Mnemonic::Pause => self.builder.pause(),
@@ -267,6 +268,7 @@ fn text_to_mnemonic(opcode: String, args: Vec<String>) -> Result<Mnemonic> {
         "call" => Ok(Mnemonic::Call(args[0].parse()?)),
         "ret" => Ok(Mnemonic::Ret),
         "rev" => Ok(Mnemonic::Rev(args[0].parse()?, args[1].parse()?)),
+        "drop" => Ok(Mnemonic::Drop(args[0].parse()?)),
 
         "halt" => Ok(Mnemonic::Halt),
         "pause" => Ok(Mnemonic::Pause),
