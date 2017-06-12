@@ -26,6 +26,7 @@ pub enum Mnemonic {
     Call(String),
     Ret,
     Rev(VMEventType, String),
+    Drop(Target),
 
     Halt,
     Pause,
