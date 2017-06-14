@@ -28,5 +28,5 @@ pub enum Mnemonic {
     Halt,
     Pause,
     Nop,
-    Int(Signal),
+    Sig(Signal),
 }

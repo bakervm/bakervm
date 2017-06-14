@@ -35,5 +35,5 @@ pub enum Instruction {
     Halt,
     Pause,
     Nop,
-    Int(Signal),
+    Sig(Signal),
 }

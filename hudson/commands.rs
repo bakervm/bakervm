@@ -89,7 +89,7 @@ pub fn stock(_matches: &ArgMatches) -> Result<()> {
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
-    builder.int(Signal::FlushFrame);
+    builder.sig(Signal::FlushFrame);
 
     builder.pause();
     builder.jmp(max + 1);

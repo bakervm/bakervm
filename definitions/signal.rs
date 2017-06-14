@@ -2,7 +2,6 @@
 //! letting the VM communicate with the outside
 
 use std::str::FromStr;
-use typedef::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum Signal {
@@ -15,7 +14,7 @@ impl FromStr for Signal {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "%flush_frame%" => Ok(Signal::FlushFrame),
-            _ => Err("unable to parse interrupt"),
+            _ => Err("unable to parse signal"),
         }
     }
 }
