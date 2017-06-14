@@ -209,10 +209,6 @@ impl BASMCompiler {
                 self.builder.call(addr);
             }
             Mnemonic::Ret => self.builder.ret(),
-            Mnemonic::Rev(vm_event, label) => {
-                let addr = self.lookup(&label)?;
-                self.builder.rev(vm_event, addr);
-            }
 
             Mnemonic::Halt => self.builder.halt(),
             Mnemonic::Pause => self.builder.pause(),
@@ -266,7 +262,6 @@ fn text_to_mnemonic(opcode: String, args: Vec<String>) -> Result<Mnemonic> {
 
         "call" => Ok(Mnemonic::Call(args[0].parse()?)),
         "ret" => Ok(Mnemonic::Ret),
-        "rev" => Ok(Mnemonic::Rev(args[0].parse()?, args[1].parse()?)),
 
         "halt" => Ok(Mnemonic::Halt),
         "pause" => Ok(Mnemonic::Pause),
