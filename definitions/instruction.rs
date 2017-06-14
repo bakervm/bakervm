@@ -1,6 +1,6 @@
 //! The instructions, the VM is able to interpret.
 
-use interrupt::InternalInterrupt;
+use signal::Signal;
 use target::Target;
 use type_t::Type;
 use typedef::*;
@@ -35,5 +35,5 @@ pub enum Instruction {
     Halt,
     Pause,
     Nop,
-    Int(InternalInterrupt),
+    Int(Signal),
 }

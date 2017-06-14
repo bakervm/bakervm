@@ -1,6 +1,6 @@
 use basm;
 use clap::ArgMatches;
-use definitions::{DisplayResolution, ImageBuilder, InternalInterrupt, Target, Value};
+use definitions::{DisplayResolution, ImageBuilder, Signal, Target, Value};
 use definitions::error::*;
 use std::fs::File;
 use std::io::Write;
@@ -89,7 +89,7 @@ pub fn stock(_matches: &ArgMatches) -> Result<()> {
     );
     builder.push(Target::Framebuffer, Value::Color(0xFF, 0xFF, 0xFF));
 
-    builder.int(InternalInterrupt::FlushFramebuffer);
+    builder.int(Signal::FlushFrame);
 
     builder.pause();
     builder.jmp(max + 1);
