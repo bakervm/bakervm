@@ -1,5 +1,5 @@
 use definitions::Config;
-use definitions::VMEvent;
+use definitions::ExternalInterrupt;
 use definitions::error::*;
 use definitions::typedef::*;
 use sdl2;
@@ -11,7 +11,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 pub fn start(
-    frame_receiver: Receiver<Frame>, interrupt_sender: Sender<VMEvent>, config: Config,
+    frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalInterrupt>, config: Config,
     barrier: Arc<Barrier>
 ) -> Result<()> {
     let sdl_context = sdl2::init()?;
@@ -54,24 +54,26 @@ pub fn start(
         for event in event_pump.poll_iter() {
             match event {
                 Event::Quit { .. } => {
-                    interrupt_sender.send(VMEvent::Halt).chain_err(|| "unable to send interrupt")?;
+                    interrupt_sender
+                        .send(ExternalInterrupt::Halt)
+                        .chain_err(|| "unable to send interrupt")?;
 
                     break 'main;
                 }
                 Event::KeyDown { keycode: Some(key), .. } => {
                     interrupt_sender
-                        .send(VMEvent::KeyDown(key as Address))
+                        .send(ExternalInterrupt::KeyDown(key as Address))
                         .chain_err(|| "unable to send interrupt")?;
                 }
                 Event::KeyUp { keycode: Some(key), .. } => {
                     interrupt_sender
-                        .send(VMEvent::KeyUp(key as Address))
+                        .send(ExternalInterrupt::KeyUp(key as Address))
                         .chain_err(|| "unable to send interrupt")?;
                 }
                 Event::MouseButtonDown { x, y, mouse_btn, .. } => {
                     interrupt_sender
                         .send(
-                            VMEvent::MouseDown {
+                            ExternalInterrupt::MouseDown {
                                 x: (x as Float / config.display.default_scale).floor() as Address,
                                 y: (y as Float / config.display.default_scale).floor() as Address,
                                 button: mouse_btn as Address,
@@ -82,7 +84,7 @@ pub fn start(
                 Event::MouseButtonUp { x, y, mouse_btn, .. } => {
                     interrupt_sender
                         .send(
-                            VMEvent::MouseUp {
+                            ExternalInterrupt::MouseUp {
                                 x: (x as Float / config.display.default_scale).floor() as Address,
                                 y: (y as Float / config.display.default_scale).floor() as Address,
                                 button: mouse_btn as Address,

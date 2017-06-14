@@ -1,14 +1,17 @@
-use definitions::{Config, Instruction, Program, Signal, Target, Type, VMEvent, VMEventType, Value};
+use definitions::{Config, ExternalInterrupt, Instruction, InternalInterrupt, Program, Target,
+                  Type, Value};
 use definitions::error::*;
 use definitions::typedef::*;
-use std::collections::{BTreeMap, HashMap, LinkedList};
+use std::collections::{BTreeMap, LinkedList};
 use std::sync::{Arc, Barrier};
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError};
 use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
-pub fn start(program: Program, sender: SyncSender<Frame>, receiver: Receiver<VMEvent>, barrier: Arc<Barrier>)
-    -> JoinHandle<()> {
+pub fn start(
+    program: Program, sender: SyncSender<Frame>, receiver: Receiver<ExternalInterrupt>,
+    barrier: Arc<Barrier>
+) -> JoinHandle<()> {
     thread::spawn(
         move || {
             barrier.wait();
@@ -56,8 +59,6 @@ struct VM {
     base_ptr: Address,
     stack: LinkedList<Value>,
     value_index: BTreeMap<Address, Value>,
-    event_register: HashMap<VMEventType, Address>,
-    event_call_depth: Address,
     framebuffer: Frame,
     framebuffer_invalid: bool,
     next_frame: Frame,
@@ -77,8 +78,10 @@ impl VM {
     // # Maintainance functions
 
     /// Executes the given program
-    pub fn exec(&mut self, program: Program, sender: SyncSender<Frame>, receiver: Receiver<VMEvent>)
-        -> Result<()> {
+    pub fn exec(
+        &mut self, program: Program, sender: SyncSender<Frame>,
+        receiver: Receiver<ExternalInterrupt>
+    ) -> Result<()> {
         self.reset();
         self.load_program(&program).chain_err(|| "invalid program container")?;
         self.build_framebuffer();
@@ -109,7 +112,7 @@ impl VM {
                 }
             }
 
-            self.handle_event(&receiver, &sender)?;
+            self.external_interrupt(&receiver, &sender)?;
         }
 
         Ok(())
@@ -160,7 +163,6 @@ impl VM {
 
             Instruction::Call(addr) => self.call(&addr),
             Instruction::Ret => self.ret()?,
-            Instruction::Rev(vm_event_type, addr) => self.rev(&vm_event_type, &addr)?,
 
             Instruction::Halt => self.halt(),
             Instruction::Pause => self.pause(),
@@ -197,30 +199,19 @@ impl VM {
     }
 
     /// Handles an internal interrupt
-    fn int(&mut self, interrupt: &Signal) {
+    fn int(&mut self, interrupt: &InternalInterrupt) {
         match interrupt {
-            &Signal::FlushFrame => {
+            &InternalInterrupt::FlushFramebuffer => {
                 self.next_frame = self.framebuffer.clone();
                 self.invalidate_framebuffer();
             }
         }
     }
 
-    /// Partially locks the VM for incoming events
-    fn lock_events(&mut self) {
-        self.event_call_depth += 1;
-    }
-
-    /// Partially unlocks the VM for incoming events
-    fn unlock_events(&mut self) {
-        self.event_call_depth -= 1;
-    }
-
     /// Handles incoming interrupts or moves along
-    fn handle_event(&mut self, receiver: &Receiver<VMEvent>, sender: &SyncSender<Frame>)
+    fn external_interrupt(&mut self, receiver: &Receiver<ExternalInterrupt>, sender: &SyncSender<Frame>)
         -> Result<()> {
-
-        let event = if self.paused {
+        let interrupt = if self.paused {
             self.paused = false;
             // We don't know how long this is going to take... better tell I/O what's going
             // on
@@ -239,43 +230,16 @@ impl VM {
             }
         };
 
-        if self.event_call_depth > 0 {
-            return Ok(());
-        }
-
-        let event_type = event.get_type();
-
-        if self.event_register.contains_key(&event_type) {
-            let addr = if let Some(ref addr) = self.event_register.get(&event_type) {
-                *addr.clone()
-            } else {
-                bail!("unable to get address from event register");
-            };
-
-            match event {
-                VMEvent::Halt => {}
-                VMEvent::KeyDown(key_code) => self.push(&Target::Stack, Value::Address(key_code))?,
-                VMEvent::KeyUp(key_code) => self.push(&Target::Stack, Value::Address(key_code))?,
-                VMEvent::MouseDown { button, x, y } => {
-                    self.push(&Target::Stack, Value::Address(y))?;
-                    self.push(&Target::Stack, Value::Address(x))?;
-                    self.push(&Target::Stack, Value::Address(button))?;
-                }
-                VMEvent::MouseUp { button, x, y } => {
-                    self.push(&Target::Stack, Value::Address(y))?;
-                    self.push(&Target::Stack, Value::Address(x))?;
-                    self.push(&Target::Stack, Value::Address(button))?;
-                }
-            }
-
-            self.call_handler(&addr);
-        } else {
-            if event_type == VMEventType::Halt {
-                self.halt();
-            }
+        match interrupt {
+            ExternalInterrupt::Halt => self.halt(),
+            ExternalInterrupt::KeyDown(..) => {}
+            ExternalInterrupt::KeyUp(..) => {}
+            ExternalInterrupt::MouseDown { .. } => {}
+            ExternalInterrupt::MouseUp { .. } => {}
         }
 
         Ok(())
+
     }
 
     /// Waits for the channel to be available, then flushes the internal
@@ -585,28 +549,12 @@ impl VM {
     /// Calls the function at the specified address saving the return address
     /// to the call stack
     fn call(&mut self, addr: &Address) {
-        if self.event_call_depth > 0 {
-            self.lock_events();
-        }
-
-        self.call_stack.push_front(self.pc + 1);
-        self.jmp(addr);
-    }
-
-    /// Calls an event handler including special call handling
-    fn call_handler(&mut self, addr: &Address) {
-        self.lock_events();
-
         self.call_stack.push_front(self.pc + 1);
         self.jmp(addr);
     }
 
     /// Returns from an ongoing function call
     fn ret(&mut self) -> Result<()> {
-        if self.event_call_depth > 0 {
-            self.unlock_events();
-        }
-
         if let Some(retur_addr) = self.call_stack.pop_front() {
             self.jmp(&retur_addr);
         } else {
@@ -614,16 +562,6 @@ impl VM {
         }
 
         Ok(())
-    }
-
-    /// Registers an event handler
-    fn rev(&mut self, vm_event_type: &VMEventType, addr: &Address) -> Result<()> {
-        if self.event_register.contains_key(vm_event_type) {
-            bail!("cannot register another event handler to an event that is already bound");
-        } else {
-            self.event_register.entry(vm_event_type.clone()).or_insert(*addr);
-            Ok(())
-        }
     }
 }
 
