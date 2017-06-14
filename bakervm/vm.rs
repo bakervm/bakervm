@@ -55,6 +55,7 @@ struct VM {
     base_ptr: Address,
     stack: LinkedList<Value>,
     value_index: BTreeMap<Address, Value>,
+    /// A register containing all currently pressed keys
     key_register: BTreeSet<Address>,
     framebuffer: Frame,
     framebuffer_invalid: bool,
@@ -230,8 +231,8 @@ impl VM {
             Event::KeyUp(key_code) => {
                 self.key_register.remove(&key_code);
             }
-            Event::MouseDown { button, x, y } => {}
-            Event::MouseUp { button, x, y } => {}
+            Event::MouseDown { .. } => {}
+            Event::MouseUp { .. } => {}
         }
 
         Ok(())
@@ -339,6 +340,7 @@ impl VM {
                 }
             }
             &Target::BasePointer => Ok(Value::Address(self.base_ptr)),
+            &Target::KeyRegister(key_code) => Ok(Value::Boolean(self.key_register.contains(&key_code),),),
         }
     }
 
@@ -509,6 +511,7 @@ impl VM {
                     bail!("unable push a non-address value to the framebuffer");
                 }
             }
+            &Target::KeyRegister(..) => Ok(()),
         }
     }
 

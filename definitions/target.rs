@@ -6,6 +6,7 @@ use typedef::*;
 
 lazy_static! {
     static ref VALUEINDEX_RE: Regex = Regex::new(r"^\$vi\((\d+)\)$").unwrap();
+    static ref KEY_REGISTER_RE: Regex = Regex::new(r"^\$key\((\d+)\)$").unwrap();
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -14,6 +15,7 @@ pub enum Target {
     ValueIndex(Address),
     Stack,
     BasePointer,
+    KeyRegister(Address),
 }
 
 impl FromStr for Target {
@@ -25,6 +27,11 @@ impl FromStr for Target {
             let index: Address = value[1].parse().unwrap();
 
             Ok(Target::ValueIndex(index))
+        } else if KEY_REGISTER_RE.is_match(s) {
+            let value = KEY_REGISTER_RE.captures_iter(s).next().unwrap();
+            let index: Address = value[1].parse().unwrap();
+
+            Ok(Target::KeyRegister(index))
         } else if s == "$fb" {
             Ok(Target::Framebuffer)
         } else if s == "$st" {
@@ -49,6 +56,19 @@ mod tests {
             panic!("input doesn't match a value index literal");
         } else {
             let value = VALUEINDEX_RE.captures_iter(input).next().unwrap();
+            let index: Address = value[1].parse().unwrap();
+            assert_eq!(index, 123);
+        }
+    }
+
+    #[test]
+    fn key_register_regex() {
+        let input = "$key(123)";
+
+        if !KEY_REGISTER_RE.is_match(input) {
+            panic!("input doesn't match a value index literal");
+        } else {
+            let value = KEY_REGISTER_RE.captures_iter(input).next().unwrap();
             let index: Address = value[1].parse().unwrap();
             assert_eq!(index, 123);
         }
