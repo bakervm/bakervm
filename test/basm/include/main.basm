@@ -25,6 +25,6 @@ include! paint/paint
   push $st, 6
   push $st, 6
   call paint_white_dot
-  int 0
+  sig %flush_frame%
   pause
   ret

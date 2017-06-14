@@ -130,8 +130,8 @@ impl ImageBuilder {
         self.add_instruction(Instruction::Nop);
     }
 
-    pub fn int(&mut self, interrupt: Signal) {
-        self.add_instruction(Instruction::Int(interrupt));
+    pub fn sig(&mut self, signal: Signal) {
+        self.add_instruction(Instruction::Sig(signal));
     }
 
 

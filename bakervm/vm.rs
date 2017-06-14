@@ -103,7 +103,7 @@ impl VM {
                 }
             }
 
-            self.external_interrupt(&receiver, &sender)?;
+            self.handle_events(&receiver, &sender)?;
         }
 
         Ok(())
@@ -158,7 +158,7 @@ impl VM {
             Instruction::Halt => self.halt(),
             Instruction::Pause => self.pause(),
             Instruction::Nop => {}
-            Instruction::Int(interrupt) => self.int(&interrupt),
+            Instruction::Sig(signal) => self.sig(&signal),
         }
 
         Ok(())
@@ -184,14 +184,14 @@ impl VM {
         self.halted = true;
     }
 
-    /// Pauses the execution of the program until an interrupt is received
+    /// Pauses the execution of the program until an event is received
     fn pause(&mut self) {
         self.paused = true;
     }
 
-    /// Handles an internal interrupt
-    fn int(&mut self, interrupt: &Signal) {
-        match interrupt {
+    /// Handles an internal signal
+    fn sig(&mut self, signal: &Signal) {
+        match signal {
             &Signal::FlushFrame => {
                 self.next_frame = self.framebuffer.clone();
                 self.invalidate_framebuffer();
@@ -199,29 +199,29 @@ impl VM {
         }
     }
 
-    /// Handles incoming interrupts or moves along
-    fn external_interrupt(&mut self, receiver: &Receiver<Event>, sender: &SyncSender<Frame>)
+    /// Handles incoming events
+    fn handle_events(&mut self, receiver: &Receiver<Event>, sender: &SyncSender<Frame>)
         -> Result<()> {
-        let interrupt = if self.paused {
+        let event = if self.paused {
             self.paused = false;
             // We don't know how long this is going to take... better tell I/O what's going
             // on
             self.wait_flush_framebuffer(sender);
-            if let Ok(interrupt) = receiver.recv() {
-                interrupt
+            if let Ok(event) = receiver.recv() {
+                event
             } else {
                 self.halt();
                 return Ok(());
             }
         } else {
-            if let Ok(interrupt) = receiver.try_recv() {
-                interrupt
+            if let Ok(event) = receiver.try_recv() {
+                event
             } else {
                 return Ok(());
             }
         };
 
-        match interrupt {
+        match event {
             Event::Halt => self.halt(),
             Event::KeyDown(..) => {}
             Event::KeyUp(..) => {}

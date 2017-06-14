@@ -27,7 +27,7 @@ impl FromStr for Event {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "0" => Ok(Event::Halt),
-            _ => Err("unable to parse interrupt"),
+            _ => Err("unable to parse event"),
         }
     }
 }

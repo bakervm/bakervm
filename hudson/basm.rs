@@ -213,7 +213,7 @@ impl BASMCompiler {
             Mnemonic::Halt => self.builder.halt(),
             Mnemonic::Pause => self.builder.pause(),
             Mnemonic::Nop => self.builder.nop(),
-            Mnemonic::Int(int) => self.builder.int(int),
+            Mnemonic::Sig(sig) => self.builder.sig(sig),
         }
 
         Ok(())
@@ -266,7 +266,7 @@ fn text_to_mnemonic(opcode: String, args: Vec<String>) -> Result<Mnemonic> {
         "halt" => Ok(Mnemonic::Halt),
         "pause" => Ok(Mnemonic::Pause),
         "nop" => Ok(Mnemonic::Nop),
-        "int" => Ok(Mnemonic::Int(args[0].parse()?)),
+        "sig" => Ok(Mnemonic::Sig(args[0].parse()?)),
         _ => bail!("unkwnown opcode {:?}", opcode),
     }
 }

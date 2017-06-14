@@ -25,7 +25,7 @@ halt
   call draw
   cmp $vi(0), $vi(30)
   jmplt loop
-  int 0
+  sig %flush_frame%
   push $vi(0), @0
   jmp loop
   ret

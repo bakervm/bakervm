@@ -11,7 +11,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 pub fn start(
-    frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Event>, config: Config,
+    frame_receiver: Receiver<Frame>, event_sender: Sender<Event>, config: Config,
     barrier: Arc<Barrier>
 ) -> Result<()> {
     let sdl_context = sdl2::init()?;
@@ -54,22 +54,22 @@ pub fn start(
         for event in event_pump.poll_iter() {
             match event {
                 SDL2Event::Quit { .. } => {
-                    interrupt_sender.send(Event::Halt).chain_err(|| "unable to send interrupt")?;
+                    event_sender.send(Event::Halt).chain_err(|| "unable to send event")?;
 
                     break 'main;
                 }
                 SDL2Event::KeyDown { keycode: Some(key), .. } => {
-                    interrupt_sender
+                    event_sender
                         .send(Event::KeyDown(key as Address))
-                        .chain_err(|| "unable to send interrupt")?;
+                        .chain_err(|| "unable to send event")?;
                 }
                 SDL2Event::KeyUp { keycode: Some(key), .. } => {
-                    interrupt_sender
+                    event_sender
                         .send(Event::KeyUp(key as Address))
-                        .chain_err(|| "unable to send interrupt")?;
+                        .chain_err(|| "unable to send event")?;
                 }
                 SDL2Event::MouseButtonDown { x, y, mouse_btn, .. } => {
-                    interrupt_sender
+                    event_sender
                         .send(
                             Event::MouseDown {
                                 x: (x as Float / config.display.default_scale).floor() as Address,
@@ -77,10 +77,10 @@ pub fn start(
                                 button: mouse_btn as Address,
                             },
                         )
-                        .chain_err(|| "unable to send interrupt")?;
+                        .chain_err(|| "unable to send event")?;
                 }
                 SDL2Event::MouseButtonUp { x, y, mouse_btn, .. } => {
-                    interrupt_sender
+                    event_sender
                         .send(
                             Event::MouseUp {
                                 x: (x as Float / config.display.default_scale).floor() as Address,
@@ -88,7 +88,7 @@ pub fn start(
                                 button: mouse_btn as Address,
                             },
                         )
-                        .chain_err(|| "unable to send interrupt")?;
+                        .chain_err(|| "unable to send event")?;
                 }
                 _ => {}
             }
