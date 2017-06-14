@@ -123,7 +123,6 @@ hudson compile --basm path/to/main.basm
 |             `call label` | label: Label                       | Calls the function at the given label, pushing the return address to the call-stack                      |
 |                    `ret` | -                                  | Returns from a function call                                                                             |
 |       `rev event, label` | event: VMEventType, label: Label   | Registers a handler that is called when the given event is fired                                         |
-|            `drop target` | target: Target                     | Discards the value at the given target                                                                   |
 |                   `halt` | -                                  | Halts the execution of the current program and causes the VM to shut down                                |
 |                  `pause` | -                                  | Pauses the execution of the current program until an interrupt is received                               |
 |                    `nop` | -                                  | Does nothing. Good for optimizing code                                                                   |
