@@ -1,7 +1,7 @@
 use definitions::{Config, Event, Instruction, Program, Signal, Target, Type, Value};
 use definitions::error::*;
 use definitions::typedef::*;
-use std::collections::{BTreeMap, LinkedList};
+use std::collections::{BTreeMap, BTreeSet, LinkedList};
 use std::sync::{Arc, Barrier};
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError};
 use std::thread::{self, JoinHandle};
@@ -55,6 +55,7 @@ struct VM {
     base_ptr: Address,
     stack: LinkedList<Value>,
     value_index: BTreeMap<Address, Value>,
+    key_register: BTreeSet<Address>,
     framebuffer: Frame,
     framebuffer_invalid: bool,
     next_frame: Frame,
@@ -223,14 +224,17 @@ impl VM {
 
         match event {
             Event::Halt => self.halt(),
-            Event::KeyDown(..) => {}
-            Event::KeyUp(..) => {}
-            Event::MouseDown { .. } => {}
-            Event::MouseUp { .. } => {}
+            Event::KeyDown(key_code) => {
+                self.key_register.insert(key_code);
+            }
+            Event::KeyUp(key_code) => {
+                self.key_register.remove(&key_code);
+            }
+            Event::MouseDown { button, x, y } => {}
+            Event::MouseUp { button, x, y } => {}
         }
 
         Ok(())
-
     }
 
     /// Waits for the channel to be available, then flushes the internal
