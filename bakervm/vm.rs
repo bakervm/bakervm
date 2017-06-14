@@ -161,7 +161,6 @@ impl VM {
             Instruction::Call(addr) => self.call(&addr),
             Instruction::Ret => self.ret()?,
             Instruction::Rev(vm_event_type, addr) => self.rev(&vm_event_type, &addr)?,
-            Instruction::Drop(target) => self.drop(&target)?,
 
             Instruction::Halt => self.halt(),
             Instruction::Pause => self.pause(),
@@ -310,7 +309,6 @@ impl VM {
         self.pc_locked = true;
     }
 
-    /// Returns the current framebuffer cursor as an Address
     fn get_framebuffer_index(&mut self) -> Result<Address> {
         let index = if let &mut Value::Address(addr) =
             self.value_index.entry(0).or_insert(Value::Address(0)) {
@@ -626,13 +624,6 @@ impl VM {
             self.event_register.entry(vm_event_type.clone()).or_insert(*addr);
             Ok(())
         }
-    }
-
-    /// Discards the top value of the given target
-    fn drop(&mut self, target: &Target) -> Result<()> {
-        self.pop(target)?;
-
-        Ok(())
     }
 }
 

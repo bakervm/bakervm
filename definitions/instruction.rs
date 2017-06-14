@@ -33,7 +33,6 @@ pub enum Instruction {
     Call(Address),
     Ret,
     Rev(VMEventType, Address),
-    Drop(Target),
 
     Halt,
     Pause,

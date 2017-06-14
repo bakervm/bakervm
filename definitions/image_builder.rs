@@ -120,10 +120,6 @@ impl ImageBuilder {
         self.add_instruction(Instruction::Rev(vm_event_type, addr));
     }
 
-    pub fn drop(&mut self, target: Target) {
-        self.add_instruction(Instruction::Drop(target));
-    }
-
 
 
 
