@@ -5,7 +5,7 @@ use std::str::FromStr;
 use typedef::*;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum ExternalInterrupt {
+pub enum Event {
     KeyDown(Address),
     KeyUp(Address),
     MouseDown {
@@ -21,17 +21,12 @@ pub enum ExternalInterrupt {
     Halt,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub enum InternalInterrupt {
-    FlushFramebuffer,
-}
-
-impl FromStr for InternalInterrupt {
+impl FromStr for Event {
     type Err = &'static str;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "0" => Ok(InternalInterrupt::FlushFramebuffer),
+            "0" => Ok(Event::Halt),
             _ => Err("unable to parse interrupt"),
         }
     }

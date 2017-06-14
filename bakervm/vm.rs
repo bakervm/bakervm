@@ -1,17 +1,13 @@
-use definitions::{Config, ExternalInterrupt, Instruction, InternalInterrupt, Program, Target,
-                  Type, Value};
+use definitions::{Config, Event, Instruction, Program, Signal, Target, Type, Value};
 use definitions::error::*;
 use definitions::typedef::*;
 use std::collections::{BTreeMap, LinkedList};
 use std::sync::{Arc, Barrier};
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError};
 use std::thread::{self, JoinHandle};
-use std::time::{Duration, Instant};
 
-pub fn start(
-    program: Program, sender: SyncSender<Frame>, receiver: Receiver<ExternalInterrupt>,
-    barrier: Arc<Barrier>
-) -> JoinHandle<()> {
+pub fn start(program: Program, sender: SyncSender<Frame>, receiver: Receiver<Event>, barrier: Arc<Barrier>)
+    -> JoinHandle<()> {
     thread::spawn(
         move || {
             barrier.wait();
@@ -78,10 +74,8 @@ impl VM {
     // # Maintainance functions
 
     /// Executes the given program
-    pub fn exec(
-        &mut self, program: Program, sender: SyncSender<Frame>,
-        receiver: Receiver<ExternalInterrupt>
-    ) -> Result<()> {
+    pub fn exec(&mut self, program: Program, sender: SyncSender<Frame>, receiver: Receiver<Event>)
+        -> Result<()> {
         self.reset();
         self.load_program(&program).chain_err(|| "invalid program container")?;
         self.build_framebuffer();
@@ -96,19 +90,16 @@ impl VM {
                 Value::Address(program.config.display.resolution.height.clone()),
             )?;
 
-        let mut now = Instant::now();
 
         while (self.pc < self.image_data.len()) && !self.halted {
             self.do_cycle()?;
 
-            let elapsed_time = now.elapsed();
-            if self.framebuffer_invalid && elapsed_time >= Duration::from_millis(16) {
+            if self.framebuffer_invalid {
                 let res = sender.try_send(self.next_frame.clone());
                 if let Err(TrySendError::Disconnected(..)) = res {
                     self.halt();
                 } else if let Ok(()) = res {
                     self.framebuffer_invalid = false;
-                    now = Instant::now();
                 }
             }
 
@@ -199,9 +190,9 @@ impl VM {
     }
 
     /// Handles an internal interrupt
-    fn int(&mut self, interrupt: &InternalInterrupt) {
+    fn int(&mut self, interrupt: &Signal) {
         match interrupt {
-            &InternalInterrupt::FlushFramebuffer => {
+            &Signal::FlushFrame => {
                 self.next_frame = self.framebuffer.clone();
                 self.invalidate_framebuffer();
             }
@@ -209,7 +200,7 @@ impl VM {
     }
 
     /// Handles incoming interrupts or moves along
-    fn external_interrupt(&mut self, receiver: &Receiver<ExternalInterrupt>, sender: &SyncSender<Frame>)
+    fn external_interrupt(&mut self, receiver: &Receiver<Event>, sender: &SyncSender<Frame>)
         -> Result<()> {
         let interrupt = if self.paused {
             self.paused = false;
@@ -231,11 +222,11 @@ impl VM {
         };
 
         match interrupt {
-            ExternalInterrupt::Halt => self.halt(),
-            ExternalInterrupt::KeyDown(..) => {}
-            ExternalInterrupt::KeyUp(..) => {}
-            ExternalInterrupt::MouseDown { .. } => {}
-            ExternalInterrupt::MouseUp { .. } => {}
+            Event::Halt => self.halt(),
+            Event::KeyDown(..) => {}
+            Event::KeyUp(..) => {}
+            Event::MouseDown { .. } => {}
+            Event::MouseUp { .. } => {}
         }
 
         Ok(())

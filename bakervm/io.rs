@@ -1,9 +1,9 @@
 use definitions::Config;
-use definitions::ExternalInterrupt;
+use definitions::Event;
 use definitions::error::*;
 use definitions::typedef::*;
 use sdl2;
-use sdl2::event::Event;
+use sdl2::event::Event as SDL2Event;
 use sdl2::pixels::Color;
 use std::sync::{Arc, Barrier};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
@@ -11,7 +11,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 pub fn start(
-    frame_receiver: Receiver<Frame>, interrupt_sender: Sender<ExternalInterrupt>, config: Config,
+    frame_receiver: Receiver<Frame>, interrupt_sender: Sender<Event>, config: Config,
     barrier: Arc<Barrier>
 ) -> Result<()> {
     let sdl_context = sdl2::init()?;
@@ -53,27 +53,25 @@ pub fn start(
         // get the inputs here
         for event in event_pump.poll_iter() {
             match event {
-                Event::Quit { .. } => {
-                    interrupt_sender
-                        .send(ExternalInterrupt::Halt)
-                        .chain_err(|| "unable to send interrupt")?;
+                SDL2Event::Quit { .. } => {
+                    interrupt_sender.send(Event::Halt).chain_err(|| "unable to send interrupt")?;
 
                     break 'main;
                 }
-                Event::KeyDown { keycode: Some(key), .. } => {
+                SDL2Event::KeyDown { keycode: Some(key), .. } => {
                     interrupt_sender
-                        .send(ExternalInterrupt::KeyDown(key as Address))
+                        .send(Event::KeyDown(key as Address))
                         .chain_err(|| "unable to send interrupt")?;
                 }
-                Event::KeyUp { keycode: Some(key), .. } => {
+                SDL2Event::KeyUp { keycode: Some(key), .. } => {
                     interrupt_sender
-                        .send(ExternalInterrupt::KeyUp(key as Address))
+                        .send(Event::KeyUp(key as Address))
                         .chain_err(|| "unable to send interrupt")?;
                 }
-                Event::MouseButtonDown { x, y, mouse_btn, .. } => {
+                SDL2Event::MouseButtonDown { x, y, mouse_btn, .. } => {
                     interrupt_sender
                         .send(
-                            ExternalInterrupt::MouseDown {
+                            Event::MouseDown {
                                 x: (x as Float / config.display.default_scale).floor() as Address,
                                 y: (y as Float / config.display.default_scale).floor() as Address,
                                 button: mouse_btn as Address,
@@ -81,10 +79,10 @@ pub fn start(
                         )
                         .chain_err(|| "unable to send interrupt")?;
                 }
-                Event::MouseButtonUp { x, y, mouse_btn, .. } => {
+                SDL2Event::MouseButtonUp { x, y, mouse_btn, .. } => {
                     interrupt_sender
                         .send(
-                            ExternalInterrupt::MouseUp {
+                            Event::MouseUp {
                                 x: (x as Float / config.display.default_scale).floor() as Address,
                                 y: (y as Float / config.display.default_scale).floor() as Address,
                                 button: mouse_btn as Address,

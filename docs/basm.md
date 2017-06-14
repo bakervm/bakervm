@@ -43,11 +43,11 @@ The types and symbols used in the bakerVM assembly language are shown here.
 |  `color` | Color       |
 |   `char` | Char        |
 
-### InternalInterrupt
+### Signal
 
 | Mnemonic | Description      |
 |---------:|------------------|
-|      `0` | FlushFramebuffer |
+|      `0` | FlushFrame |
 
 ## Labels
 A label is a marker in the source code that symbolizes an address in the instruction stream. Labels begin with a `.`, for example:
@@ -115,4 +115,4 @@ hudson compile --basm path/to/main.basm
 |                   `halt` | -                                  | Halts the execution of the current program and causes the VM to shut down                                |
 |                  `pause` | -                                  | Pauses the execution of the current program until an interrupt is received                               |
 |                    `nop` | -                                  | Does nothing. Good for optimizing code                                                                   |
-|          `int interrupt` | interrupt: InternalInterrupt       | Triggers the given internal interrupt                                                                    |
+|          `int interrupt` | interrupt: Signal                  | Triggers the given internal interrupt                                                                    |
