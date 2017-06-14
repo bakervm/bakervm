@@ -14,12 +14,13 @@ The types and symbols used in the bakerVM assembly language are shown here.
 
 ### Target
 
-| Mnemonic | Description                                                         |
-|---------:|---------------------------------------------------------------------|
-|    `$st` | Stack                                                               |
-|    `$bp` | Base pointer                                                        |
-|    `$fb` | Framebuffer                                                         |
-| `$vi(#)` | The value index, where the # represents a constant positive integer |
+|  Mnemonic | Holds Type  | Description                                                          |
+|----------:|-------------|----------------------------------------------------------------------|
+|     `$st` | Any `Value` | Stack                                                                |
+|     `$bp` | `Address`   | Base pointer                                                         |
+|     `$fb` | `Color`     | Framebuffer                                                          |
+|  `$vi(#)` | Any `Value` | The value index, where the # represents a constant positive integer  |
+| `$key(#)` | Address     | The key register, where the # represents a constant positive integer |
 
 ### Value
 
@@ -39,15 +40,15 @@ The types and symbols used in the bakerVM assembly language are shown here.
 |   `addr` | Address     |
 |   `bool` | Boolean     |
 |  `float` | Float       |
-|    `sig` | Integer     |
+|    `int` | Integer     |
 |  `color` | Color       |
 |   `char` | Char        |
 
 ### Signal
 
-| Mnemonic | Description      |
-|---------:|------------------|
-|      `0` | FlushFrame |
+|        Mnemonic | Description |
+|----------------:|-------------|
+| `%flush_frame%` | FlushFrame  |
 
 ## Labels
 A label is a marker in the source code that symbolizes an address in the instruction stream. Labels begin with a `.`, for example:
@@ -113,6 +114,6 @@ hudson compile --basm path/to/main.basm
 |             `call label` | label: Label                       | Calls the function at the given label, pushing the return address to the call-stack                      |
 |                    `ret` | -                                  | Returns from a function call                                                                             |
 |                   `halt` | -                                  | Halts the execution of the current program and causes the VM to shut down                                |
-|                  `pause` | -                                  | Pauses the execution of the current program until an signal is received                               |
+|                  `pause` | -                                  | Pauses the execution of the current program until a signal is received                                   |
 |                    `nop` | -                                  | Does nothing. Good for optimizing code                                                                   |
-|          `sig signal` | signal: Signal                  | Triggers the given internal signal                                                                    |
+|             `sig signal` | signal: Signal                     | Triggers the given internal signal                                                                       |
