@@ -532,12 +532,13 @@ impl VM {
         let a_value = self.pop(target_a)?;
         let b_value = self.pop(target_b)?;
 
-        self.push(target_a, b_value)?;
         self.push(target_b, a_value)?;
+        self.push(target_a, b_value)?;
 
         Ok(())
     }
 
+    /// Duplicates the value at the given target to the stack
     fn dup(&mut self, target: &Target) -> Result<()> {
         let value = self.pop(target)?;
 
@@ -580,6 +581,23 @@ mod tests {
         vm.handle_instruction(Instruction::Halt).unwrap();
 
         assert!(vm.halted);
+    }
+
+    #[test]
+    fn swp() {
+        let mut vm = VM::default();
+        vm.handle_instruction(Instruction::Push(Target::Stack, Value::Address(123))).unwrap();
+        vm.handle_instruction(Instruction::Push(Target::Stack, Value::Address(321))).unwrap();
+
+        assert_eq!(vm.stack.front(), Some(&Value::Address(321)));
+
+        vm.handle_instruction(Instruction::Swp(Target::Stack, Target::Stack)).unwrap();
+
+        assert_eq!(vm.stack.front(), Some(&Value::Address(123)));
+
+        vm.handle_instruction(Instruction::Swp(Target::Stack, Target::Stack)).unwrap();
+
+        assert_eq!(vm.stack.front(), Some(&Value::Address(321)));
     }
 
     #[test]
