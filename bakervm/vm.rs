@@ -300,8 +300,7 @@ impl VM {
             Ok(index)
         } else {
             let base_index = NUM_RESERVED_MEM_SLOTS + self.base_ptr - 1;
-            let offset = index - NUM_RESERVED_MEM_SLOTS + 1;
-
+            let offset = index - NUM_RESERVED_MEM_SLOTS;
             let internal_index = base_index - offset;
 
             if internal_index < NUM_RESERVED_MEM_SLOTS {
@@ -716,6 +715,47 @@ mod tests {
 
         if let Err(err) = vm.load_program(&program) {
             panic!("program loading failed: {:?}", err);
+        }
+    }
+
+    #[test]
+    fn allocation() {
+        for _ in 0..3000 {
+            let space = rand::random::<Address>() % 100;
+
+            let mut vm = VM::default();
+
+            vm.push(&Target::Stack, Value::Address(space)).unwrap();
+            vm.add(&Target::BasePointer, &Target::Stack).unwrap();
+
+            for i in 0..space {
+                vm.push(
+                        &Target::ValueIndex(NUM_RESERVED_MEM_SLOTS + i),
+                        Value::Address(42),
+                    )
+                    .unwrap();
+            }
+        }
+    }
+
+    #[test]
+    #[should_panic]
+    fn failed_allocation() {
+        for _ in 0..3000 {
+            let space = rand::random::<Address>() % 100;
+
+            let mut vm = VM::default();
+
+            vm.push(&Target::Stack, Value::Address(space)).unwrap();
+            vm.add(&Target::BasePointer, &Target::Stack).unwrap();
+
+            for i in 0..(space + 1) {
+                vm.push(
+                        &Target::ValueIndex(NUM_RESERVED_MEM_SLOTS + i),
+                        Value::Address(42),
+                    )
+                    .unwrap();
+            }
         }
     }
 }
