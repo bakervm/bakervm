@@ -299,8 +299,10 @@ impl VM {
         if index < NUM_RESERVED_MEM_SLOTS {
             Ok(index)
         } else {
-            let internal_index = (NUM_RESERVED_MEM_SLOTS + self.base_ptr - 1) -
-                                 (index - NUM_RESERVED_MEM_SLOTS);
+            let base_index = NUM_RESERVED_MEM_SLOTS + self.base_ptr - 1;
+            let offset = index - NUM_RESERVED_MEM_SLOTS + 1;
+
+            let internal_index = base_index - offset;
 
             if internal_index < NUM_RESERVED_MEM_SLOTS {
                 bail!("cannot access value without further allocation");
