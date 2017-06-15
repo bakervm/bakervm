@@ -586,19 +586,24 @@ mod tests {
 
     #[test]
     fn swp() {
-        let mut vm = VM::default();
-        vm.handle_instruction(Instruction::Push(Target::Stack, Value::Address(123))).unwrap();
-        vm.handle_instruction(Instruction::Push(Target::Stack, Value::Address(321))).unwrap();
+        for _ in 0..3000 {
+            let val_a = rand::random::<Address>() / 2;
+            let val_b = rand::random::<Address>() / 2;
 
-        assert_eq!(vm.stack.front(), Some(&Value::Address(321)));
+            let mut vm = VM::default();
+            vm.handle_instruction(Instruction::Push(Target::Stack, Value::Address(val_a))).unwrap();
+            vm.handle_instruction(Instruction::Push(Target::Stack, Value::Address(val_b))).unwrap();
 
-        vm.handle_instruction(Instruction::Swp(Target::Stack, Target::Stack)).unwrap();
+            assert_eq!(vm.stack.front(), Some(&Value::Address(val_b)));
 
-        assert_eq!(vm.stack.front(), Some(&Value::Address(123)));
+            vm.handle_instruction(Instruction::Swp(Target::Stack, Target::Stack)).unwrap();
 
-        vm.handle_instruction(Instruction::Swp(Target::Stack, Target::Stack)).unwrap();
+            assert_eq!(vm.stack.front(), Some(&Value::Address(val_a)));
 
-        assert_eq!(vm.stack.front(), Some(&Value::Address(321)));
+            vm.handle_instruction(Instruction::Swp(Target::Stack, Target::Stack)).unwrap();
+
+            assert_eq!(vm.stack.front(), Some(&Value::Address(val_b)));
+        }
     }
 
     #[test]
