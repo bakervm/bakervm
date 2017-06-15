@@ -1,4 +1,3 @@
-use basm;
 use clap::ArgMatches;
 use definitions::{DisplayResolution, ImageBuilder, Signal, Target, Value};
 use definitions::error::*;
@@ -101,33 +100,6 @@ pub fn stock(_matches: &ArgMatches) -> Result<()> {
     output_file.write_all(&program_data[..]).chain_err(|| "unable to write output file")?;
 
     output_file.sync_all().chain_err(|| "unable to sync output file to file system")?;
-
-    Ok(())
-}
-
-pub fn compile(matches: &ArgMatches) -> Result<()> {
-    let input_file_name = if let Some(file_name) = matches.value_of("input") {
-        file_name
-    } else {
-        bail!("no file name given");
-    };
-
-    if matches.is_present("basm") {
-        let program = basm::compile(input_file_name.to_owned())
-            .chain_err(|| "unable to compile file")?;
-
-        let output_file_name = if let Some(file_name) = matches.value_of("output") {
-            file_name.to_owned()
-        } else {
-            format!("{}.img", input_file_name)
-        };
-
-        let mut file = File::create(output_file_name).chain_err(|| "unable to create file")?;
-
-        file.write_all(&program[..]).chain_err(|| "unable to write program data")?;
-
-        file.sync_all().chain_err(|| "unable to sync output file to file system")?;
-    }
 
     Ok(())
 }
