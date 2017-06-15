@@ -8,7 +8,7 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 lazy_static! {
     static ref LABELED_MNEMONIC_RE: Regex = Regex::new(r"^\.(.+?) +?(.+)$").unwrap();
@@ -21,7 +21,6 @@ struct BASMCompiler {
     label_addr_map: HashMap<String, Address>,
     mnemonics: Vec<Mnemonic>,
     builder: ImageBuilder,
-    last_base_dir: Option<PathBuf>,
     deep: usize,
 }
 
@@ -30,53 +29,11 @@ impl BASMCompiler {
         self.label_addr_map.entry(label).or_insert(self.mnemonics.len());
     }
 
-    fn base_path(&mut self, orig_path: &Path) -> Result<PathBuf> {
-        let file_name = if let Some(ref file_name) = orig_path.file_name() {
-            if let Some(..) = self.last_base_dir {
-                PathBuf::from(orig_path)
-            } else {
-                PathBuf::from(file_name.clone())
-            }
-        } else {
-            bail!("unable to obtain file name");
-        };
-
-        let absolute_path = if let Some(ref base_dir) = self.last_base_dir {
-            base_dir.clone()
-        } else {
-            let current_dir = if orig_path.is_relative() {
-                env::current_dir().chain_err(|| "unable to get current directory")?
-            } else {
-                if let Some(ref parent) = orig_path.parent() {
-                    parent.to_path_buf().clone()
-                } else {
-                    bail!("unable to get parent directory")
-                }
-            };
-
-            let base_file = current_dir.join(orig_path);
-            let base_dir = if let Some(ref dir) = base_file.parent() {
-                dir.clone()
-            } else {
-                bail!("unable to get parent directory")
-            };
-
-            self.last_base_dir = Some(base_dir.to_path_buf().clone());
-            base_dir.to_path_buf()
-        };
-
-        Ok(absolute_path.join(file_name))
-    }
-
-    fn compile_mnemonics(&mut self, file_name: String) -> Result<()> {
-        let orig_path = Path::new(&file_name);
-
+    fn compile_mnemonics(&mut self, orig_path: &Path) -> Result<()> {
         let padding = (0..self.deep).map(|_| "  ").collect::<String>();
-        println!("BASM    {}{}", padding, file_name);
+        println!("BASM    {}{:?}", padding, orig_path);
 
-        let path = self.base_path(orig_path)?;
-
-        let file = File::open(path).chain_err(|| "unable to open file")?;
+        let file = File::open(orig_path).chain_err(|| "unable to open file")?;
 
         let reader = BufReader::new(file);
 
@@ -131,7 +88,23 @@ impl BASMCompiler {
                         };
 
                     self.deep += 1;
-                    self.compile_mnemonics(captures[1].trim().to_owned() + ".basm")?;
+
+                    let parent = if let Some(ref parent) = orig_path.parent() {
+                        parent.to_path_buf().clone()
+                    } else {
+                        bail!("unable to get parent directory")
+                    };
+
+                    env::set_current_dir(parent.clone())
+                        .chain_err(|| "unable to switch directories")?;
+
+                    let path = Path::new(&(captures[1].trim().to_owned() + ".basm"))
+                        .canonicalize()
+                        .chain_err(|| "unable to canonicalize path")?;
+
+                    self.compile_mnemonics(&path)?;
+
+                    env::set_current_dir(parent).chain_err(|| "unable to switch directories")?;
                     self.deep -= 1;
 
                     continue;
@@ -163,7 +136,7 @@ impl BASMCompiler {
         Ok(())
     }
 
-    fn compile_mnemonic(&mut self, mnemonic: Mnemonic) -> Result<()> {
+    fn compile_instruction(&mut self, mnemonic: Mnemonic) -> Result<()> {
         match mnemonic {
             Mnemonic::Add(dest, src) => self.builder.add(dest, src),
             Mnemonic::Sub(dest, src) => self.builder.sub(dest, src),
@@ -228,10 +201,23 @@ impl BASMCompiler {
     }
 
     pub fn compile(&mut self, file_name: String) -> Result<ImageData> {
-        self.compile_mnemonics(file_name)?;
+        let path =
+            Path::new(&file_name).canonicalize().chain_err(|| "unable to canonicalize path")?;
+
+        let parent = if let Some(ref parent) = path.parent() {
+            parent.to_path_buf().clone()
+        } else {
+            bail!("unable to get parent directory")
+        };
+
+        env::set_current_dir(parent.clone()).chain_err(|| "unable to switch directories")?;
+
+        self.compile_mnemonics(&path)?;
+
+        env::set_current_dir(parent).chain_err(|| "unable to switch directories")?;
 
         for mnemonic in self.mnemonics.clone() {
-            self.compile_mnemonic(mnemonic)?;
+            self.compile_instruction(mnemonic)?;
         }
 
         Ok(self.builder.clone().gen())

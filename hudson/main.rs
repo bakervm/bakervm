@@ -6,6 +6,7 @@ extern crate bincode;
 extern crate regex;
 #[macro_use]
 extern crate lazy_static;
+extern crate image;
 
 mod commands;
 mod basm;
@@ -40,6 +41,16 @@ fn run() -> Result<()> {
         .about("The bakervm toolkit")
         .subcommand(SubCommand::with_name("stock").about("Generate the default image"),)
         .subcommand(
+            SubCommand::with_name("pack").about("Write texture functions from images")
+                .arg(Arg::with_name("input").index(1).required(true).help("Sets the source file to use."),)
+                .arg(Arg::with_name("output")
+                    .short("o")
+                    .long("output")
+                    .takes_value(true)
+                    .value_name("FILE")
+                    .help("Sets the destination file.")),
+        )
+        .subcommand(
             SubCommand::with_name("compile")
                 .arg(Arg::with_name("input").index(1).required(true).help("Sets the source file to use."),)
                 .arg(Arg::with_name("output")
@@ -56,6 +67,7 @@ fn run() -> Result<()> {
     match matches.subcommand() {
         ("compile", Some(sub_match)) => commands::compile(sub_match)?,
         ("stock", Some(sub_match)) => commands::stock(sub_match)?,
+        ("pack", Some(sub_match)) => commands::pack(sub_match)?,
         _ => {}
     }
 
