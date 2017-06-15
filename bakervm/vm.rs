@@ -261,7 +261,6 @@ impl VM {
     /// Resets the VM to a clean state
     fn reset(&mut self) {
         *self = VM::default();
-        self.base_ptr = NUM_RESERVED_MEM_SLOTS;
     }
 
     /// Locks the program counter in place
@@ -300,7 +299,8 @@ impl VM {
         if index < NUM_RESERVED_MEM_SLOTS {
             Ok(index)
         } else {
-            let internal_index = self.base_ptr - (index - NUM_RESERVED_MEM_SLOTS);
+            let internal_index = (NUM_RESERVED_MEM_SLOTS + self.base_ptr) -
+                                 (index - NUM_RESERVED_MEM_SLOTS);
 
             if internal_index < NUM_RESERVED_MEM_SLOTS {
                 bail!("cannot access value without further allocation");
@@ -402,6 +402,10 @@ impl VM {
     fn cmp(&mut self, target_a: &Target, target_b: &Target) -> Result<()> {
         let target_a_value = self.pop(target_a)?;
         let target_b_value = self.pop(target_b)?;
+
+        if target_a_value.get_type() != target_b_value.get_type() {
+            bail!("cannot compare values of different types")
+        }
 
         if target_a_value < target_b_value {
             self.cmp_register = Some(Ordering::Less);
