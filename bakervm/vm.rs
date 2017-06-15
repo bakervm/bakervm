@@ -725,10 +725,11 @@ mod tests {
 
     #[test]
     fn allocation() {
+        let mut vm = VM::default();
+
         for _ in 0..3000 {
             let space = rand::random::<Address>() % 100;
 
-            let mut vm = VM::default();
 
             vm.push(&Target::Stack, Value::Address(space)).unwrap();
             vm.add(&Target::BasePointer, &Target::Stack).unwrap();
@@ -736,20 +737,28 @@ mod tests {
             for i in 0..space {
                 vm.push(
                         &Target::ValueIndex(NUM_RESERVED_MEM_SLOTS + i),
-                        Value::Address(42),
+                        Value::Address(i),
                     )
                     .unwrap();
             }
+
+            for i in 0..space {
+                let val = vm.pop(&Target::ValueIndex(NUM_RESERVED_MEM_SLOTS + i)).unwrap();
+
+                assert_eq!(val, Value::Address(i));
+            }
         }
+
     }
 
     #[test]
     #[should_panic]
     fn failed_allocation() {
+        let mut vm = VM::default();
+
         for _ in 0..3000 {
             let space = rand::random::<Address>() % 100;
 
-            let mut vm = VM::default();
 
             vm.push(&Target::Stack, Value::Address(space)).unwrap();
             vm.add(&Target::BasePointer, &Target::Stack).unwrap();
@@ -757,7 +766,7 @@ mod tests {
             for i in 0..(space + 1) {
                 vm.push(
                         &Target::ValueIndex(NUM_RESERVED_MEM_SLOTS + i),
-                        Value::Address(42),
+                        Value::Address(i),
                     )
                     .unwrap();
             }
