@@ -8,7 +8,6 @@ pub enum Type {
     Integer,
     Color,
     Char,
-    Undefined,
 }
 
 impl FromStr for Type {
