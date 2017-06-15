@@ -19,7 +19,7 @@ impl FromStr for Type {
             "addr" => Ok(Type::Address),
             "bool" => Ok(Type::Boolean),
             "float" => Ok(Type::Float),
-            "sig" => Ok(Type::Integer),
+            "int" => Ok(Type::Integer),
             "color" => Ok(Type::Color),
             "char" => Ok(Type::Char),
             _ => Err("unable to parse type"),
