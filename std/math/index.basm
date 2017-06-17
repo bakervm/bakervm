@@ -1,0 +1,5 @@
+jmp _std_math_index
+
+include! abs
+
+._std_math_index

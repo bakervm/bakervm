@@ -1,0 +1,6 @@
+jmp _std_index
+
+include! graphics/index
+include! input/index
+
+._std_index

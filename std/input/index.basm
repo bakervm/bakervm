@@ -1,0 +1,5 @@
+jmp _std_input_index
+
+include! keyboard/index
+
+._std_input_index

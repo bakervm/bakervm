@@ -1,0 +1,26 @@
+jmp _std_graphics_draw_point
+
+.std.graphics.draw_point
+  push $st, @4
+  add $bp, $st        ; Allocate 4 slots
+
+  mov $vi(20), $st    ; y-coord (future-index)
+  mov $vi(21), $st    ; x-coord
+  mov $vi(22), $st    ; color
+
+  dup $vi(1)          ; get display-width
+  mov $vi(23), $st    ; save display-width
+
+  mul $vi(20), $vi(23)
+  add $vi(20), $vi(21)   ; vi(20) = index
+
+  mov $vi(0), $vi(20)
+
+  mov $fb, $vi(22)
+
+  push $st, @4
+  sub $bp, $st        ; Deallocate 4 slots
+
+  ret
+
+._std_graphics_draw_point

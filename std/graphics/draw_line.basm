@@ -1,0 +1,26 @@
+jmp _std_graphics_draw_line
+
+include! draw_point
+
+.std.graphics.draw_line
+  mov $vi(30), $st    ; p2 y
+  mov $vi(31), $st    ; p2 x
+
+  mov $vi(32), $st    ; p1 y
+  mov $vi(33), $st    ; p1 x
+
+  mov $vi(34), $st    ; color
+
+  cast $vi(30), float
+  cast $vi(31), float
+  cast $vi(32), float
+  cast $vi(33), float
+
+  sub  $vi(31), $vi(33)   ; x1
+  sub  $vi(30), $vi(32)   ; x2
+
+
+
+  ret
+
+._std_graphics_draw_line
