@@ -3,7 +3,7 @@ use definitions::error::*;
 use definitions::typedef::*;
 use mnemonic::Mnemonic;
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::fs::File;
 use std::io::BufReader;
@@ -21,17 +21,36 @@ struct BASMCompiler {
     label_addr_map: HashMap<String, Address>,
     mnemonics: Vec<Mnemonic>,
     builder: ImageBuilder,
+    compiled_files: HashSet<String>,
     deep: usize,
 }
 
 impl BASMCompiler {
-    fn add_label(&mut self, label: String) {
-        self.label_addr_map.entry(label).or_insert(self.mnemonics.len());
+    fn add_label(&mut self, label: String) -> Result<()> {
+        if self.label_addr_map.contains_key(&label) {
+            bail!("label {:?} already exists", label)
+        } else {
+            self.label_addr_map.entry(label).or_insert(self.mnemonics.len());
+
+            Ok(())
+        }
     }
 
     fn compile_mnemonics(&mut self, orig_path: &Path) -> Result<()> {
         let padding = (0..self.deep).map(|_| "  ").collect::<String>();
         println!("BASM    {}{:?}", padding, orig_path);
+
+        let path_string = if let Some(string) = orig_path.to_str() {
+            string.to_owned()
+        } else {
+            bail!("unable to convert path to string");
+        };
+
+        if self.compiled_files.contains(&path_string) {
+            return Ok(());
+        } else {
+            self.compiled_files.insert(path_string);
+        }
 
         let file = File::open(orig_path).chain_err(|| "unable to open file")?;
 
@@ -64,7 +83,7 @@ impl BASMCompiler {
 
                     let label = captures[1].trim();
 
-                    self.add_label(label.to_owned());
+                    self.add_label(label.to_owned())?;
 
                     captures[2].trim().to_owned()
                 } else if LABEL_RE.is_match(first_half) {
@@ -77,7 +96,7 @@ impl BASMCompiler {
 
                     let label = captures[1].trim();
 
-                    self.add_label(label.to_owned());
+                    self.add_label(label.to_owned())?;
                     continue;
                 } else if INCLUDE_RE.is_match(first_half) {
                     let captures =

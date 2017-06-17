@@ -1,0 +1,5 @@
+jmp _std_input_keyboard_index
+
+include! is_key_pressed
+
+._std_input_keyboard_index

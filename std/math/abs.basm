@@ -1,0 +1,26 @@
+jmp _std_math_abs
+
+.std.math.abs
+  push $st, @2
+  add $bp, $st
+
+  mov $vi(21), $st
+  push $vi(20), 0
+
+  cmp $vi(21), $vi(20)
+  jmplt std.math.abs__lower_than_zero
+  mov $st, $vi(21)
+  jmp std.math.abs__end
+
+.std.math.abs__lower_than_zero
+  push $st, -1
+  mul $vi(21), $st
+
+  mov $st, $vi(21)
+
+.std.math.abs__end
+  push $st, @2
+  sub $bp, $st
+ret
+
+._std_math_abs

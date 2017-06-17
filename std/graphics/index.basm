@@ -1,0 +1,7 @@
+jmp _std_graphics_index
+
+include! draw_point
+include! draw_line
+include! draw_rect
+
+._std_graphics_index

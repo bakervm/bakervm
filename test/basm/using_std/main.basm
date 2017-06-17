@@ -1,0 +1,25 @@
+include! ../../../std/index
+
+push $st, @1
+add $bp, $st
+
+push $vi(20), @0
+call start
+pause
+
+push $st, @1
+sub $bp, $st
+halt
+
+.start
+  push $st, #FFFFFF
+  dup $vi(20)
+  dup $vi(20)
+  call std.graphics.draw_point
+  sig %flush_frame%
+
+  push $st, @1
+  add $vi(20), $st
+  pause
+  jmp start
+  ret

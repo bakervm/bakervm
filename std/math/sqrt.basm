@@ -1,0 +1,24 @@
+jmp _std_math_sqrt
+
+.std.math.sqrt
+  push $st, @2
+  add $bp, $st
+
+  call std.math.sqrt__test
+  call std.math.sqrt__close_enough
+  call std.math.sqrt__better_guess
+
+  push $st, @2
+  sub $bp, $st
+ret
+
+.std.math.sqrt__test
+ret
+
+.std.math.sqrt__close_enough
+ret
+
+.std.math.sqrt__better_guess
+ret
+
+._std_math_sqrt

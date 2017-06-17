@@ -1,0 +1,35 @@
+jmp _std_input_keyboard_is_key_pressed
+
+.std.input.keyboard.is_key_pressed
+  push $st, @1      ; allocate memory
+  add $bp, $st
+
+  mov $vi(20), $st  ; key, to check for
+
+  push $st, @97
+  cmp $st, $vi(20)
+  mov $vi(19), $st
+  jmpeq std.input.keyboard.__check_is_a_pressed
+  ret
+
+.std.input.keyboard.__check_is_a_pressed
+  call std.input.keyboard.is_a_pressed
+  ret
+
+  push $st, @1      ; deallocate memory
+  sub $bp, $st
+ret
+
+.std.input.keyboard.is_a_pressed
+  push $st, true
+  cmp $st, $key(97)     ; "a"
+  mov $vi(19), $st
+  jmpeq std.input.keyboard.__a_key_pressed
+  push $st, false
+  ret
+.std.input.keyboard.__a_key_pressed
+  push $st, true
+ret
+
+
+._std_input_keyboard_is_key_pressed
