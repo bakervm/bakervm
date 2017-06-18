@@ -1,10 +1,10 @@
-jmp _std_graphics_draw_rect
+jmp _std_graphics_draw_filled_rect
 
 include! ../math/max
 include! ../math/min
 include! draw_point
 
-.std.graphics.draw_rect
+.std.graphics.draw_filled_rect
   push $st, @9
   add $bp, $st
 
@@ -63,7 +63,7 @@ include! draw_point
   dup $vi(26)   ; y
   call std.graphics.draw_point
 
-  .std.graphics.draw_rect__draw_outer
+  .std.graphics.draw_filled_rect__draw_outer
     dup $vi(24)   ; color
     dup $vi(20)   ; x
     dup $vi(21)   ; y
@@ -73,16 +73,16 @@ include! draw_point
     add $vi(20), $st
 
     cmp $vi(20), $vi(27)
-    jmpgt std.graphics.draw_rect__draw_inner
-    jmp std.graphics.draw_rect__draw_outer
-  .std.graphics.draw_rect__draw_inner
+    jmpgt std.graphics.draw_filled_rect__draw_inner
+    jmp std.graphics.draw_filled_rect__draw_outer
+  .std.graphics.draw_filled_rect__draw_inner
     dup $vi(25)
     mov $vi(20), $st
 
     push $st, @1
     add $vi(21), $st
     cmp $vi(21), $vi(28)
-    jmplteq std.graphics.draw_rect__draw_outer
+    jmplteq std.graphics.draw_filled_rect__draw_outer
 
   dup $vi(24)   ; color
   dup $vi(27)   ; x
@@ -93,4 +93,4 @@ include! draw_point
   sub $bp, $st
 ret
 
-._std_graphics_draw_rect
+._std_graphics_draw_filled_rect
