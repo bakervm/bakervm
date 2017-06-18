@@ -11,7 +11,7 @@ halt
 
   push $st, @3
   push $st, @3
-  call std.graphics.draw_rect
+  call std.graphics.draw_filled_rect
 
 
   push $st, #00ff00
@@ -21,7 +21,7 @@ halt
 
   push $st, @8
   push $st, @3
-  call std.graphics.draw_rect
+  call std.graphics.draw_filled_rect
 
 
   push $st, #0000ff
@@ -31,7 +31,7 @@ halt
 
   push $st, @13
   push $st, @3
-  call std.graphics.draw_rect
+  call std.graphics.draw_filled_rect
 
 
   sig %flush_frame%
