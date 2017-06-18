@@ -530,7 +530,7 @@ impl VM {
                 let index = self.get_framebuffer_index()?;
 
                 if index >= self.framebuffer.len() {
-                    bail!("framebuffer index {:?} is out of bounds", index);
+                    return Ok(());
                 }
 
                 if let Value::Color(r, g, b) = value {
@@ -545,7 +545,7 @@ impl VM {
                     self.base_ptr = addr;
                     Ok(())
                 } else {
-                    bail!("unable push a non-address value to the framebuffer");
+                    bail!("unable set the base pointer to a non-address value");
                 }
             }
             &Target::KeyRegister(..) => Ok(()),
