@@ -2,6 +2,6 @@ jmp _std_graphics_index
 
 include! draw_point
 include! draw_line
-include! draw_rect
+include! draw_filled_rect
 
 ._std_graphics_index

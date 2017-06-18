@@ -1,0 +1,40 @@
+include! ../../../std/graphics/draw_filled_rect
+
+call start
+halt
+
+.start
+  push $st, #ff0000
+
+  push $st, @0
+  push $st, @0
+
+  push $st, @3
+  push $st, @3
+  call std.graphics.draw_rect
+
+
+  push $st, #00ff00
+
+  push $st, @5
+  push $st, @0
+
+  push $st, @8
+  push $st, @3
+  call std.graphics.draw_rect
+
+
+  push $st, #0000ff
+
+  push $st, @10
+  push $st, @0
+
+  push $st, @13
+  push $st, @3
+  call std.graphics.draw_rect
+
+
+  sig %flush_frame%
+  pause
+  jmp start
+ret

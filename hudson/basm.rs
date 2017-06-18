@@ -72,6 +72,10 @@ impl BASMCompiler {
             if let Some(first_half) = r_split.next() {
                 let first_half = first_half.trim();
 
+                if first_half.is_empty() {
+                    continue;
+                }
+
                 let first_half: String = if LABELED_MNEMONIC_RE.is_match(first_half) {
                     let captures = if let Some(captures) = LABELED_MNEMONIC_RE
                            .captures_iter(first_half)

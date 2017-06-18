@@ -1,0 +1,23 @@
+jmp _std_math_max
+
+.std.math.max
+  push $st, @2
+  add $bp, $st
+
+  mov $vi(20), $st  ; b
+  mov $vi(21), $st  ; a
+
+  cmp $vi(21), $vi(20)
+  jmpgteq std.math.max__a_greater
+  jmplt std.math.max__b_greater
+  .std.math.max__a_greater
+    mov $st, $vi(21)
+    jmp std.math.max__end
+  .std.math.max__b_greater
+    mov $st, $vi(20)
+  .std.math.max__end
+  push $st, @2
+  sub $bp, $st
+ret
+
+._std_math_max

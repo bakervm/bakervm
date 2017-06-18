@@ -1,0 +1,23 @@
+jmp _std_math_min
+
+.std.math.min
+  push $st, @2
+  add $bp, $st
+
+  mov $vi(20), $st  ; b
+  mov $vi(21), $st  ; a
+
+  cmp $vi(21), $vi(20)
+  jmplteq std.math.min__a_smaller
+  jmpgt std.math.min__b_smaller
+  .std.math.min__a_smaller
+    mov $st, $vi(21)
+    jmp std.math.min__end
+  .std.math.min__b_smaller
+    mov $st, $vi(20)
+  .std.math.min__end
+  push $st, @2
+  sub $bp, $st
+ret
+
+._std_math_min
