@@ -44,6 +44,11 @@ const NUM_RESERVED_MEM_SLOTS: usize = 20;
 // const FRAMEBUFFER_CURSOR_INDEX: Target = Target::ValueIndex(0);
 const DISPLAY_WIDTH_INDEX: Target = Target::ValueIndex(1);
 const DISPLAY_HEIGHT_INDEX: Target = Target::ValueIndex(2);
+const MOUSE_X_INDEX: Target = Target::ValueIndex(3);
+const MOUSE_Y_INDEX: Target = Target::ValueIndex(4);
+const LEFT_MOUSE_INDEX: Target = Target::ValueIndex(5);
+const MIDDLE_MOUSE_INDEX: Target = Target::ValueIndex(6);
+const RIGHT_MOUSE_INDEX: Target = Target::ValueIndex(7);
 
 /// The whole state of the VM
 #[derive(Serialize, Deserialize, Default, Debug)]
@@ -231,8 +236,30 @@ impl VM {
             Event::KeyUp(key_code) => {
                 self.key_register.remove(&key_code);
             }
-            Event::MouseDown { .. } => {}
-            Event::MouseUp { .. } => {}
+            Event::MouseDown { button, x, y } => {
+                self.push(&MOUSE_X_INDEX, Value::Address(x))?;
+                self.push(&MOUSE_Y_INDEX, Value::Address(y))?;
+                match button {
+                    1 => self.push(&LEFT_MOUSE_INDEX, Value::Boolean(true))?,
+                    2 => self.push(&MIDDLE_MOUSE_INDEX, Value::Boolean(true))?,
+                    3 => self.push(&RIGHT_MOUSE_INDEX, Value::Boolean(true))?,
+                    _ => bail!("unknown mouse button"),
+                }
+            }
+            Event::MouseUp { button, x, y } => {
+                self.push(&MOUSE_X_INDEX, Value::Address(x))?;
+                self.push(&MOUSE_Y_INDEX, Value::Address(y))?;
+                match button {
+                    1 => self.push(&LEFT_MOUSE_INDEX, Value::Boolean(false))?,
+                    2 => self.push(&MIDDLE_MOUSE_INDEX, Value::Boolean(false))?,
+                    3 => self.push(&RIGHT_MOUSE_INDEX, Value::Boolean(false))?,
+                    _ => bail!("unknown mouse button"),
+                }
+            }
+            Event::MouseMove { x, y } => {
+                self.push(&MOUSE_X_INDEX, Value::Address(x))?;
+                self.push(&MOUSE_Y_INDEX, Value::Address(y))?;
+            }
         }
 
         Ok(())

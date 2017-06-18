@@ -4,11 +4,12 @@ use definitions::error::*;
 use definitions::typedef::*;
 use sdl2;
 use sdl2::event::Event as SDL2Event;
+use sdl2::event::EventType as SDL2EventType;
 use sdl2::pixels::Color;
 use std::sync::{Arc, Barrier};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 pub fn start(
     frame_receiver: Receiver<Frame>, event_sender: Sender<Event>, config: Config,
@@ -16,6 +17,8 @@ pub fn start(
 ) -> Result<()> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
+
+    sdl_context.mouse().show_cursor(false);
 
     let window = video_subsystem
         .window(
@@ -43,57 +46,112 @@ pub fn start(
         )?;
 
     let mut event_pump = sdl_context.event_pump()?;
-    let mut frame_count = 0;
+    event_pump.disable_event(SDL2EventType::First);
+    event_pump.disable_event(SDL2EventType::AppTerminating);
+    event_pump.disable_event(SDL2EventType::AppLowMemory);
+    event_pump.disable_event(SDL2EventType::AppWillEnterBackground);
+    event_pump.disable_event(SDL2EventType::AppDidEnterBackground);
+    event_pump.disable_event(SDL2EventType::AppWillEnterForeground);
+    event_pump.disable_event(SDL2EventType::AppDidEnterForeground);
+    event_pump.disable_event(SDL2EventType::Window);
+    event_pump.disable_event(SDL2EventType::TextEditing);
+    event_pump.disable_event(SDL2EventType::TextInput);
+    event_pump.disable_event(SDL2EventType::MouseWheel);
+    event_pump.disable_event(SDL2EventType::JoyAxisMotion);
+    event_pump.disable_event(SDL2EventType::JoyBallMotion);
+    event_pump.disable_event(SDL2EventType::JoyHatMotion);
+    event_pump.disable_event(SDL2EventType::JoyButtonDown);
+    event_pump.disable_event(SDL2EventType::JoyButtonUp);
+    event_pump.disable_event(SDL2EventType::JoyDeviceAdded);
+    event_pump.disable_event(SDL2EventType::JoyDeviceRemoved);
+    event_pump.disable_event(SDL2EventType::ControllerAxisMotion);
+    event_pump.disable_event(SDL2EventType::ControllerButtonDown);
+    event_pump.disable_event(SDL2EventType::ControllerButtonUp);
+    event_pump.disable_event(SDL2EventType::ControllerDeviceAdded);
+    event_pump.disable_event(SDL2EventType::ControllerDeviceRemoved);
+    event_pump.disable_event(SDL2EventType::ControllerDeviceRemapped);
+    event_pump.disable_event(SDL2EventType::FingerDown);
+    event_pump.disable_event(SDL2EventType::FingerUp);
+    event_pump.disable_event(SDL2EventType::FingerMotion);
+    event_pump.disable_event(SDL2EventType::DollarGesture);
+    event_pump.disable_event(SDL2EventType::DollarRecord);
+    event_pump.disable_event(SDL2EventType::MultiGesture);
+    event_pump.disable_event(SDL2EventType::ClipboardUpdate);
+    event_pump.disable_event(SDL2EventType::DropFile);
+    event_pump.disable_event(SDL2EventType::User);
+    event_pump.disable_event(SDL2EventType::Last);
 
     barrier.wait();
 
-    let mut now_before = Instant::now();
+    let mut last_event = None;
 
     'main: loop {
-        // get the inputs here
-        for event in event_pump.poll_iter() {
-            match event {
-                SDL2Event::Quit { .. } => {
-                    event_sender.send(Event::Halt).chain_err(|| "unable to send event")?;
+        let new_event = event_pump.poll_event();
+        if new_event != last_event {
+            // get the inputs here
+            if let Some(event) = new_event.clone() {
+                match event {
+                    SDL2Event::Quit { .. } => {
+                        event_sender.send(Event::Halt).chain_err(|| "unable to send event")?;
 
-                    break 'main;
+                        break 'main;
+                    }
+                    SDL2Event::KeyDown { keycode: Some(key), .. } => {
+                        event_sender
+                            .send(Event::KeyDown(key as Address))
+                            .chain_err(|| "unable to send event")?;
+                    }
+                    SDL2Event::KeyUp { keycode: Some(key), .. } => {
+                        event_sender
+                            .send(Event::KeyUp(key as Address))
+                            .chain_err(|| "unable to send event")?;
+                    }
+                    SDL2Event::MouseButtonDown { x, y, mouse_btn, .. } => {
+                        event_sender
+                            .send(
+                                Event::MouseDown {
+                                    x: (x as Float / config.display.default_scale).floor() as
+                                       Address,
+                                    y: (y as Float / config.display.default_scale).floor() as
+                                       Address,
+                                    button: mouse_btn as Address,
+                                },
+                            )
+                            .chain_err(|| "unable to send event")?;
+                    }
+                    SDL2Event::MouseButtonUp { x, y, mouse_btn, .. } => {
+                        event_sender
+                            .send(
+                                Event::MouseUp {
+                                    x: (x as Float / config.display.default_scale).floor() as
+                                       Address,
+                                    y: (y as Float / config.display.default_scale).floor() as
+                                       Address,
+                                    button: mouse_btn as Address,
+                                },
+                            )
+                            .chain_err(|| "unable to send event")?;
+                    }
+                    SDL2Event::MouseMotion { x, y, .. } => {
+                        event_sender
+                            .send(
+                                Event::MouseMove {
+                                    x: (x as Float / config.display.default_scale).floor() as
+                                       Address,
+                                    y: (y as Float / config.display.default_scale).floor() as
+                                       Address,
+                                },
+                            )
+                            .chain_err(|| "unable to send event")?;
+                    }
+                    _ => {}
                 }
-                SDL2Event::KeyDown { keycode: Some(key), .. } => {
-                    event_sender
-                        .send(Event::KeyDown(key as Address))
-                        .chain_err(|| "unable to send event")?;
-                }
-                SDL2Event::KeyUp { keycode: Some(key), .. } => {
-                    event_sender
-                        .send(Event::KeyUp(key as Address))
-                        .chain_err(|| "unable to send event")?;
-                }
-                SDL2Event::MouseButtonDown { x, y, mouse_btn, .. } => {
-                    event_sender
-                        .send(
-                            Event::MouseDown {
-                                x: (x as Float / config.display.default_scale).floor() as Address,
-                                y: (y as Float / config.display.default_scale).floor() as Address,
-                                button: mouse_btn as Address,
-                            },
-                        )
-                        .chain_err(|| "unable to send event")?;
-                }
-                SDL2Event::MouseButtonUp { x, y, mouse_btn, .. } => {
-                    event_sender
-                        .send(
-                            Event::MouseUp {
-                                x: (x as Float / config.display.default_scale).floor() as Address,
-                                y: (y as Float / config.display.default_scale).floor() as Address,
-                                button: mouse_btn as Address,
-                            },
-                        )
-                        .chain_err(|| "unable to send event")?;
-                }
-                _ => {}
             }
         }
 
+        if new_event.is_some() {
+            last_event = new_event;
+        }
 
         // Receive a frame
         let maybe_frame = frame_receiver.try_recv();
@@ -118,16 +176,6 @@ pub fn start(
         } else {
             thread::sleep(Duration::from_millis(10));
         }
-
-        let secs_elapsed = now_before.elapsed();
-
-        if secs_elapsed >= Duration::from_millis(1000) {
-            println!("FPS: {:?}", frame_count / secs_elapsed.as_secs());
-            now_before = Instant::now();
-            frame_count = 0;
-        }
-
-        frame_count += 1;
     }
 
     Ok(())
