@@ -1,0 +1,29 @@
+include! ../../../std/index
+
+
+push $st, @1
+add $bp, $st
+push $vi(20), @16000
+push $vi(0), @0
+call start
+halt
+
+.start
+  call clear
+  push $st, #ffffff
+  dup $vi(3)
+  dup $vi(4)
+  call std.graphics.draw_point
+  sig %flush_frame%
+  pause
+  jmp start
+ret
+
+.clear
+  push $fb, #000000
+  push $st, @1
+  add $vi(0), $st
+  cmp $vi(0), $vi(20)
+  jmplt clear
+  pause
+ret

@@ -91,12 +91,17 @@ impl VM {
                 &DISPLAY_WIDTH_INDEX,
                 Value::Address(program.config.display.resolution.width.clone()),
             )?;
-
         self.push(
                 &DISPLAY_HEIGHT_INDEX,
                 Value::Address(program.config.display.resolution.height.clone()),
             )?;
 
+        self.push(&MOUSE_X_INDEX, Value::Address(0))?;
+        self.push(&MOUSE_Y_INDEX, Value::Address(0))?;
+
+        self.push(&LEFT_MOUSE_INDEX, Value::Boolean(false))?;
+        self.push(&MIDDLE_MOUSE_INDEX, Value::Boolean(false))?;
+        self.push(&RIGHT_MOUSE_INDEX, Value::Boolean(false))?;
 
         while (self.pc < self.image_data.len()) && !self.halted {
             self.do_cycle()?;
