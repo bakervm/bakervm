@@ -3,24 +3,28 @@ jmp _std_graphics_draw_line
 include! draw_point
 
 .std.graphics.draw_line
-  mov $vi(30), $st    ; p2 y
-  mov $vi(31), $st    ; p2 x
+  push $st, @5
+  add $bp, $st
 
-  mov $vi(32), $st    ; p1 y
-  mov $vi(33), $st    ; p1 x
+  mov $vi(20), $st    ; p2 y
+  mov $vi(21), $st    ; p2 x
 
-  mov $vi(34), $st    ; color
+  mov $vi(22), $st    ; p1 y
+  mov $vi(22), $st    ; p1 x
 
-  cast $vi(30), float
-  cast $vi(31), float
-  cast $vi(32), float
-  cast $vi(33), float
+  mov $vi(24), $st    ; color
 
-  sub  $vi(31), $vi(33)   ; x1
-  sub  $vi(30), $vi(32)   ; x2
+  cast $vi(20), float
+  cast $vi(21), float
+  cast $vi(22), float
+  cast $vi(23), float
+
+  sub  $vi(21), $vi(23)   ; x1
+  sub  $vi(20), $vi(22)   ; x2
 
 
-
-  ret
+  push $st, @5
+  sub $bp, $st
+ret
 
 ._std_graphics_draw_line

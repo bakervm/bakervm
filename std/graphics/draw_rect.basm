@@ -1,5 +1,0 @@
-jmp _std_graphics_draw_rect
-
-include! draw_line
-
-._std_graphics_draw_rect

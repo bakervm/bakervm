@@ -1,5 +1,7 @@
 jmp _std_math_index
 
 include! abs
+include! max
+include! min
 
 ._std_math_index
