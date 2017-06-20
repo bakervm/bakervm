@@ -18,7 +18,10 @@ pub fn start(
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
-    sdl_context.mouse().show_cursor(false);
+    let hide_cursor = config.display.hide_cursor;
+
+
+    sdl_context.mouse().show_cursor(!hide_cursor);
 
     let window = video_subsystem
         .window(
@@ -96,55 +99,61 @@ pub fn start(
 
                         break 'main;
                     }
-                    SDL2Event::KeyDown { keycode: Some(key), .. } => {
-                        event_sender
-                            .send(Event::KeyDown(key as Address))
-                            .chain_err(|| "unable to send event")?;
-                    }
-                    SDL2Event::KeyUp { keycode: Some(key), .. } => {
-                        event_sender
-                            .send(Event::KeyUp(key as Address))
-                            .chain_err(|| "unable to send event")?;
-                    }
-                    SDL2Event::MouseButtonDown { x, y, mouse_btn, .. } => {
-                        event_sender
-                            .send(
-                                Event::MouseDown {
-                                    x: (x as Float / config.display.default_scale).floor() as
-                                       Address,
-                                    y: (y as Float / config.display.default_scale).floor() as
-                                       Address,
-                                    button: mouse_btn as Address,
-                                },
-                            )
-                            .chain_err(|| "unable to send event")?;
-                    }
-                    SDL2Event::MouseButtonUp { x, y, mouse_btn, .. } => {
-                        event_sender
-                            .send(
-                                Event::MouseUp {
-                                    x: (x as Float / config.display.default_scale).floor() as
-                                       Address,
-                                    y: (y as Float / config.display.default_scale).floor() as
-                                       Address,
-                                    button: mouse_btn as Address,
-                                },
-                            )
-                            .chain_err(|| "unable to send event")?;
-                    }
-                    SDL2Event::MouseMotion { x, y, .. } => {
-                        event_sender
-                            .send(
-                                Event::MouseMove {
-                                    x: (x as Float / config.display.default_scale).floor() as
-                                       Address,
-                                    y: (y as Float / config.display.default_scale).floor() as
-                                       Address,
-                                },
-                            )
-                            .chain_err(|| "unable to send event")?;
-                    }
                     _ => {}
+                }
+
+                if config.input_enabled {
+                    match event {
+                        SDL2Event::KeyDown { keycode: Some(key), .. } => {
+                            event_sender
+                                .send(Event::KeyDown(key as Address))
+                                .chain_err(|| "unable to send event")?;
+                        }
+                        SDL2Event::KeyUp { keycode: Some(key), .. } => {
+                            event_sender
+                                .send(Event::KeyUp(key as Address))
+                                .chain_err(|| "unable to send event")?;
+                        }
+                        SDL2Event::MouseButtonDown { x, y, mouse_btn, .. } => {
+                            event_sender
+                                .send(
+                                    Event::MouseDown {
+                                        x: (x as Float / config.display.default_scale).floor() as
+                                           Address,
+                                        y: (y as Float / config.display.default_scale).floor() as
+                                           Address,
+                                        button: mouse_btn as Address,
+                                    },
+                                )
+                                .chain_err(|| "unable to send event")?;
+                        }
+                        SDL2Event::MouseButtonUp { x, y, mouse_btn, .. } => {
+                            event_sender
+                                .send(
+                                    Event::MouseUp {
+                                        x: (x as Float / config.display.default_scale).floor() as
+                                           Address,
+                                        y: (y as Float / config.display.default_scale).floor() as
+                                           Address,
+                                        button: mouse_btn as Address,
+                                    },
+                                )
+                                .chain_err(|| "unable to send event")?;
+                        }
+                        SDL2Event::MouseMotion { x, y, .. } => {
+                            event_sender
+                                .send(
+                                    Event::MouseMove {
+                                        x: (x as Float / config.display.default_scale).floor() as
+                                           Address,
+                                        y: (y as Float / config.display.default_scale).floor() as
+                                           Address,
+                                    },
+                                )
+                                .chain_err(|| "unable to send event")?;
+                        }
+                        _ => {}
+                    }
                 }
             }
         }

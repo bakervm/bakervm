@@ -2,5 +2,6 @@ jmp _std_index
 
 include! graphics/index
 include! input/index
+include! math/index
 
 ._std_index
