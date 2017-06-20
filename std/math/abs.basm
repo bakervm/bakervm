@@ -5,7 +5,7 @@ jmp _std_math_abs
   add $bp, $st
 
   mov $vi(21), $st
-  push $vi(20), 0
+  push $vi(20), 0.0
 
   cmp $vi(21), $vi(20)
   jmplt std.math.abs__lower_than_zero
@@ -13,9 +13,8 @@ jmp _std_math_abs
   jmp std.math.abs__end
 
 .std.math.abs__lower_than_zero
-  push $st, -1
+  push $st, -1.0
   mul $vi(21), $st
-
   mov $st, $vi(21)
 
 .std.math.abs__end

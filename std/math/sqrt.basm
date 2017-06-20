@@ -1,24 +1,67 @@
 jmp _std_math_sqrt
 
-.std.math.sqrt
-  push $st, @2
-  add $bp, $st
+  include! abs
 
-  call std.math.sqrt__test
-  call std.math.sqrt__close_enough
-  call std.math.sqrt__better_guess
+  .std.math.sqrt
+    dup $st
+    push $st, 2.0
+    div $st, $st
+    call std.math.sqrt__test
+  ret
 
-  push $st, @2
-  sub $bp, $st
-ret
+  .std.math.sqrt__test
+    push $st, @2
+    add $bp, $st
 
-.std.math.sqrt__test
-ret
+    mov $vi(20), $st  ; g
+    mov $vi(21), $st  ; x
 
-.std.math.sqrt__close_enough
-ret
+    dup $vi(21)
+    dup $vi(20)
+    div $st, $st
+    dup $vi(20)
+    call std.math.sqrt__close_enough
+    jmpgteq std.math.sqrt__test___again
+      dup $vi(20)
+      jmp std.math.sqrt__end
+    .std.math.sqrt__test___again
+      dup $vi(21)
+      dup $vi(20)
+      call std.math.sqrt__better_guess
+      dup $vi(21)
+      swp $st, $st
+      call std.math.sqrt__test
 
-.std.math.sqrt__better_guess
-ret
+  .std.math.sqrt__end
+
+    push $st, @2
+    sub $bp, $st
+  ret
+
+  .std.math.sqrt__close_enough
+    sub $st, $st
+    call std.math.abs
+    push $st, 0.0001
+    cmp $st, $st
+    mov $vi(19), $st
+    mov $vi(19), $st
+  ret
+
+  .std.math.sqrt__better_guess
+    push $st, @2
+    add $bp, $st
+
+    mov $vi(20), $st
+    dup $vi(20)
+
+    div $st, $st
+    add $st, $vi(20)
+
+    push $st, 2.0
+    div $st, $st
+
+    push $st, @2
+    sub $bp, $st
+  ret
 
 ._std_math_sqrt

@@ -381,8 +381,8 @@ impl VM {
 
     /// Adds the value of the src target to the value of the dest target
     fn add(&mut self, dest: &Target, src: &Target) -> Result<()> {
-        let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
+        let dest_value = self.pop(dest)?;
 
         self.push(dest, (dest_value + src_value)?)?;
 
@@ -391,8 +391,8 @@ impl VM {
 
     /// Subtracts the value of the src target from the value of the dest target
     fn sub(&mut self, dest: &Target, src: &Target) -> Result<()> {
-        let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
+        let dest_value = self.pop(dest)?;
 
         self.push(dest, (dest_value - src_value)?)?;
 
@@ -401,8 +401,8 @@ impl VM {
 
     /// Divides the value of the dest target through the value of the src target
     fn div(&mut self, dest: &Target, src: &Target) -> Result<()> {
-        let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
+        let dest_value = self.pop(dest)?;
 
         self.push(dest, (dest_value / src_value)?)?;
 
@@ -411,8 +411,8 @@ impl VM {
 
     /// Multiplies the value of the dest target with the value of the src target
     fn mul(&mut self, dest: &Target, src: &Target) -> Result<()> {
-        let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
+        let dest_value = self.pop(dest)?;
 
         self.push(dest, (dest_value * src_value)?)?;
 
@@ -422,8 +422,8 @@ impl VM {
     /// Applies the modulo operator on the value of the dest target using the
     /// value of the src target
     fn rem(&mut self, dest: &Target, src: &Target) -> Result<()> {
-        let dest_value = self.pop(dest)?;
         let src_value = self.pop(src)?;
+        let dest_value = self.pop(dest)?;
 
         self.push(dest, (dest_value * src_value)?)?;
 
@@ -433,8 +433,8 @@ impl VM {
     /// Compares the top values of the two targets and saves the result to
     /// `self.cmp_register`
     fn cmp(&mut self, target_a: &Target, target_b: &Target) -> Result<()> {
-        let target_a_value = self.pop(target_a)?;
         let target_b_value = self.pop(target_b)?;
+        let target_a_value = self.pop(target_a)?;
 
         if target_a_value.get_type() != target_b_value.get_type() {
             bail!("cannot compare values of different types")
@@ -660,7 +660,7 @@ mod tests {
 
             let stack_value = vm.pop(&Target::Stack).unwrap();
 
-            assert_eq!(stack_value, Value::Integer(val_b + val_a));
+            assert_eq!(stack_value, Value::Integer(val_a + val_b));
         }
     }
 
@@ -686,7 +686,7 @@ mod tests {
 
             let stack_value = vm.pop(&Target::Stack).unwrap();
 
-            assert_eq!(stack_value, Value::Integer(val_b - val_a));
+            assert_eq!(stack_value, Value::Integer(val_a - val_b));
         }
     }
 
@@ -712,7 +712,7 @@ mod tests {
 
             let stack_value = vm.pop(&Target::Stack).unwrap();
 
-            assert_eq!(stack_value, Value::Float(val_b * val_a));
+            assert_eq!(stack_value, Value::Float(val_a * val_b));
         }
     }
 
@@ -738,7 +738,7 @@ mod tests {
 
             let stack_value = vm.pop(&Target::Stack).unwrap();
 
-            assert_eq!(stack_value, Value::Float(val_b / val_a));
+            assert_eq!(stack_value, Value::Float(val_a / val_b));
         }
     }
 
