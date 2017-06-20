@@ -1,0 +1,9 @@
+include! ../../../std/index
+
+call start
+halt
+
+.start
+  push $st, 12.0
+  call std.math.sqrt
+ret
