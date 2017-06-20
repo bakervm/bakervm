@@ -1,7 +1,7 @@
 # BASM naming conventions
 
 ## Guards
-Usually when writing a library you should enclose your library file wit a guard e.g:
+Usually when writing a library you should enclose your library file with a guard:
 ```
 jmp _my_library_namespace_and_method_name
 
@@ -11,7 +11,7 @@ jmp _my_library_namespace_and_method_name
 ```
 
 ## Modules and functions
-Since dots are allowed in labels, you should always namespace your library:
+Since dots are allowed in label names, you should always namespaces in your library:
 ```
 jmp _my_library_namespace_and_method_name
 
