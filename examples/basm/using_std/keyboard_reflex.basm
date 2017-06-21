@@ -1,0 +1,39 @@
+include! ../../../std/index
+
+push $st, @2
+add $bp, $st
+push $vi(20), @16000
+push $vi(21), true
+push $vi(0), @0
+call start
+halt
+
+.start
+  push $vi(0), @0
+  call clear
+
+  cmp $key(32), $vi(21)
+  jmpeq is_equal
+    sig %flush_frame%
+    jmp start
+  .is_equal
+    push $st, #FF00FF
+
+    push $st, @50
+    push $st, @50
+    push $st, @100
+    push $st, @100
+
+    call std.graphics.draw_filled_rect
+    sig %flush_frame%
+    jmp start
+ret
+
+
+.clear
+  push $fb, #000000
+  push $st, @1
+  add $vi(0), $st
+  cmp $vi(0), $vi(20)
+  jmplteq clear
+ret

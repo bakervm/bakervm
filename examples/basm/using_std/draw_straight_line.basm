@@ -1,0 +1,36 @@
+include! ../../../std/index
+
+push $st, @1
+add $bp, $st
+push $vi(20), @16000
+push $vi(0), @0
+call start
+halt
+
+.start
+  push $vi(0), @0
+  call clear
+  pause
+  push $st, #FF00FF
+
+  push $st, 50.0
+  push $st, 50.0
+
+  dup $vi(3)
+  cast $st, float
+  dup $vi(4)
+  cast $st, float
+
+  call std.graphics.draw_line
+  sig %flush_frame%
+  pause
+  jmp start
+ret
+
+.clear
+  push $fb, #000000
+  push $st, @1
+  add $vi(0), $st
+  cmp $vi(0), $vi(20)
+  jmplteq clear
+ret

@@ -57,13 +57,29 @@ impl Value {
     fn address_to(addr: Address, val_type: &Type) -> Value {
         match *val_type {
             Type::Integer => Value::Integer(addr as Integer),
+            Type::Float => Value::Float(addr as Float),
+            Type::Color => {
+                let addr = addr as u32;
+
+                let r = (addr >> 16) as u8;
+                let g = (addr >> 8) as u8;
+                let b = addr as u8;
+
+                Value::Color(r, g, b)
+            }
+            Type::Char => {
+                let addr = addr as u8;
+
+                Value::Char(addr as char)
+            }
             _ => Value::Address(addr),
         }
     }
 
     fn float_to(float: Float, val_type: &Type) -> Value {
         match *val_type {
-            Type::Integer => Value::Integer(float as Integer),
+            Type::Integer => Value::Integer(float.round() as Integer),
+            Type::Address => Value::Address(float.round() as Address),
             _ => Value::Float(float),
         }
     }
@@ -82,7 +98,7 @@ impl Value {
                 Value::Color(r, g, b)
             }
             Type::Char => {
-                let integer = integer as u8;
+                let integer = integer.abs() as u8;
 
                 Value::Char(integer as char)
             }
@@ -93,11 +109,14 @@ impl Value {
     fn color_to((r, g, b): Color, val_type: &Type) -> Value {
         match *val_type {
             Type::Integer => {
-                let mut integer: u32 = (r as u32) << 16;
-                integer |= (g as u32) << 8;
-                integer |= b as u32;
+                let integer: u32 = ((r as u32) << 16) | ((g as u32) << 8) | (b as u32);
 
                 Value::Integer(integer as Integer)
+            }
+            Type::Address => {
+                let addr: u32 = ((r as u32) << 16) | ((g as u32) << 8) | (b as u32);
+
+                Value::Address(addr as Address)
             }
             _ => Value::Color(r, g, b),
         }
@@ -150,9 +169,11 @@ impl Add for Value {
         match (self.clone(), rhs.clone()) {
             (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float + rhs_float,),),
             (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
-                Ok(Value::Integer(lhs_integer + rhs_integer))
+                Ok(Value::Integer(lhs_integer.wrapping_add(rhs_integer)))
             }
-            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => Ok(Value::Address(lhs_addr + rhs_addr,),),
+            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => {
+                Ok(Value::Address(lhs_addr.wrapping_add(rhs_addr)))
+            }
             _ => bail!("unable to add values {:?} and {:?}", self, rhs),
         }
     }
@@ -165,9 +186,11 @@ impl Sub for Value {
         match (self.clone(), rhs.clone()) {
             (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float - rhs_float,),),
             (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
-                Ok(Value::Integer(lhs_integer - rhs_integer))
+                Ok(Value::Integer(lhs_integer.wrapping_sub(rhs_integer)))
             }
-            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => Ok(Value::Address(lhs_addr - rhs_addr,),),
+            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => {
+                Ok(Value::Address(lhs_addr.wrapping_sub(rhs_addr)))
+            }
             _ => bail!("unable to subtract values {:?} and {:?}", self, rhs),
         }
     }
@@ -180,9 +203,11 @@ impl Mul for Value {
         match (self.clone(), rhs.clone()) {
             (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float * rhs_float,),),
             (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
-                Ok(Value::Integer(lhs_integer * rhs_integer))
+                Ok(Value::Integer(lhs_integer.wrapping_mul(rhs_integer)))
             }
-            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => Ok(Value::Address(lhs_addr * rhs_addr,),),
+            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => {
+                Ok(Value::Address(lhs_addr.wrapping_mul(rhs_addr)))
+            }
             _ => bail!("unable to multiply values {:?} and {:?}", self, rhs),
         }
     }

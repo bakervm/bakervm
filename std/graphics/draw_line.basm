@@ -3,28 +3,90 @@ jmp _std_graphics_draw_line
 include! draw_point
 
 .std.graphics.draw_line
-  push $st, @5
+  push $st, @9
   add $bp, $st
 
-  mov $vi(20), $st    ; p2 y
-  mov $vi(21), $st    ; p2 x
+  mov $vi(20), $st    ; y1
+  mov $vi(21), $st    ; x1
 
-  mov $vi(22), $st    ; p1 y
-  mov $vi(22), $st    ; p1 x
+  mov $vi(22), $st    ; y0
+  mov $vi(23), $st    ; x0
 
   mov $vi(24), $st    ; color
 
-  cast $vi(20), float
-  cast $vi(21), float
-  cast $vi(22), float
-  cast $vi(23), float
+  dup $vi(20)
+  dup $vi(22)
+  sub $st, $st
 
-  sub  $vi(21), $vi(23)   ; x1
-  sub  $vi(20), $vi(22)   ; x2
+  dup $vi(21)
+  dup $vi(23)
+  sub $st, $st
+
+  mov $vi(25), $st    ; x01
+  mov $vi(26), $st    ; y01
+
+  dup $vi(25)
+  dup $vi(25)
+  mul $st, $st
+
+  dup $vi(26)
+  dup $vi(26)
+  mul $st, $st
+
+  add $st, $st
+
+  call std.math.sqrt
+
+  dup $st
+
+  div $vi(25), $st  ; x01 normal
+  div $vi(26), $st  ; y01 normal
+
+  call std.graphics.draw_line__draw_point
+
+  .std.graphics.draw_line__draw_loop
+    dup $vi(25)
+    add $vi(23), $st
+    dup $vi(26)
+    add $vi(22), $st
+    call std.graphics.draw_line__draw_point
+
+    dup $vi(23)
+    cast $st, addr
+
+    dup $vi(21)
+    cast $st, addr
+    cmp $st, $st
+    mov $vi(19), $st
+    mov $vi(19), $st
+    jmpeq std.graphics.draw_line__equal_x
+      jmp std.graphics.draw_line__draw_loop
+
+    .std.graphics.draw_line__equal_x
+    dup $vi(22)
+    cast $st, addr
+
+    dup $vi(20)
+    cast $st, addr
+    cmp $st, $st
+    mov $vi(19), $st
+    mov $vi(19), $st
+    jmpeq std.graphics.draw_line__end
+      jmp std.graphics.draw_line__draw_loop
 
 
-  push $st, @5
+  .std.graphics.draw_line__end
+  push $st, @9
   sub $bp, $st
+ret
+
+.std.graphics.draw_line__draw_point
+  dup $vi(24)
+  dup $vi(23)
+  cast $st, addr
+  dup $vi(22)
+  cast $st, addr
+  call std.graphics.draw_point
 ret
 
 ._std_graphics_draw_line
