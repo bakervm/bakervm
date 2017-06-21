@@ -1,8 +1,9 @@
 //! A helpful image builder used in tests and for generating the stock image
 
-use bincode::{self, Infinite};
 use instruction::Instruction;
 use program::Program;
+use rmp_serde;
+use serde::Serialize;
 use signal::Signal;
 use target::Target;
 use type_t::Type;
@@ -140,7 +141,13 @@ impl ImageBuilder {
     pub fn gen(self) -> ImageData {
         let program = self.gen_program();
 
-        bincode::serialize(&program, Infinite).expect("unable to encode program")
+        let mut buf = Vec::new();
+
+        program
+            .serialize(&mut rmp_serde::Serializer::new(&mut buf))
+            .expect("unable to encode program");
+
+        buf
     }
 
     pub fn gen_program(&self) -> Program {

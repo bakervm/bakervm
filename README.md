@@ -9,7 +9,7 @@ The bakerVM is a virtual machine that executes bakerVM bytecode.
 
 A builder-like compiler backend for the vm can be found in `definitions/image_builder.rs`.
 
-The executable images of the vm are encoded and decoded using the [bincode crate][bincode]
+The executable images of the vm are encoded and decoded using [MessagePack][msgpack]
 
 **NOTE THAT THIS SOFTWARE IS STILL UNDER HEAVY DEVELOPMENT AND IN NO WAY STABLE OR COMPLETE.**
 
@@ -61,4 +61,4 @@ bakervm path/to/my/image/game.img
 [docs-link]: https://docs.rs/bakervm
 [screenshot]: https://raw.githubusercontent.com/bakervm/bakervm/master/screenshot.png
 [logo]: https://raw.githubusercontent.com/bakervm/bakervm/master/logo.png
-[bincode]: https://crates.io/crates/bincode
+[msgpack]: http://msgpack.org

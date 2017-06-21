@@ -1,0 +1,18 @@
+include! ../../../std/index
+
+
+call start
+halt
+
+include! new_bakervm.png
+
+
+.start
+  call assets.images.draw_new_bakervm.png
+  sig %flush_frame%
+  pause
+  pause
+  pause
+  pause
+  pause
+ret

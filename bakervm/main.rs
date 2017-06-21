@@ -1,4 +1,4 @@
-extern crate bincode;
+extern crate rmp_serde;
 extern crate clap;
 #[macro_use]
 extern crate error_chain;
@@ -16,6 +16,8 @@ use clap::{App, Arg};
 use definitions::Program;
 use definitions::error::*;
 use definitions::typedef::*;
+use rmp_serde::Deserializer;
+use serde::Deserialize;
 use std::fs::File;
 use std::io::Read;
 use std::sync::{Arc, Barrier, mpsc};
@@ -62,11 +64,15 @@ fn run() -> Result<()> {
         let mut buf: ImageData = ImageData::new();
         file.read_to_end(&mut buf).chain_err(|| "unable to read from file")?;
 
-        bincode::deserialize(&buf[..]).chain_err(|| "unable to decode image file")?
+        let mut de = Deserializer::new(&buf[..]);
+
+        Deserialize::deserialize(&mut de).chain_err(|| "unable to decode image file")?
     } else {
         let program_data = include_bytes!("stock.img");
 
-        bincode::deserialize(program_data).chain_err(|| "unable to decode image file")?
+        let mut de = Deserializer::new(&program_data[..]);
+
+        Deserialize::deserialize(&mut de).chain_err(|| "unable to decode image file")?
     };
 
     let mut config = program.config.clone();
