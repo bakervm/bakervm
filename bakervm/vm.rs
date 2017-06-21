@@ -2,6 +2,7 @@ use definitions::{Config, Event, Instruction, Program, Signal, Target, Type, Val
 use definitions::error::*;
 use definitions::typedef::*;
 use std::collections::{BTreeMap, BTreeSet, LinkedList};
+use std::env;
 use std::sync::{Arc, Barrier};
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError};
 use std::thread::{self, JoinHandle};
@@ -41,7 +42,7 @@ enum Ordering {
 
 const NUM_RESERVED_MEM_SLOTS: usize = 20;
 
-// const FRAMEBUFFER_CURSOR_INDEX: Target = Target::ValueIndex(0);
+const FRAMEBUFFER_CURSOR_INDEX: Target = Target::ValueIndex(0);
 const DISPLAY_WIDTH_INDEX: Target = Target::ValueIndex(1);
 const DISPLAY_HEIGHT_INDEX: Target = Target::ValueIndex(2);
 const MOUSE_X_INDEX: Target = Target::ValueIndex(3);
@@ -86,6 +87,8 @@ impl VM {
         self.reset();
         self.load_program(&program).chain_err(|| "invalid program container")?;
         self.build_framebuffer();
+
+        self.push(&FRAMEBUFFER_CURSOR_INDEX, Value::Address(0))?;
 
         self.push(
                 &DISPLAY_WIDTH_INDEX,
@@ -198,6 +201,17 @@ impl VM {
 
     /// Pauses the execution of the program until an event is received
     fn pause(&mut self) {
+        if cfg!(debug_assertions) {
+            if let Ok(value_index) = env::var("BAKERVM_DEBUG_PRINT") {
+                match value_index.as_str() {
+                    "value_index" => println!("{:?}", self.value_index),
+                    "stack" => println!("{:?}", self.stack),
+                    "framebuffer" => println!("{:?}", self.framebuffer),
+                    _ => {}
+                }
+            }
+        }
+
         self.paused = true;
     }
 
