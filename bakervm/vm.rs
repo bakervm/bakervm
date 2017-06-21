@@ -618,9 +618,10 @@ impl VM {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use bincode;
     use definitions::ImageBuilder;
     use rand;
+    use rmp_serde as rmps;
+    use serde::Deserialize;
 
     #[test]
     fn halt() {
@@ -760,7 +761,9 @@ mod tests {
     fn load_stock_image() {
         let program_data = include_bytes!("stock.img");
 
-        let program = bincode::deserialize(program_data).unwrap();
+        let mut de = rmps::Deserializer::new(&program_data[..]);
+
+        let program = Deserialize::deserialize(&mut de).unwrap();
 
         let mut vm = VM::default();
 
