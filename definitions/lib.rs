@@ -5,7 +5,7 @@ extern crate error_chain;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde;
-extern crate bincode;
+extern crate rmp_serde;
 extern crate regex;
 #[macro_use]
 extern crate lazy_static;
