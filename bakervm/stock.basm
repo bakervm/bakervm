@@ -1,0 +1,59 @@
+include! ../std/index
+
+call start
+halt
+
+.start
+  call clear
+  push $st, #FFFFFF
+
+  push $st, 1.0
+  push $st, 1.0
+
+  push $st, 4.0
+  push $st, 4.0
+
+  call std.graphics.draw_line
+
+  push $st, #FFFFFF
+
+  push $st, 4.0
+  push $st, 4.0
+
+  push $st, 1.0
+  push $st, 7.0
+
+  call std.graphics.draw_line
+
+
+  push $st, #FFFFFF
+
+  push $st, 6.0
+  push $st, 7.0
+
+  push $st, 11.0
+  push $st, 7.0
+
+  call std.graphics.draw_line
+
+
+
+  sig %flush_frame%
+  pause
+  jmp start
+ret
+
+.clear
+  push $st, @1
+  add $bp, $st
+  push $vi(20), @16000
+  push $vi(0), @0
+  .clear__loop
+  push $fb, #000000
+  push $st, @1
+  add $vi(0), $st
+  cmp $vi(0), $vi(20)
+  jmplteq clear__loop
+  push $st, @1
+  sub $bp, $st
+ret

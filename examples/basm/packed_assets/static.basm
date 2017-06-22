@@ -11,8 +11,5 @@ include! new_bakervm.png
   call assets.images.draw_new_bakervm.png
   sig %flush_frame%
   pause
-  pause
-  pause
-  pause
-  pause
+  jmp start
 ret

@@ -1,14 +1,9 @@
 include! ../../../std/index
 
-push $st, @1
-add $bp, $st
-push $vi(20), @16000
-push $vi(0), @0
 call start
 halt
 
 .start
-  push $vi(0), @0
   call clear
   pause
   push $st, #FF00FF
@@ -28,9 +23,16 @@ halt
 ret
 
 .clear
+  push $st, @1
+  add $bp, $st
+  push $vi(20), @16000
+  push $vi(0), @0
+  .clear__loop
   push $fb, #000000
   push $st, @1
   add $vi(0), $st
   cmp $vi(0), $vi(20)
-  jmplteq clear
+  jmplteq clear__loop
+  push $st, @1
+  sub $bp, $st
 ret
