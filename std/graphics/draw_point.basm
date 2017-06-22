@@ -11,12 +11,17 @@ jmp _std_graphics_draw_point
   dup $vi(1)          ; get display-width
   mov $vi(23), $st    ; save display-width
 
+  cmp $vi(21), $vi(23)
+  jmpgteq std.graphics.draw_point__end
+
   mul $vi(20), $vi(23)
   add $vi(20), $vi(21)   ; vi(20) = index
 
   mov $vi(0), $vi(20)
 
   mov $fb, $vi(22)
+
+  .std.graphics.draw_point__end
 
   push $st, @4
   sub $bp, $st        ; Deallocate 4 slots
