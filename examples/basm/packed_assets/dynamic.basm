@@ -1,0 +1,34 @@
+include! ../../../std/index
+
+
+call start
+halt
+
+include! new_bakervm_dyn.png
+
+
+.start
+  call clear
+  dup $vi(3)
+  dup $vi(4)
+  call assets.images.draw_new_bakervm.png
+  sig %flush_frame%
+  pause
+  jmp start
+ret
+
+
+.clear
+  push $st, @1
+  add $bp, $st
+  push $vi(20), @15999
+  push $vi(0), @0
+  .clear__loop
+  push $fb, #000000
+  push $st, @1
+  add $vi(0), $st
+  cmp $vi(0), $vi(20)
+  jmplteq clear__loop
+  push $st, @1
+  sub $bp, $st
+ret

@@ -37,8 +37,8 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
     let mut file_contents = String::new();
     file_contents += format!("\n.assets.images.draw_{}", file_name.to_str().unwrap()).as_str();
 
-    for (x, y, color) in packed_image {
-        if pack_type == "static" {
+    if pack_type == "static" {
+        for (x, y, color) in packed_image {
             file_contents += "\npush $st, #";
             file_contents += format!("{:02x}{:02x}{:02x}", color.0, color.1, color.2).as_str();
 
@@ -50,6 +50,30 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
 
             file_contents += "\ncall std.graphics.draw_point";
         }
+    } else if pack_type == "dynamic-pos" {
+        file_contents += "\npush $st, @2";
+        file_contents += "\nadd $bp, $st";
+
+        file_contents += "\nmov $vi(21), $st"; // y
+        file_contents += "\nmov $vi(20), $st"; // x
+
+        for (x, y, color) in packed_image {
+            file_contents += "\npush $st, #";
+            file_contents += format!("{:02x}{:02x}{:02x}", color.0, color.1, color.2).as_str();
+
+            file_contents += format!("\npush $st, @{}", x).as_str();
+            file_contents += "\ndup $vi(20)";
+            file_contents += "\nadd $st, $st";
+
+            file_contents += format!("\npush $st, @{}", y).as_str();
+            file_contents += "\ndup $vi(21)";
+            file_contents += "\nadd $st, $st";
+
+            file_contents += "\ncall std.graphics.draw_point";
+        }
+
+        file_contents += "\npush $st, @2";
+        file_contents += "\nsub $bp, $st";
     }
 
     file_contents += "\nret";

@@ -47,7 +47,13 @@ fn run() -> Result<()> {
                     .long("output")
                     .takes_value(true)
                     .value_name("FILE")
-                    .help("Sets the destination file.")),
+                    .help("Sets the destination file."))
+                .arg(Arg::with_name("type")
+                    .short("t")
+                    .long("type")
+                    .takes_value(true)
+                    .value_name("TYPE")
+                    .help("Sets the packing type")),
         )
         .subcommand(
             SubCommand::with_name("compile")
