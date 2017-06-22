@@ -105,52 +105,62 @@ pub fn start(
                 if config.input_enabled {
                     match event {
                         SDL2Event::KeyDown { keycode: Some(key), .. } => {
-                            event_sender
-                                .send(Event::KeyDown(key as Address))
-                                .chain_err(|| "unable to send event")?;
+                            let res = event_sender.send(Event::KeyDown(key as Address));
+
+                            if let Err(..) = res {
+                                break 'main;
+                            }
                         }
                         SDL2Event::KeyUp { keycode: Some(key), .. } => {
-                            event_sender
-                                .send(Event::KeyUp(key as Address))
-                                .chain_err(|| "unable to send event")?;
+                            let res = event_sender.send(Event::KeyUp(key as Address));
+
+                            if let Err(..) = res {
+                                break 'main;
+                            }
                         }
                         SDL2Event::MouseButtonDown { x, y, mouse_btn, .. } => {
-                            event_sender
-                                .send(
-                                    Event::MouseDown {
-                                        x: (x as Float / config.display.default_scale).floor() as
-                                           Address,
-                                        y: (y as Float / config.display.default_scale).floor() as
-                                           Address,
-                                        button: mouse_btn as Address,
-                                    },
-                                )
-                                .chain_err(|| "unable to send event")?;
+                            let res = event_sender.send(
+                                Event::MouseDown {
+                                    x: (x as Float / config.display.default_scale).floor() as
+                                       Address,
+                                    y: (y as Float / config.display.default_scale).floor() as
+                                       Address,
+                                    button: mouse_btn as Address,
+                                },
+                            );
+
+                            if let Err(..) = res {
+                                break 'main;
+                            }
                         }
                         SDL2Event::MouseButtonUp { x, y, mouse_btn, .. } => {
-                            event_sender
-                                .send(
-                                    Event::MouseUp {
-                                        x: (x as Float / config.display.default_scale).floor() as
-                                           Address,
-                                        y: (y as Float / config.display.default_scale).floor() as
-                                           Address,
-                                        button: mouse_btn as Address,
-                                    },
-                                )
-                                .chain_err(|| "unable to send event")?;
+                            let res = event_sender.send(
+                                Event::MouseUp {
+                                    x: (x as Float / config.display.default_scale).floor() as
+                                       Address,
+                                    y: (y as Float / config.display.default_scale).floor() as
+                                       Address,
+                                    button: mouse_btn as Address,
+                                },
+                            );
+
+                            if let Err(..) = res {
+                                break 'main;
+                            }
                         }
                         SDL2Event::MouseMotion { x, y, .. } => {
-                            event_sender
-                                .send(
-                                    Event::MouseMove {
-                                        x: (x as Float / config.display.default_scale).floor() as
-                                           Address,
-                                        y: (y as Float / config.display.default_scale).floor() as
-                                           Address,
-                                    },
-                                )
-                                .chain_err(|| "unable to send event")?;
+                            let res = event_sender.send(
+                                Event::MouseMove {
+                                    x: (x as Float / config.display.default_scale).floor() as
+                                       Address,
+                                    y: (y as Float / config.display.default_scale).floor() as
+                                       Address,
+                                },
+                            );
+
+                            if let Err(..) = res {
+                                break 'main;
+                            }
                         }
                         _ => {}
                     }

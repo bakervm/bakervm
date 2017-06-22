@@ -114,6 +114,6 @@ hudson compile --basm path/to/main.basm
 |             `call label` | label: Label                       | Calls the function at the given label, pushing the return address to the call-stack                      |
 |                    `ret` | -                                  | Returns from a function call                                                                             |
 |                   `halt` | -                                  | Halts the execution of the current program and causes the VM to shut down                                |
-|                  `pause` | -                                  | Pauses the execution of the current program until a signal is received                                   |
+|                  `pause` | -                                  | Pauses the execution of the current program until an event is received                                   |
 |                    `nop` | -                                  | Does nothing. Good for optimizing code                                                                   |
 |             `sig signal` | signal: Signal                     | Triggers the given internal signal                                                                       |
