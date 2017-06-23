@@ -1,4 +1,5 @@
 
+jmp _assets_images_draw_new_bakervm_png
 .assets.images.draw_new_bakervm.png
 push $st, @2
 add $bp, $st
@@ -20815,3 +20816,4 @@ call std.graphics.draw_point
 push $st, @2
 sub $bp, $st
 ret
+._assets_images_draw_new_bakervm_png
