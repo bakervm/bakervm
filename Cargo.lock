@@ -1,6 +1,6 @@
 [root]
 name = "bakervm"
-version = "0.8.2"
+version = "0.9.0"
 dependencies = [
  "clap 2.25.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "error-chain 0.10.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -278,7 +278,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "num_cpus"
-version = "1.6.0"
+version = "1.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "libc 0.2.24 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -325,7 +325,7 @@ dependencies = [
  "futures 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.24 (registry+https://github.com/rust-lang/crates.io-index)",
- "num_cpus 1.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num_cpus 1.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -568,7 +568,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum num-iter 0.1.33 (registry+https://github.com/rust-lang/crates.io-index)" = "f7d1891bd7b936f12349b7d1403761c8a0b85a18b148e9da4429d5d102c1a41e"
 "checksum num-rational 0.1.38 (registry+https://github.com/rust-lang/crates.io-index)" = "33c881e104a26e1accc09449374c095ff2312c8e0c27fab7bbefe16eac7c776d"
 "checksum num-traits 0.1.39 (registry+https://github.com/rust-lang/crates.io-index)" = "1708c0628602a98b52fad936cf3edb9a107af06e52e49fdf0707e884456a6af6"
-"checksum num_cpus 1.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "83df569ffd47dbf87f36bead512632f89e90882b8e7a14286d0471daf6b72de9"
+"checksum num_cpus 1.6.2 (registry+https://github.com/rust-lang/crates.io-index)" = "aec53c34f2d0247c5ca5d32cca1478762f301740468ee9ee6dcb7a0dd7a0c584"
 "checksum png 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6535266009941ceac9a17e6d681cd2adc75611cd4833db853282e8d4c470239c"
 "checksum quote 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "7a6e920b65c65f10b2ae65c831a81a073a89edd28c7cce89475bff467ab4167a"
 "checksum rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)" = "022e0636ec2519ddae48154b028864bdce4eaf7d35226ab8e65c611be97b189d"
