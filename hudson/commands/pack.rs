@@ -34,8 +34,14 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
         bail!("cannot load grayscale image");
     };
 
+    let module_name = format!(".assets.images.draw_{}", file_name.to_str().unwrap());
+    let guard_name = module_name.replace('.', "_");
+
     let mut file_contents = String::new();
-    file_contents += format!("\n.assets.images.draw_{}", file_name.to_str().unwrap()).as_str();
+
+    file_contents += format!("\njmp {}", guard_name.clone()).as_str();
+
+    file_contents += format!("\n{}", module_name).as_str();
 
     if pack_type == "static" {
         for (x, y, color) in packed_image {
@@ -77,6 +83,9 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
     }
 
     file_contents += "\nret";
+
+    file_contents += format!("\n.{}", guard_name.clone()).as_str();
+    file_contents += "\n";
 
     let mut file = File::create(format!("{}.basm", file_name.to_str().unwrap()))
         .chain_err(|| "failed to create file")?;

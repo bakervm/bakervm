@@ -1,10 +1,10 @@
 include! ../../../std/index
+include! new_bakervm_dyn.png
 
 
 call start
 halt
 
-include! new_bakervm_dyn.png
 
 
 .start
