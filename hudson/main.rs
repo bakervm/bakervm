@@ -71,7 +71,6 @@ fn run() -> Result<()> {
 
     match matches.subcommand() {
         ("compile", Some(sub_match)) => commands::compile(sub_match)?,
-        ("stock", Some(sub_match)) => commands::stock(sub_match)?,
         ("pack", Some(sub_match)) => commands::pack(sub_match)?,
         _ => {}
     }
