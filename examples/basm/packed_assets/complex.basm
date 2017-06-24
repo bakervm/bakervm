@@ -1,0 +1,19 @@
+include! ../../../std/index
+include! lore-the-throne.jpg
+include! new_bakervm_dyn.png
+
+
+call start
+halt
+
+
+
+.start
+  call assets.images.draw_lore-the-throne.jpg
+  dup $vi(3)
+  dup $vi(4)
+  call assets.images.draw_new_bakervm.png
+  sig %flush_frame%
+  pause
+  jmp start
+ret

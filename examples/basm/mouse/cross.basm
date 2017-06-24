@@ -1,0 +1,82 @@
+include! ../../../std/index
+
+call start
+halt
+
+.start
+  call clear
+
+  pause
+
+  push $st, #FF00FF
+
+  push $st, 0.0
+  push $st, 0.0
+
+  dup $vi(3)
+  cast $st, float
+  dup $vi(4)
+  cast $st, float
+
+  call std.graphics.draw_line
+
+  push $st, #FF00FF
+
+  push $st, 0.0
+  dup $vi(2)
+  cast $st, float
+
+  dup $vi(3)
+  cast $st, float
+  dup $vi(4)
+  cast $st, float
+
+  call std.graphics.draw_line
+
+  push $st, #FF00FF
+
+  dup $vi(1)
+  cast $st, float
+  push $st, 0.0
+
+  dup $vi(3)
+  cast $st, float
+  dup $vi(4)
+  cast $st, float
+
+  call std.graphics.draw_line
+
+  push $st, #FF00FF
+
+  dup $vi(1)
+  cast $st, float
+  dup $vi(2)
+  cast $st, float
+
+  dup $vi(3)
+  cast $st, float
+  dup $vi(4)
+  cast $st, float
+
+  call std.graphics.draw_line
+
+  sig %flush_frame%
+  pause
+  jmp start
+ret
+
+
+.clear
+  push $st, @1
+  add $bp, $st
+  push $vi(20), @15999
+  push $vi(0), @0
+  .clear__loop
+  push $fb, #000000
+  push $st, @1
+  add $vi(0), $st
+  cmp $vi(0), $vi(20)
+  jmplteq clear__loop
+  push $st, @1
+  sub $bp, $st
+ret
