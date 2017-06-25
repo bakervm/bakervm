@@ -53,6 +53,14 @@ fn run() -> Result<()> {
                     .long("type")
                     .takes_value(true)
                     .value_name("TYPE")
+                    .validator(|input| {
+                        let options = vec!["static", "dynamic-pos"];
+                        if !options.contains(&input.as_str()) {
+                            Err(format!("value has to be one of {:?}", options))
+                        } else {
+                            Ok(())
+                        }
+                    })
                     .help("Sets the packing type")),
         )
         .subcommand(
