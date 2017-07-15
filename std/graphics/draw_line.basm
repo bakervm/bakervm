@@ -52,10 +52,10 @@ include! draw_point
     call std.graphics.draw_line__draw_point
 
     dup $vi(23)
-    cast $st, addr
+    cast $st, size
 
     dup $vi(21)
-    cast $st, addr
+    cast $st, size
     cmp $st, $st
     mov $vi(19), $st
     mov $vi(19), $st
@@ -64,10 +64,10 @@ include! draw_point
 
     .std.graphics.draw_line__equal_x
     dup $vi(22)
-    cast $st, addr
+    cast $st, size
 
     dup $vi(20)
-    cast $st, addr
+    cast $st, size
     cmp $st, $st
     mov $vi(19), $st
     mov $vi(19), $st
@@ -83,9 +83,9 @@ ret
 .std.graphics.draw_line__draw_point
   dup $vi(24)
   dup $vi(23)
-  cast $st, addr
+  cast $st, size
   dup $vi(22)
-  cast $st, addr
+  cast $st, size
   call std.graphics.draw_point
 ret
 

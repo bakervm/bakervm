@@ -2,6 +2,7 @@
 
 use error::*;
 use regex::Regex;
+use std::fmt::{self, Display, Formatter};
 use std::ops::{Add, Div, Mul, Rem, Sub};
 use std::result;
 use std::str::FromStr;
@@ -19,7 +20,7 @@ lazy_static! {
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq, PartialOrd)]
 pub enum Value {
-    Address(Address), // @12 | @54 | @0 | @1 | ...
+    Size(Address), // @12 | @54 | @0 | @1 | ...
     Boolean(bool), // true | false
     Float(Float), // -1.33 | 0.23114 | 3.141 | ...
     Integer(Integer), // 12 | 42 | 1 | 0 | 24 | ...
@@ -27,10 +28,26 @@ pub enum Value {
     Char(char), // 'a' | 'b' | 'c' | 'd' | ...
 }
 
+impl Display for Value {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            &Value::Size(size) => write!(f, "@{}", size),
+            &Value::Boolean(boolean) => {
+                let val = if boolean { "true" } else { "false" };
+                write!(f, "{}", val)
+            }
+            &Value::Float(float) => write!(f, "{}", float),
+            &Value::Integer(integer) => write!(f, "{}", integer),
+            &Value::Color(r, g, b) => write!(f, "#{:02x}{:02x}{:02x}", r, g, b),
+            &Value::Char(character) => write!(f, "'{}'", character),
+        }
+    }
+}
+
 impl Value {
     pub fn get_type(&self) -> Type {
         match *self {
-            Value::Address(..) => Type::Address,
+            Value::Size(..) => Type::Size,
             Value::Boolean(..) => Type::Boolean,
             Value::Float(..) => Type::Float,
             Value::Integer(..) => Type::Integer,
@@ -45,7 +62,7 @@ impl Value {
 
     pub fn convert_to(&self, val_type: &Type) -> Self {
         match *self {
-            Value::Address(addr) => Self::address_to(addr, val_type),
+            Value::Size(addr) => Self::address_to(addr, val_type),
             Value::Boolean(boolean) => Value::Boolean(boolean),
             Value::Float(float) => Self::float_to(float, val_type),
             Value::Integer(integer) => Self::integer_to(integer, val_type),
@@ -72,21 +89,21 @@ impl Value {
 
                 Value::Char(addr as char)
             }
-            _ => Value::Address(addr),
+            _ => Value::Size(addr),
         }
     }
 
     fn float_to(float: Float, val_type: &Type) -> Value {
         match *val_type {
             Type::Integer => Value::Integer(float.round() as Integer),
-            Type::Address => Value::Address(float.round() as Address),
+            Type::Size => Value::Size(float.round() as Address),
             _ => Value::Float(float),
         }
     }
 
     fn integer_to(integer: Integer, val_type: &Type) -> Value {
         match *val_type {
-            Type::Address => Value::Address(integer as Address),
+            Type::Size => Value::Size(integer as Address),
             Type::Float => Value::Float(integer as Float),
             Type::Color => {
                 let integer = integer as u32;
@@ -113,10 +130,10 @@ impl Value {
 
                 Value::Integer(integer as Integer)
             }
-            Type::Address => {
+            Type::Size => {
                 let addr: u32 = ((r as u32) << 16) | ((g as u32) << 8) | (b as u32);
 
-                Value::Address(addr as Address)
+                Value::Size(addr as Address)
             }
             _ => Value::Color(r, g, b),
         }
@@ -137,7 +154,7 @@ impl FromStr for Value {
         if ADDRESS_RE.is_match(s) {
             let address_cap = ADDRESS_RE.captures_iter(s).next().unwrap();
 
-            Ok(Value::Address(address_cap[1].parse().unwrap()))
+            Ok(Value::Size(address_cap[1].parse().unwrap()))
         } else if BOOLEAN_RE.is_match(s) {
             Ok(Value::Boolean(s.parse().unwrap()))
         } else if FLOAT_RE.is_match(s) {
@@ -171,8 +188,8 @@ impl Add for Value {
             (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
                 Ok(Value::Integer(lhs_integer.wrapping_add(rhs_integer)))
             }
-            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => {
-                Ok(Value::Address(lhs_addr.wrapping_add(rhs_addr)))
+            (Value::Size(lhs_addr), Value::Size(rhs_addr)) => {
+                Ok(Value::Size(lhs_addr.wrapping_add(rhs_addr)))
             }
             _ => bail!("unable to add values {:?} and {:?}", self, rhs),
         }
@@ -188,8 +205,8 @@ impl Sub for Value {
             (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
                 Ok(Value::Integer(lhs_integer.wrapping_sub(rhs_integer)))
             }
-            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => {
-                Ok(Value::Address(lhs_addr.wrapping_sub(rhs_addr)))
+            (Value::Size(lhs_addr), Value::Size(rhs_addr)) => {
+                Ok(Value::Size(lhs_addr.wrapping_sub(rhs_addr)))
             }
             _ => bail!("unable to subtract values {:?} and {:?}", self, rhs),
         }
@@ -205,8 +222,8 @@ impl Mul for Value {
             (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
                 Ok(Value::Integer(lhs_integer.wrapping_mul(rhs_integer)))
             }
-            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => {
-                Ok(Value::Address(lhs_addr.wrapping_mul(rhs_addr)))
+            (Value::Size(lhs_addr), Value::Size(rhs_addr)) => {
+                Ok(Value::Size(lhs_addr.wrapping_mul(rhs_addr)))
             }
             _ => bail!("unable to multiply values {:?} and {:?}", self, rhs),
         }
@@ -233,7 +250,7 @@ impl Rem for Value {
             (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
                 Ok(Value::Integer(lhs_integer % rhs_integer))
             }
-            (Value::Address(lhs_addr), Value::Address(rhs_addr)) => Ok(Value::Address(lhs_addr % rhs_addr,),),
+            (Value::Size(lhs_addr), Value::Size(rhs_addr)) => Ok(Value::Size(lhs_addr % rhs_addr)),
             _ => {
                 bail!(
                     "unable to calculate the remainder of values {:?} and {:?}",
