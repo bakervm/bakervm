@@ -117,29 +117,46 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
             file_contents += "\nsub $bp, $st";
         }
         PackingMode::DynamicPosition => {
-            file_contents += "\npush $st, @2";
+            let mut idx = 0;
+            file_contents += "\npush $st, @1";
             file_contents += "\nadd $bp, $st";
 
-            file_contents += "\nmov $vi(21), $st"; // y
-            file_contents += "\nmov $vi(20), $st"; // x
+            file_contents += "\ndup $vi(1)";
+            file_contents += "\nmul $st, $st";
+            file_contents += "\nadd $st, $st";
+
+            file_contents += "\nmov $vi(0), $st";
+
+            file_contents += "\ndup $vi(1)";
+            file_contents += "\nmov $vi(20), $st";
+            file_contents += format!("\npush $st, @{}", image_width).as_str();
+            file_contents += "\nsub $vi(20), $st";
 
             for pixel in packed_image {
-                // file_contents += "\npush $st, #";
-                // file_contents += format!("{:02x}{:02x}{:02x}", color.0, color.1,
-                // color.2).as_str();
-                //
-                // file_contents += format!("\npush $st, @{}", x).as_str();
-                // file_contents += "\ndup $vi(20)";
-                // file_contents += "\nadd $st, $st";
-                //
-                // file_contents += format!("\npush $st, @{}", y).as_str();
-                // file_contents += "\ndup $vi(21)";
-                // file_contents += "\nadd $st, $st";
-                //
-                // file_contents += "\ncall std.graphics.draw_point";
+                match pixel {
+                    Pixel::Color(r, g, b) => {
+                        file_contents += format!("\npush $fb, #{:02x}{:02x}{:02x}", r, g, b)
+                            .as_str();
+                        file_contents += "\npush $st, @1";
+                        file_contents += "\nadd $vi(0), $st";
+                        idx += 1;
+                    }
+                    Pixel::Padding(padding) => {
+                        idx += padding;
+                        file_contents += format!("\npush $st, @{}", padding).as_str();
+                        file_contents += "\nadd $vi(0), $st";
+                    }
+                }
+
+                if idx >= image_width {
+                    idx = 0;
+                    file_contents += "\ndup $vi(20)";
+                    file_contents += "\nadd $vi(0), $st";
+                }
             }
 
-            file_contents += "\npush $st, @2";
+
+            file_contents += "\npush $st, @1";
             file_contents += "\nsub $bp, $st";
         }
     }
