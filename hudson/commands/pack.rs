@@ -65,7 +65,7 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
 
     println!("Image dimensions {:?}", dimensions);
 
-    let (image_width, image_height) = dimensions;
+    let (image_width, _) = dimensions;
 
     let module_name = format!(".assets.images.draw_{}", file_name.to_str().unwrap());
     let guard_name = module_name.replace('.', "_");
@@ -155,7 +155,6 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
                 }
             }
 
-
             file_contents += "\npush $st, @1";
             file_contents += "\nsub $bp, $st";
         }
@@ -179,7 +178,7 @@ fn pack_rgb(image: RgbImage) -> Result<Vec<Pixel>> {
 
     let mut pixels = Vec::new();
 
-    for (x, y, color) in image.enumerate_pixels() {
+    for (_, _, color) in image.enumerate_pixels() {
         pixels.push(Pixel::Color(color[0], color[1], color[2]));
     }
 
@@ -191,7 +190,7 @@ fn pack_rgba(image: RgbaImage) -> Result<Vec<Pixel>> {
 
     let mut padding = 0;
 
-    for (x, y, color) in image.enumerate_pixels() {
+    for (_, _, color) in image.enumerate_pixels() {
         if color[3] > 128 {
             if padding > 0 {
                 pixels.push(Pixel::Padding(padding));

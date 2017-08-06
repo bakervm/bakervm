@@ -78,8 +78,9 @@ impl BASMCompiler {
 
                 let first_half: String = if LABELED_MNEMONIC_RE.is_match(first_half) {
                     let captures = if let Some(captures) = LABELED_MNEMONIC_RE
-                           .captures_iter(first_half)
-                           .next() {
+                        .captures_iter(first_half)
+                        .next()
+                    {
                         captures
                     } else {
                         bail!("no label capture found")
@@ -118,8 +119,9 @@ impl BASMCompiler {
                         bail!("unable to get parent directory")
                     };
 
-                    env::set_current_dir(parent.clone())
-                        .chain_err(|| "unable to switch directories")?;
+                    env::set_current_dir(parent.clone()).chain_err(
+                        || "unable to switch directories",
+                    )?;
 
                     let path = Path::new(&(captures[1].trim().to_owned() + ".basm"))
                         .canonicalize()
