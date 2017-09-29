@@ -1,7 +1,7 @@
-use definitions::Config;
-use definitions::Event;
-use definitions::error::*;
-use definitions::typedef::*;
+use core::Config;
+use core::Event;
+use core::error::*;
+use core::typedef::*;
 use sdl2;
 use sdl2::event::Event as SDL2Event;
 use sdl2::event::EventType as SDL2EventType;

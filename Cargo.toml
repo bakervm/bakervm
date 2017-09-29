@@ -24,8 +24,8 @@ lazy_static = "^0.2.8"
 image = "^0.14.0"
 
 [lib]
-name = "definitions"
-path = "definitions/lib.rs"
+name = "core"
+path = "core/lib.rs"
 doctest = false
 
 [[bin]]

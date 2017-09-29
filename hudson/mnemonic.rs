@@ -1,4 +1,4 @@
-use definitions::{Signal, Target, Type, Value};
+use core::{Signal, Target, Type, Value};
 #[derive(Clone, Debug)]
 pub enum Mnemonic {
     Add(Target, Target),

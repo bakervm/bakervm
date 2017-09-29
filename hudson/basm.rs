@@ -1,6 +1,6 @@
-use definitions::ImageBuilder;
-use definitions::error::*;
-use definitions::typedef::*;
+use core::ImageBuilder;
+use core::error::*;
+use core::typedef::*;
 use mnemonic::Mnemonic;
 use regex::Regex;
 use std::collections::{HashMap, HashSet};

@@ -7,7 +7,7 @@ A virtual machine for building and running retro games
 
 The bakerVM is a virtual machine that executes bakerVM bytecode.
 
-A builder-like compiler backend for the vm can be found in `definitions/image_builder.rs`.
+A builder-like compiler backend for the vm can be found in `core/image_builder.rs`.
 
 The executable images of the vm are encoded and decoded using [MessagePack][msgpack]
 

@@ -1,6 +1,6 @@
 use basm;
 use clap::ArgMatches;
-use definitions::error::*;
+use core::error::*;
 use std::env;
 use std::fs::File;
 use std::io::Write;

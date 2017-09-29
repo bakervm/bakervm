@@ -1,6 +1,6 @@
-use definitions::{Config, Event, Instruction, Program, Signal, Target, Type, Value};
-use definitions::error::*;
-use definitions::typedef::*;
+use core::{Config, Event, Instruction, Program, Signal, Target, Type, Value};
+use core::error::*;
+use core::typedef::*;
 use std::collections::{BTreeMap, BTreeSet, LinkedList};
 use std::env;
 use std::sync::{Arc, Barrier};
@@ -618,7 +618,7 @@ impl VM {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use definitions::ImageBuilder;
+    use core::ImageBuilder;
     use rand;
     use rmp_serde as rmps;
     use serde::Deserialize;
