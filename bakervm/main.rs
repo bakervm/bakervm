@@ -2,7 +2,7 @@ extern crate rmp_serde;
 extern crate clap;
 #[macro_use]
 extern crate error_chain;
-extern crate definitions;
+extern crate core;
 extern crate sdl2;
 extern crate rand;
 #[macro_use]
@@ -13,9 +13,9 @@ mod vm;
 mod io;
 
 use clap::{App, Arg};
-use definitions::Program;
-use definitions::error::*;
-use definitions::typedef::*;
+use core::Program;
+use core::error::*;
+use core::typedef::*;
 use rmp_serde::Deserializer;
 use serde::Deserialize;
 use std::fs::File;

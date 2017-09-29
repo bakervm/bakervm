@@ -2,7 +2,7 @@
 //!
 //! # Example
 //! ```
-//! use definitions::typedef::*;
+//! use core::typedef::*;
 //! ```
 
 pub type Byte = u8;

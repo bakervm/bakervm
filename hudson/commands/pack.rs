@@ -1,5 +1,5 @@
 use clap::ArgMatches;
-use definitions::error::*;
+use core::error::*;
 use image::{self, DynamicImage, RgbImage, RgbaImage};
 use std::fs::File;
 use std::io::Write;

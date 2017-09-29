@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate error_chain;
 extern crate clap;
-extern crate definitions;
+extern crate core;
 extern crate regex;
 #[macro_use]
 extern crate lazy_static;
@@ -12,7 +12,7 @@ mod basm;
 mod mnemonic;
 
 use clap::{App, AppSettings, Arg, SubCommand};
-use definitions::error::*;
+use core::error::*;
 
 fn main() {
     if let Err(ref e) = run() {
