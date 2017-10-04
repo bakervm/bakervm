@@ -7,28 +7,25 @@ use std::sync::{Arc, Barrier};
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError};
 use std::thread::{self, JoinHandle};
 
-pub fn start(program: Program, sender: SyncSender<Frame>, receiver: Receiver<Event>, barrier: Arc<Barrier>)
-    -> JoinHandle<()> {
-    thread::spawn(
-        move || {
-            barrier.wait();
-            if let Err(ref e) = VM::default().exec(program, sender, receiver) {
-                println!("error: {}", e);
+pub fn start(program: Program, sender: SyncSender<Frame>, receiver: Receiver<Event>, barrier: Arc<Barrier>) -> JoinHandle<()> {
+    thread::spawn(move || {
+        barrier.wait();
+        if let Err(ref e) = VM::default().exec(program, sender, receiver) {
+            println!("error: {}", e);
 
-                for e in e.iter().skip(1) {
-                    println!("caused by: {}", e);
-                }
-
-                // The backtrace is not always generated. Try to run this example
-                // with `RUST_BACKTRACE=1`.
-                if let Some(backtrace) = e.backtrace() {
-                    println!("backtrace: {:?}", backtrace);
-                }
-
-                ::std::process::exit(1);
+            for e in e.iter().skip(1) {
+                println!("caused by: {}", e);
             }
-        },
-    )
+
+            // The backtrace is not always generated. Try to run this example
+            // with `RUST_BACKTRACE=1`.
+            if let Some(backtrace) = e.backtrace() {
+                println!("backtrace: {:?}", backtrace);
+            }
+
+            ::std::process::exit(1);
+        }
+    })
 }
 
 /// Since rusts `std:::cmp::Ordering` doesn't implement serialization, we have
@@ -82,8 +79,7 @@ impl VM {
     // # Maintainance functions
 
     /// Executes the given program
-    pub fn exec(&mut self, program: Program, sender: SyncSender<Frame>, receiver: Receiver<Event>)
-        -> Result<()> {
+    pub fn exec(&mut self, program: Program, sender: SyncSender<Frame>, receiver: Receiver<Event>) -> Result<()> {
         self.reset();
         self.load_program(&program).chain_err(|| "invalid program container")?;
         self.build_framebuffer();
@@ -91,13 +87,13 @@ impl VM {
         self.push(&FRAMEBUFFER_CURSOR_INDEX, Value::Size(0))?;
 
         self.push(
-                &DISPLAY_WIDTH_INDEX,
-                Value::Size(program.config.display.resolution.width.clone()),
-            )?;
+            &DISPLAY_WIDTH_INDEX,
+            Value::Size(program.config.display.resolution.width.clone()),
+        )?;
         self.push(
-                &DISPLAY_HEIGHT_INDEX,
-                Value::Size(program.config.display.resolution.height.clone()),
-            )?;
+            &DISPLAY_HEIGHT_INDEX,
+            Value::Size(program.config.display.resolution.height.clone()),
+        )?;
 
         self.push(&MOUSE_X_INDEX, Value::Size(0))?;
         self.push(&MOUSE_Y_INDEX, Value::Size(0))?;
@@ -227,8 +223,7 @@ impl VM {
     }
 
     /// Handles incoming events
-    fn handle_events(&mut self, receiver: &Receiver<Event>, sender: &SyncSender<Frame>)
-        -> Result<()> {
+    fn handle_events(&mut self, receiver: &Receiver<Event>, sender: &SyncSender<Frame>) -> Result<()> {
         let event = if self.paused {
             self.paused = false;
             // We don't know how long this is going to take... better tell I/O what's going
@@ -316,8 +311,7 @@ impl VM {
     }
 
     fn get_framebuffer_index(&mut self) -> Result<Address> {
-        let index = if let &mut Value::Size(addr) =
-            self.value_index.entry(0).or_insert(Value::Size(0)) {
+        let index = if let &mut Value::Size(addr) = self.value_index.entry(0).or_insert(Value::Size(0)) {
             addr
         } else {
             bail!("unable to access a non-address index");
@@ -388,7 +382,7 @@ impl VM {
                 }
             }
             &Target::BasePointer => Ok(Value::Size(self.base_ptr)),
-            &Target::KeyRegister(key_code) => Ok(Value::Boolean(self.key_register.contains(&key_code),),),
+            &Target::KeyRegister(key_code) => Ok(Value::Boolean(self.key_register.contains(&key_code))),
         }
     }
 
@@ -503,8 +497,7 @@ impl VM {
     /// Jumps if the last compare got the result `Some(Ordering::Less)` or
     /// `Some(Ordering::Equal)`
     fn jmp_lt_eq(&mut self, addr: &Address) {
-        if (self.cmp_register == Some(Ordering::Less)) ||
-           (self.cmp_register == Some(Ordering::Equal)) {
+        if (self.cmp_register == Some(Ordering::Less)) || (self.cmp_register == Some(Ordering::Equal)) {
             self.jmp(addr);
         }
     }
@@ -512,8 +505,7 @@ impl VM {
     /// Jumps if the last compare got the result `Some(Ordering::Greater)` or
     /// `Some(Ordering::Equal)`
     fn jmp_gt_eq(&mut self, addr: &Address) {
-        if (self.cmp_register == Some(Ordering::Greater)) ||
-           (self.cmp_register == Some(Ordering::Equal)) {
+        if (self.cmp_register == Some(Ordering::Greater)) || (self.cmp_register == Some(Ordering::Equal)) {
             self.jmp(addr);
         }
     }
@@ -535,8 +527,7 @@ impl VM {
             &Target::ValueIndex(index) => {
                 let internal_index = self.internal_index(index)?;
 
-                let mut index_value =
-                    self.value_index.entry(internal_index).or_insert(Value::Size(0));
+                let mut index_value = self.value_index.entry(internal_index).or_insert(Value::Size(0));
                 *index_value = value;
 
                 Ok(())
@@ -790,10 +781,9 @@ mod tests {
 
             for i in 0..space {
                 vm.push(
-                        &Target::ValueIndex(NUM_RESERVED_MEM_SLOTS + i),
-                        Value::Size(i),
-                    )
-                    .unwrap();
+                    &Target::ValueIndex(NUM_RESERVED_MEM_SLOTS + i),
+                    Value::Size(i),
+                ).unwrap();
             }
 
             for i in 0..space {
@@ -819,10 +809,9 @@ mod tests {
 
             for i in 0..(space + 1) {
                 vm.push(
-                        &Target::ValueIndex(NUM_RESERVED_MEM_SLOTS + i),
-                        Value::Size(i),
-                    )
-                    .unwrap();
+                    &Target::ValueIndex(NUM_RESERVED_MEM_SLOTS + i),
+                    Value::Size(i),
+                ).unwrap();
             }
         }
     }

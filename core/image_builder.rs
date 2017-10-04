@@ -143,9 +143,7 @@ impl ImageBuilder {
 
         let mut buf = Vec::new();
 
-        program
-            .serialize(&mut rmp_serde::Serializer::new(&mut buf))
-            .expect("unable to encode program");
+        program.serialize(&mut rmp_serde::Serializer::new(&mut buf)).expect("unable to encode program");
 
         buf
     }

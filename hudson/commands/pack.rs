@@ -92,8 +92,7 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
             for pixel in packed_image {
                 match pixel {
                     Pixel::Color(r, g, b) => {
-                        file_contents += format!("\npush $fb, #{:02x}{:02x}{:02x}", r, g, b)
-                            .as_str();
+                        file_contents += format!("\npush $fb, #{:02x}{:02x}{:02x}", r, g, b).as_str();
                         file_contents += "\npush $st, @1";
                         file_contents += "\nadd $vi(0), $st";
                         idx += 1;
@@ -135,8 +134,7 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
             for pixel in packed_image {
                 match pixel {
                     Pixel::Color(r, g, b) => {
-                        file_contents += format!("\npush $fb, #{:02x}{:02x}{:02x}", r, g, b)
-                            .as_str();
+                        file_contents += format!("\npush $fb, #{:02x}{:02x}{:02x}", r, g, b).as_str();
                         file_contents += "\npush $st, @1";
                         file_contents += "\nadd $vi(0), $st";
                         idx += 1;
@@ -165,9 +163,7 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
     file_contents += format!("\n.{}", guard_name.clone()).as_str();
     file_contents += "\n";
 
-    let mut file = File::create(format!("{}.basm", file_name.to_str().unwrap())).chain_err(
-        || "failed to create file",
-    )?;
+    let mut file = File::create(format!("{}.basm", file_name.to_str().unwrap())).chain_err(|| "failed to create file")?;
 
     file.write_all(file_contents.as_bytes()).chain_err(|| "unable to write to file")?;
 

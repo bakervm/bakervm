@@ -184,13 +184,9 @@ impl Add for Value {
 
     fn add(self, rhs: Self) -> Self::Output {
         match (self.clone(), rhs.clone()) {
-            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float + rhs_float,),),
-            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
-                Ok(Value::Integer(lhs_integer.wrapping_add(rhs_integer)))
-            }
-            (Value::Size(lhs_addr), Value::Size(rhs_addr)) => {
-                Ok(Value::Size(lhs_addr.wrapping_add(rhs_addr)))
-            }
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float + rhs_float)),
+            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => Ok(Value::Integer(lhs_integer.wrapping_add(rhs_integer))),
+            (Value::Size(lhs_addr), Value::Size(rhs_addr)) => Ok(Value::Size(lhs_addr.wrapping_add(rhs_addr))),
             _ => bail!("unable to add values {:?} and {:?}", self, rhs),
         }
     }
@@ -201,13 +197,9 @@ impl Sub for Value {
 
     fn sub(self, rhs: Self) -> Self::Output {
         match (self.clone(), rhs.clone()) {
-            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float - rhs_float,),),
-            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
-                Ok(Value::Integer(lhs_integer.wrapping_sub(rhs_integer)))
-            }
-            (Value::Size(lhs_addr), Value::Size(rhs_addr)) => {
-                Ok(Value::Size(lhs_addr.wrapping_sub(rhs_addr)))
-            }
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float - rhs_float)),
+            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => Ok(Value::Integer(lhs_integer.wrapping_sub(rhs_integer))),
+            (Value::Size(lhs_addr), Value::Size(rhs_addr)) => Ok(Value::Size(lhs_addr.wrapping_sub(rhs_addr))),
             _ => bail!("unable to subtract values {:?} and {:?}", self, rhs),
         }
     }
@@ -218,13 +210,9 @@ impl Mul for Value {
 
     fn mul(self, rhs: Self) -> Self::Output {
         match (self.clone(), rhs.clone()) {
-            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float * rhs_float,),),
-            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
-                Ok(Value::Integer(lhs_integer.wrapping_mul(rhs_integer)))
-            }
-            (Value::Size(lhs_addr), Value::Size(rhs_addr)) => {
-                Ok(Value::Size(lhs_addr.wrapping_mul(rhs_addr)))
-            }
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float * rhs_float)),
+            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => Ok(Value::Integer(lhs_integer.wrapping_mul(rhs_integer))),
+            (Value::Size(lhs_addr), Value::Size(rhs_addr)) => Ok(Value::Size(lhs_addr.wrapping_mul(rhs_addr))),
             _ => bail!("unable to multiply values {:?} and {:?}", self, rhs),
         }
     }
@@ -235,7 +223,7 @@ impl Div for Value {
 
     fn div(self, rhs: Self) -> Self::Output {
         match (self.clone(), rhs.clone()) {
-            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float / rhs_float,),),
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float / rhs_float)),
             _ => bail!("unable to divide values {:?} and {:?}", self, rhs),
         }
     }
@@ -246,10 +234,8 @@ impl Rem for Value {
 
     fn rem(self, rhs: Self) -> Self::Output {
         match (self.clone(), rhs.clone()) {
-            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float % rhs_float,),),
-            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => {
-                Ok(Value::Integer(lhs_integer % rhs_integer))
-            }
+            (Value::Float(lhs_float), Value::Float(rhs_float)) => Ok(Value::Float(lhs_float % rhs_float)),
+            (Value::Integer(lhs_integer), Value::Integer(rhs_integer)) => Ok(Value::Integer(lhs_integer % rhs_integer)),
             (Value::Size(lhs_addr), Value::Size(rhs_addr)) => Ok(Value::Size(lhs_addr % rhs_addr)),
             _ => {
                 bail!(

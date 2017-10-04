@@ -48,12 +48,9 @@ fn run() -> Result<()> {
                     "Sets the source file to use.",
                 ))
                 .arg(
-                    Arg::with_name("output")
-                        .short("o")
-                        .long("output")
-                        .takes_value(true)
-                        .value_name("FILE")
-                        .help("Sets the destination file."),
+                    Arg::with_name("output").short("o").long("output").takes_value(true).value_name("FILE").help(
+                        "Sets the destination file.",
+                    ),
                 )
                 .arg(
                     Arg::with_name("type")
@@ -78,12 +75,9 @@ fn run() -> Result<()> {
                     "Sets the source file to use.",
                 ))
                 .arg(
-                    Arg::with_name("output")
-                        .short("o")
-                        .long("output")
-                        .takes_value(true)
-                        .value_name("FILE")
-                        .help("Sets the destination file."),
+                    Arg::with_name("output").short("o").long("output").takes_value(true).value_name("FILE").help(
+                        "Sets the destination file.",
+                    ),
                 )
                 .arg(Arg::with_name("basm").long("basm").help(
                     "compile the specified file as BASM",

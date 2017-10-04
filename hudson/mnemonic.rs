@@ -42,9 +42,7 @@ impl Display for Mnemonic {
             &Mnemonic::Mul(ref dest, ref src) => write!(f, "mul {}, {}", dest, src),
             &Mnemonic::Rem(ref dest, ref src) => write!(f, "rem {}, {}", dest, src),
 
-            &Mnemonic::Cmp(ref target_a, ref target_b) => {
-                write!(f, "cmp {}, {}", target_a, target_b)
-            }
+            &Mnemonic::Cmp(ref target_a, ref target_b) => write!(f, "cmp {}, {}", target_a, target_b),
             &Mnemonic::Jmp(ref label) => write!(f, "jmp {}", label),
             &Mnemonic::JmpLt(ref label) => write!(f, "jmplt {}", label),
             &Mnemonic::JmpGt(ref label) => write!(f, "jmpgt {}", label),
@@ -56,9 +54,7 @@ impl Display for Mnemonic {
 
             &Mnemonic::Push(ref target, ref value) => write!(f, "push {}, {}", target, value),
             &Mnemonic::Mov(ref dest, ref src) => write!(f, "mov {}, {}", dest, src),
-            &Mnemonic::Swp(ref target_a, ref target_b) => {
-                write!(f, "swp {}, {}", target_a, target_b)
-            }
+            &Mnemonic::Swp(ref target_a, ref target_b) => write!(f, "swp {}, {}", target_a, target_b),
             &Mnemonic::Dup(ref target) => write!(f, "dup {}", target),
 
             &Mnemonic::Call(ref label) => write!(f, "call {}", label),

@@ -45,18 +45,14 @@ fn run() -> Result<()> {
         .version(env!("CARGO_PKG_VERSION"))
         .author("Julian Laubstein <contact@julianlaubstein.de>")
         .about("A virtual machine for building and running retro games")
+        .arg(Arg::with_name("input").index(1).help(
+            "Sets the image file to use. Uses a standard image if nothing is specified.",
+        ))
         .arg(
-            Arg::with_name("input")
-                .index(1)
-                .help("Sets the image file to use. Uses a standard image if nothing is specified.")
+            Arg::with_name("scale").short("s").long("scale").takes_value(true).value_name("SCALE").help(
+                "Sets the scale for the display. If not specified, the default scale set by the image will be used.",
+            ),
         )
-        .arg(
-            Arg::with_name("scale")
-                .short("s")
-                .long("scale")
-                .takes_value(true)
-                .value_name("SCALE")
-                .help("Sets the scale for the display. If not specified, the default scale set by the image will be used."))
         .get_matches();
 
     let program: Program = if let Some(input) = matches.value_of("input") {

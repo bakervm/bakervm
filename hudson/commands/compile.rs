@@ -15,8 +15,7 @@ pub fn compile(matches: &ArgMatches) -> Result<()> {
     let start_dir = env::current_dir().chain_err(|| "unable to get current directory")?;
 
     if matches.is_present("basm") {
-        let program =
-            basm::compile(input_file_name.to_owned()).chain_err(|| "unable to compile file")?;
+        let program = basm::compile(input_file_name.to_owned()).chain_err(|| "unable to compile file")?;
 
         let output_file_name = if let Some(file_name) = matches.value_of("output") {
             file_name.to_owned()
