@@ -77,9 +77,7 @@ impl BASMCompiler {
                 }
 
                 let first_half: String = if LABELED_MNEMONIC_RE.is_match(first_half) {
-                    let captures = if let Some(captures) = LABELED_MNEMONIC_RE
-                           .captures_iter(first_half)
-                           .next() {
+                    let captures = if let Some(captures) = LABELED_MNEMONIC_RE.captures_iter(first_half).next() {
                         captures
                     } else {
                         bail!("no label capture found")
@@ -91,24 +89,22 @@ impl BASMCompiler {
 
                     captures[2].trim().to_owned()
                 } else if LABEL_RE.is_match(first_half) {
-                    let captures =
-                        if let Some(captures) = LABEL_RE.captures_iter(first_half).next() {
-                            captures
-                        } else {
-                            bail!("no label capture found")
-                        };
+                    let captures = if let Some(captures) = LABEL_RE.captures_iter(first_half).next() {
+                        captures
+                    } else {
+                        bail!("no label capture found")
+                    };
 
                     let label = captures[1].trim();
 
                     self.add_label(label.to_owned())?;
                     continue;
                 } else if INCLUDE_RE.is_match(first_half) {
-                    let captures =
-                        if let Some(captures) = INCLUDE_RE.captures_iter(first_half).next() {
-                            captures
-                        } else {
-                            bail!("no include capture found")
-                        };
+                    let captures = if let Some(captures) = INCLUDE_RE.captures_iter(first_half).next() {
+                        captures
+                    } else {
+                        bail!("no include capture found")
+                    };
 
                     self.deep += 1;
 
@@ -118,12 +114,11 @@ impl BASMCompiler {
                         bail!("unable to get parent directory")
                     };
 
-                    env::set_current_dir(parent.clone())
-                        .chain_err(|| "unable to switch directories")?;
+                    env::set_current_dir(parent.clone()).chain_err(|| "unable to switch directories")?;
 
-                    let path = Path::new(&(captures[1].trim().to_owned() + ".basm"))
-                        .canonicalize()
-                        .chain_err(|| "unable to canonicalize path")?;
+                    let path = Path::new(&(captures[1].trim().to_owned() + ".basm")).canonicalize().chain_err(
+                        || "unable to canonicalize path",
+                    )?;
 
                     self.compile_mnemonics(&path)?;
 
@@ -224,8 +219,7 @@ impl BASMCompiler {
     }
 
     pub fn compile(&mut self, file_name: String) -> Result<ImageData> {
-        let path =
-            Path::new(&file_name).canonicalize().chain_err(|| "unable to canonicalize path")?;
+        let path = Path::new(&file_name).canonicalize().chain_err(|| "unable to canonicalize path")?;
 
         let parent = if let Some(ref parent) = path.parent() {
             parent.to_path_buf().clone()

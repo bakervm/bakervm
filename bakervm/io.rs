@@ -11,42 +11,32 @@ use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::thread;
 use std::time::Duration;
 
-pub fn start(
-    frame_receiver: Receiver<Frame>, event_sender: Sender<Event>, config: Config,
-    barrier: Arc<Barrier>
-) -> Result<()> {
+pub fn start(frame_receiver: Receiver<Frame>, event_sender: Sender<Event>, config: Config, barrier: Arc<Barrier>) -> Result<()> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
     let hide_cursor = config.display.hide_cursor;
-
 
     sdl_context.mouse().show_cursor(!hide_cursor);
 
     let window = video_subsystem
         .window(
             config.title.as_ref(),
-            (config.display.default_scale * (config.display.resolution.width as Float)).round() as
-            u32,
-            (config.display.default_scale * (config.display.resolution.height as Float))
-                .round() as u32,
+            (config.display.default_scale * (config.display.resolution.width as Float)).round() as u32,
+            (config.display.default_scale * (config.display.resolution.height as Float)).round() as u32,
         )
         .position_centered()
         .build()
         .chain_err(|| "unable to build window")?;
 
-    let mut canvas = window
-        .into_canvas()
-        .target_texture()
-        .present_vsync()
-        .build()
-        .chain_err(|| "unable to convert window into canvas")?;
+    let mut canvas = window.into_canvas().target_texture().present_vsync().build().chain_err(
+        || "unable to convert window into canvas",
+    )?;
 
-    canvas
-        .set_scale(
-            config.display.default_scale as f32,
-            config.display.default_scale as f32,
-        )?;
+    canvas.set_scale(
+        config.display.default_scale as f32,
+        config.display.default_scale as f32,
+    )?;
 
     let mut event_pump = sdl_context.event_pump()?;
     event_pump.disable_event(SDL2EventType::First);
@@ -119,44 +109,32 @@ pub fn start(
                             }
                         }
                         SDL2Event::MouseButtonDown { x, y, mouse_btn, .. } => {
-                            let res = event_sender.send(
-                                Event::MouseDown {
-                                    x: (x as Float / config.display.default_scale).floor() as
-                                       Address,
-                                    y: (y as Float / config.display.default_scale).floor() as
-                                       Address,
-                                    button: mouse_btn as Address,
-                                },
-                            );
+                            let res = event_sender.send(Event::MouseDown {
+                                x: (x as Float / config.display.default_scale).floor() as Address,
+                                y: (y as Float / config.display.default_scale).floor() as Address,
+                                button: mouse_btn as Address,
+                            });
 
                             if let Err(..) = res {
                                 break 'main;
                             }
                         }
                         SDL2Event::MouseButtonUp { x, y, mouse_btn, .. } => {
-                            let res = event_sender.send(
-                                Event::MouseUp {
-                                    x: (x as Float / config.display.default_scale).floor() as
-                                       Address,
-                                    y: (y as Float / config.display.default_scale).floor() as
-                                       Address,
-                                    button: mouse_btn as Address,
-                                },
-                            );
+                            let res = event_sender.send(Event::MouseUp {
+                                x: (x as Float / config.display.default_scale).floor() as Address,
+                                y: (y as Float / config.display.default_scale).floor() as Address,
+                                button: mouse_btn as Address,
+                            });
 
                             if let Err(..) = res {
                                 break 'main;
                             }
                         }
                         SDL2Event::MouseMotion { x, y, .. } => {
-                            let res = event_sender.send(
-                                Event::MouseMove {
-                                    x: (x as Float / config.display.default_scale).floor() as
-                                       Address,
-                                    y: (y as Float / config.display.default_scale).floor() as
-                                       Address,
-                                },
-                            );
+                            let res = event_sender.send(Event::MouseMove {
+                                x: (x as Float / config.display.default_scale).floor() as Address,
+                                y: (y as Float / config.display.default_scale).floor() as Address,
+                            });
 
                             if let Err(..) = res {
                                 break 'main;

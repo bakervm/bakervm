@@ -1,6 +1,7 @@
 //! A Target is an abstract representation of a memory section inside the VM
 
 use regex::Regex;
+use std::fmt::{self, Display, Formatter};
 use std::str::FromStr;
 use typedef::*;
 
@@ -16,6 +17,18 @@ pub enum Target {
     Stack,
     BasePointer,
     KeyRegister(Address),
+}
+
+impl Display for Target {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        match self {
+            &Target::Framebuffer => write!(f, "$fb"),
+            &Target::ValueIndex(addr) => write!(f, "$vi({})", addr),
+            &Target::Stack => write!(f, "$st"),
+            &Target::BasePointer => write!(f, "$bp"),
+            &Target::KeyRegister(addr) => write!(f, "$key({})", addr),
+        }
+    }
 }
 
 impl FromStr for Target {

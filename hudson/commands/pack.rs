@@ -4,6 +4,35 @@ use image::{self, DynamicImage, RgbImage, RgbaImage};
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
+use std::result;
+use std::str::FromStr;
+
+enum PackingMode {
+    Static,
+    DynamicPosition,
+    // DynamicScale,
+    // DynamicRotation,
+    // DynamicScalePosition,
+    // DynamicScaleRotation,
+    // DynamicPositionRotation,
+}
+
+impl FromStr for PackingMode {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> result::Result<PackingMode, Self::Err> {
+        match s {
+            "static" => Ok(PackingMode::Static),
+            "dynamic-pos" => Ok(PackingMode::DynamicPosition),
+            _ => Err("unable to parse packing-mode"),
+        }
+    }
+}
+
+enum Pixel {
+    Padding(u32),
+    Color(u8, u8, u8),
+}
 
 pub fn pack(matches: &ArgMatches) -> Result<()> {
     let input_file_name = if let Some(file_name) = matches.value_of("input") {
@@ -18,21 +47,25 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
         bail!("unable to extract file name");
     };
 
-    let pack_type = if let Some(pack_type) = matches.value_of("type") {
-        pack_type
+    let pack_type: PackingMode = if let Some(pack_type) = matches.value_of("type") {
+        pack_type.parse()?
     } else {
-        "static"
+        "static".parse()? // The default packing mode
     };
 
     let image_data = image::open(input_file_name).chain_err(|| "unable to open image file")?;
 
-    let packed_image = if let DynamicImage::ImageRgb8(rgb_image) = image_data {
-        pack_rgb(rgb_image)?
+    let (packed_image, dimensions) = if let DynamicImage::ImageRgb8(rgb_image) = image_data {
+        (pack_rgb(rgb_image.clone())?, rgb_image.dimensions())
     } else if let DynamicImage::ImageRgba8(rgba_image) = image_data {
-        pack_rgba(rgba_image)?
+        (pack_rgba(rgba_image.clone())?, rgba_image.dimensions())
     } else {
         bail!("cannot load grayscale image");
     };
+
+    println!("Image dimensions {:?}", dimensions);
+
+    let (image_width, _) = dimensions;
 
     let module_name = format!(".assets.images.draw_{}", file_name.to_str().unwrap());
     let guard_name = module_name.replace('.', "_");
@@ -43,43 +76,86 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
 
     file_contents += format!("\n{}", module_name).as_str();
 
-    if pack_type == "static" {
-        for (x, y, color) in packed_image {
-            file_contents += "\npush $st, #";
-            file_contents += format!("{:02x}{:02x}{:02x}", color.0, color.1, color.2).as_str();
+    match pack_type {
+        PackingMode::Static => {
+            let mut idx = 0;
+            file_contents += "\npush $st, @1";
+            file_contents += "\nadd $bp, $st";
 
-            file_contents += "\npush $st, @";
-            file_contents += format!("{}", x).as_str();
+            file_contents += "\npush $vi(0), @0";
 
-            file_contents += "\npush $st, @";
-            file_contents += format!("{}", y).as_str();
+            file_contents += "\ndup $vi(1)";
+            file_contents += "\nmov $vi(20), $st";
+            file_contents += format!("\npush $st, @{}", image_width).as_str();
+            file_contents += "\nsub $vi(20), $st";
 
-            file_contents += "\ncall std.graphics.draw_point";
+            for pixel in packed_image {
+                match pixel {
+                    Pixel::Color(r, g, b) => {
+                        file_contents += format!("\npush $fb, #{:02x}{:02x}{:02x}", r, g, b).as_str();
+                        file_contents += "\npush $st, @1";
+                        file_contents += "\nadd $vi(0), $st";
+                        idx += 1;
+                    }
+                    Pixel::Padding(padding) => {
+                        idx += padding;
+                        file_contents += format!("\npush $st, @{}", padding).as_str();
+                        file_contents += "\nadd $vi(0), $st";
+                    }
+                }
+
+                if idx >= image_width {
+                    idx = 0;
+                    file_contents += "\ndup $vi(20)";
+                    file_contents += "\nadd $vi(0), $st";
+                }
+            }
+
+
+            file_contents += "\npush $st, @1";
+            file_contents += "\nsub $bp, $st";
         }
-    } else if pack_type == "dynamic-pos" {
-        file_contents += "\npush $st, @2";
-        file_contents += "\nadd $bp, $st";
+        PackingMode::DynamicPosition => {
+            let mut idx = 0;
+            file_contents += "\npush $st, @1";
+            file_contents += "\nadd $bp, $st";
 
-        file_contents += "\nmov $vi(21), $st"; // y
-        file_contents += "\nmov $vi(20), $st"; // x
-
-        for (x, y, color) in packed_image {
-            file_contents += "\npush $st, #";
-            file_contents += format!("{:02x}{:02x}{:02x}", color.0, color.1, color.2).as_str();
-
-            file_contents += format!("\npush $st, @{}", x).as_str();
-            file_contents += "\ndup $vi(20)";
+            file_contents += "\ndup $vi(1)";
+            file_contents += "\nmul $st, $st";
             file_contents += "\nadd $st, $st";
 
-            file_contents += format!("\npush $st, @{}", y).as_str();
-            file_contents += "\ndup $vi(21)";
-            file_contents += "\nadd $st, $st";
+            file_contents += "\nmov $vi(0), $st";
 
-            file_contents += "\ncall std.graphics.draw_point";
+            file_contents += "\ndup $vi(1)";
+            file_contents += "\nmov $vi(20), $st";
+            file_contents += format!("\npush $st, @{}", image_width).as_str();
+            file_contents += "\nsub $vi(20), $st";
+
+            for pixel in packed_image {
+                match pixel {
+                    Pixel::Color(r, g, b) => {
+                        file_contents += format!("\npush $fb, #{:02x}{:02x}{:02x}", r, g, b).as_str();
+                        file_contents += "\npush $st, @1";
+                        file_contents += "\nadd $vi(0), $st";
+                        idx += 1;
+                    }
+                    Pixel::Padding(padding) => {
+                        idx += padding;
+                        file_contents += format!("\npush $st, @{}", padding).as_str();
+                        file_contents += "\nadd $vi(0), $st";
+                    }
+                }
+
+                if idx >= image_width {
+                    idx = 0;
+                    file_contents += "\ndup $vi(20)";
+                    file_contents += "\nadd $vi(0), $st";
+                }
+            }
+
+            file_contents += "\npush $st, @1";
+            file_contents += "\nsub $bp, $st";
         }
-
-        file_contents += "\npush $st, @2";
-        file_contents += "\nsub $bp, $st";
     }
 
     file_contents += "\nret";
@@ -87,37 +163,39 @@ pub fn pack(matches: &ArgMatches) -> Result<()> {
     file_contents += format!("\n.{}", guard_name.clone()).as_str();
     file_contents += "\n";
 
-    let mut file = File::create(format!("{}.basm", file_name.to_str().unwrap()))
-        .chain_err(|| "failed to create file")?;
+    let mut file = File::create(format!("{}.basm", file_name.to_str().unwrap())).chain_err(|| "failed to create file")?;
 
     file.write_all(file_contents.as_bytes()).chain_err(|| "unable to write to file")?;
 
     Ok(())
 }
 
-fn pack_rgb(image: RgbImage) -> Result<Vec<(usize, usize, (u8, u8, u8))>> {
-    println!("RGB image dimensions {:?}", image.dimensions());
+fn pack_rgb(image: RgbImage) -> Result<Vec<Pixel>> {
 
-    let mut pixels: Vec<(usize, usize, (u8, u8, u8))> = Vec::new();
+    let mut pixels = Vec::new();
 
-    for (x, y, color) in image.enumerate_pixels() {
-        let color = (color[0], color[1], color[2]);
-
-        pixels.push((x as usize, y as usize, color));
+    for (_, _, color) in image.enumerate_pixels() {
+        pixels.push(Pixel::Color(color[0], color[1], color[2]));
     }
 
     Ok(pixels)
 }
 
-fn pack_rgba(image: RgbaImage) -> Result<Vec<(usize, usize, (u8, u8, u8))>> {
-    println!("RGBA image dimensions {:?}", image.dimensions());
+fn pack_rgba(image: RgbaImage) -> Result<Vec<Pixel>> {
+    let mut pixels = Vec::new();
 
-    let mut pixels: Vec<(usize, usize, (u8, u8, u8))> = Vec::new();
+    let mut padding = 0;
 
-    for (x, y, color) in image.enumerate_pixels() {
-        if color[3] == 255 {
-            let color = (color[0], color[1], color[2]);
-            pixels.push((x as usize, y as usize, color));
+    for (_, _, color) in image.enumerate_pixels() {
+        if color[3] > 128 {
+            if padding > 0 {
+                pixels.push(Pixel::Padding(padding));
+                padding = 0;
+            }
+
+            pixels.push(Pixel::Color(color[0], color[1], color[2]));
+        } else {
+            padding += 1;
         }
     }
 

@@ -8,3 +8,4 @@ array_layout = "Block"
 fn_call_style = "Block"
 fn_args_layout = "Block"
 chain_indent = "Block"
+max_width = 200

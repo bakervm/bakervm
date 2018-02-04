@@ -17,16 +17,16 @@ The types and symbols used in the bakerVM assembly language are shown here.
 |  Mnemonic | Holds Type  | Description                                                          |
 |----------:|-------------|----------------------------------------------------------------------|
 |     `$st` | Any `Value` | Stack                                                                |
-|     `$bp` | `Address`   | Base pointer                                                         |
+|     `$bp` | `Size`   | Base pointer                                                         |
 |     `$fb` | `Color`     | Framebuffer                                                          |
 |  `$vi(#)` | Any `Value` | The value index, where the # represents a constant positive integer  |
-| `$key(#)` | Address     | The key register, where the # represents a constant positive integer |
+| `$key(#)` | Size     | The key register, where the # represents a constant positive integer |
 
 ### Value
 
 |                          Mnemonic | Description |
 |----------------------------------:|-------------|
-|        `@12`, `@0`, `@43`, `@723` | Address     |
+|        `@12`, `@0`, `@43`, `@723` | Size     |
 |                   `true`, `false` | Boolean     |
 |           `1.3`, `4.7`, `-43.338` | Float       |
 |            `1`, `2`, `43`, `-567` | Integer     |
@@ -37,7 +37,7 @@ The types and symbols used in the bakerVM assembly language are shown here.
 
 | Mnemonic | Description |
 |---------:|-------------|
-|   `addr` | Address     |
+|   `size` | Size     |
 |   `bool` | Boolean     |
 |  `float` | Float       |
 |    `int` | Integer     |

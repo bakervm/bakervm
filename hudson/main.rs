@@ -38,41 +38,50 @@ fn run() -> Result<()> {
         .author("Julian Laubstein <contact@julianlaubstein.de>")
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .about("The bakervm toolkit")
-        .subcommand(SubCommand::with_name("stock").about("Generate the default image"),)
+        .subcommand(SubCommand::with_name("stock").about(
+            "Generate the default image",
+        ))
         .subcommand(
-            SubCommand::with_name("pack").about("Write texture functions from images")
-                .arg(Arg::with_name("input").index(1).required(true).help("Sets the source file to use."),)
-                .arg(Arg::with_name("output")
-                    .short("o")
-                    .long("output")
-                    .takes_value(true)
-                    .value_name("FILE")
-                    .help("Sets the destination file."))
-                .arg(Arg::with_name("type")
-                    .short("t")
-                    .long("type")
-                    .takes_value(true)
-                    .value_name("TYPE")
-                    .validator(|input| {
-                        let options = vec!["static", "dynamic-pos"];
-                        if !options.contains(&input.as_str()) {
-                            Err(format!("value has to be one of {:?}", options))
-                        } else {
-                            Ok(())
-                        }
-                    })
-                    .help("Sets the packing type")),
+            SubCommand::with_name("pack")
+                .about("Write texture functions from images")
+                .arg(Arg::with_name("input").index(1).required(true).help(
+                    "Sets the source file to use.",
+                ))
+                .arg(
+                    Arg::with_name("output").short("o").long("output").takes_value(true).value_name("FILE").help(
+                        "Sets the destination file.",
+                    ),
+                )
+                .arg(
+                    Arg::with_name("type")
+                        .short("t")
+                        .long("type")
+                        .takes_value(true)
+                        .value_name("TYPE")
+                        .validator(|input| {
+                            let options = vec!["static", "dynamic-pos"];
+                            if !options.contains(&input.as_str()) {
+                                Err(format!("value has to be one of {:?}", options))
+                            } else {
+                                Ok(())
+                            }
+                        })
+                        .help("Sets the packing type"),
+                ),
         )
         .subcommand(
             SubCommand::with_name("compile")
-                .arg(Arg::with_name("input").index(1).required(true).help("Sets the source file to use."),)
-                .arg(Arg::with_name("output")
-                    .short("o")
-                    .long("output")
-                    .takes_value(true)
-                    .value_name("FILE")
-                    .help("Sets the destination file."))
-                .arg(Arg::with_name("basm").long("basm").help("compile the specified file as BASM"))
+                .arg(Arg::with_name("input").index(1).required(true).help(
+                    "Sets the source file to use.",
+                ))
+                .arg(
+                    Arg::with_name("output").short("o").long("output").takes_value(true).value_name("FILE").help(
+                        "Sets the destination file.",
+                    ),
+                )
+                .arg(Arg::with_name("basm").long("basm").help(
+                    "compile the specified file as BASM",
+                )),
         )
         .get_matches();
 
