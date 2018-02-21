@@ -1,4 +1,4 @@
-# bakerVM [![Crates.io][crate-image]][crate-link] [![Build Status][travis-image]][travis-link] [![Docs.rs][docs-image]][docs-link]
+# bakerVM [![Crates.io][crate-image]][crate-link] [![Build Status][travis-image]][travis-link] [![Docs.rs][docs-image]][docs-link] [![dependency status][deps-image]][deps-link]
 A virtual machine for building and running retro games
 
 ![The logo of the bakerVM][logo]
@@ -53,6 +53,8 @@ hudson compile --basm path/to/main.basm
 bakervm path/to/my/image/game.img
 ```
 
+[deps-image]:https://deps.rs/repo/github/bakervm/bakervm/status.svg
+[deps-link]: https://deps.rs/repo/github/bakervm/bakervm
 [crate-image]: https://img.shields.io/crates/v/bakervm.svg
 [crate-link]: https://crates.io/crates/bakervm
 [travis-image]: https://travis-ci.org/bakervm/bakervm.svg?branch=master
