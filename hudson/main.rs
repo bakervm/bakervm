@@ -6,9 +6,13 @@ extern crate regex;
 #[macro_use]
 extern crate lazy_static;
 extern crate image;
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
 
 mod commands;
 mod basm;
+mod beast;
 mod mnemonic;
 
 use clap::{App, AppSettings, Arg, SubCommand};
@@ -72,7 +76,7 @@ fn run() -> Result<()> {
                     .takes_value(true)
                     .value_name("FILE")
                     .help("Sets the destination file."))
-                .arg(Arg::with_name("basm").long("basm").help("compile the specified file as BASM"))
+                .arg(Arg::with_name("lang").long("lang").short("l").takes_value(true).help("compile the specified language (default: Beast)"))
         )
         .get_matches();
 
