@@ -1,0 +1,212 @@
+/// Values
+
+// Integers
+sign = @{ ("+" | "-")? }
+digit = @{ '0' .. '9' }
+hexdigit = @{
+      digit
+    | 'A' .. 'F'
+    | 'a' .. 'f'
+}
+num = @{ digit ~ ("_"? ~ digit)* }
+hexnum = @{ hexdigit ~ ("_"? ~ hexdigit)* }
+
+unsigned_num = @{ num | "0x" ~ hexnum } // uN
+
+signed_num = @{ sign ~ num | sign ~ "0x" ~ hexnum } // sN
+
+uninterpreted_integer = { unsigned_num | signed_num } // iN
+
+// Floating-Point
+frac = @{ (digit ~ frac | digit ~ "_" ~ digit ~ frac)? }
+hexfrac = @{ (hexdigit ~ hexfrac | hexdigit ~ "_" ~ hexdigit ~ hexfrac)? }
+float = @{
+      num ~ "." ~ frac
+    | num ~ ("E" | "e") ~ sign ~ num
+    | num ~ "." ~ frac ~ ("E" | "e") ~ sign ~ num
+}
+hexfloat = @{
+      hexnum ~ "." ~ hexfrac
+    | hexnum ~ ("E" | "e") ~ sign ~ num
+    | hexnum ~ "." ~ hexfrac ~ ("E" | "e") ~ sign ~ num
+}
+
+floating_point_number = @{ sign ~ floating_point_number_mag } // fN
+floating_point_number_mag = @{
+      float
+    | hexfloat
+    | "inf"
+    | "nan"
+    | "nan:0x" ~ hexnum
+} // fNmag
+
+// Strings
+string = @{ "\"" ~ stringelem* ~ "\"" }
+stringelem = @{ stringchar | "\\" ~ hexdigit ~ hexdigit }
+stringchar = @{ !("\\" | "\"") ~ any |  "\\t" | "\\n" | "\\r" | "\\\"" | "\\\'" | "\\\\" | ( "\\u{" ~ hexnum ~ "}" )}
+
+// Booleans
+boolean = { "true" | "false" }
+
+// Color
+color = ${ color_hash ~ color_value }
+color_hash = _{ "#" }
+color_value = @{ hexdigit{6} }
+
+// Identifiers
+func_id = @{ id }
+module_id = @{ id }
+
+id = @{ "$" ~ idchar+ }
+idchar = @{
+      '0' .. '9'
+    | 'a' .. 'z'
+    | 'A' .. 'Z'
+    | "_"
+}
+
+/// Type Type
+type_t = { bool_t | float_t | int_t | color_t | char_t }
+bool_t = @{ "bool" }
+float_t = @{ "float" }
+int_t = @{ "int" }
+color_t = @{ "color" }
+char_t = @{ "char" }
+
+/// Atom
+atom_keyword = _{ ":" }
+atom = @{ atom_keyword ~ idchar+ }
+
+/// Literal
+literal = { color | boolean | floating_point_number | unsigned_num | signed_num }
+
+/// Modules
+module = { opening_brace ~ module_keyword ~ id ~ module_field* ~ start_func? ~ closing_brace }
+module_field = { func | import | export }
+
+/// Functions
+func = { opening_brace ~ func_keyword ~ id ~ instr* ~ closing_brace }
+start_func = { opening_brace ~ start_keyword ~ id ~ closing_brace }
+
+/// Import/Export
+import = { opening_brace ~ import_keyword ~ func_id ~ (as_keyword ~ func_id)? ~ from_keyword ~ module_id ~ closing_brace }
+export = { opening_brace ~ export_keyword ~ func_id ~ (as_keyword ~ func_id)? ~ closing_brace }
+
+/// Instructions
+instr = { while_loop | if_cond | plain_instr }
+plain_instr = {
+    opening_brace ~
+      (
+            add_instr
+          | sub_instr
+          | mul_instr
+          | div_instr
+          | rem_instr
+          | cast_instr
+          | sig_instr
+          | push_instr
+          | mov_instr
+          | swp_instr
+          | dup_instr
+          | call_instr
+          | ret_instr
+      )
+     ~ closing_brace
+}
+
+add_instr_keyword = _{ "add" }
+add_instr = { add_instr_keyword ~ target ~ comma ~ (literal | target) }
+
+sub_instr_keyword = _{ "sub" }
+sub_instr = { sub_instr_keyword ~ target ~ comma ~ (literal | target) }
+
+mul_instr_keyword = _{ "mul" }
+mul_instr = { mul_instr_keyword ~ target ~ comma ~ (literal | target) }
+
+div_instr_keyword = _{ "div" }
+div_instr = { div_instr_keyword ~ target ~ comma ~ (literal | target) }
+
+rem_instr_keyword = _{ "rem" }
+rem_instr = { rem_instr_keyword ~ target ~ comma ~ (literal | target) }
+
+cast_instr_keyword = _{ "cast" }
+cast_instr = { cast_instr_keyword ~ target ~ comma ~ type_t }
+
+sig_instr_keyword = _{ "sig" }
+sig_instr = { sig_instr_keyword ~ atom }
+
+push_instr_keyword = _{ "push" }
+push_instr = { push_instr_keyword ~ target ~ comma ~ literal }
+
+mov_instr_keyword = _{ "mov" }
+mov_instr = { mov_instr_keyword ~ target ~ comma ~ target }
+
+swp_instr_keyword = _{ "swp" }
+swp_instr = { swp_instr_keyword ~ target ~ comma ~ target }
+
+dup_instr_keyword = _{ "dup" }
+dup_instr = { dup_instr_keyword ~ (literal | target) }
+
+call_instr_keyword = _{ "call" }
+call_instr = { call_instr_keyword ~ func_id }
+
+ret_instr_keyword = _{ "ret" }
+ret_instr = { ret_instr_keyword }
+
+// While
+while_loop_keyword = _{ "while" }
+while_loop = { opening_brace ~ while_loop_keyword ~ condition ~ instr* ~ closing_brace }
+
+// If
+if_cond_keyword = _{ "if" }
+else_cond_keyword = _{ "else" }
+if_cond = { opening_brace ~ if_cond_keyword ~ condition ~ instr* ~ (opening_brace ~ else_cond_keyword ~ instr* ~ closing_brace)? ~ closing_brace }
+
+// condition
+condition = { opening_brace ~ conditional_func ~ target ~ comma ~ (literal | target) ~ closing_brace }
+conditional_func = { equal | greater | less | greater_or_equal | less_or_equal }
+equal = @{ "eq" }
+greater = @{ "gt" }
+less = @{ "lt" }
+greater_or_equal = @{ "gte" }
+less_or_equal = @{ "lte" }
+
+/// Targets
+target = { stack_target | base_pointer_target | framebuffer_target | key_target | value_index_target }
+
+stack_target_keyword = _{ "%st" }
+stack_target = { stack_target_keyword }
+
+framebuffer_target_keyword = _{ "%fb" }
+framebuffer_target = { framebuffer_target_keyword }
+
+base_pointer_target_keyword = _{ "%bp" }
+base_pointer_target = { base_pointer_target_keyword }
+
+value_index_target_keyword = _{ "%vi" }
+value_index_target = { value_index_target_keyword ~ opening_brace ~ unsigned_num ~ closing_brace }
+
+key_target_keyword = _{ "%key" }
+key_target = { key_target_keyword ~ opening_brace ~ unsigned_num ~ closing_brace }
+
+/// Keywords
+module_keyword = _{ "module" }
+func_keyword = _{ "func" }
+start_keyword = _{ "start" }
+import_keyword = _{ "import" }
+export_keyword = _{ "export" }
+from_keyword = _{ "from" }
+as_keyword = _{ "as" }
+
+/// Misc
+comma = _{ "," }
+opening_brace = _{ "(" }
+closing_brace = _{ ")" }
+
+comment = _{ multiline_comment | (";;" ~ (!newline ~ any)*) }
+multiline_comment = {
+    "(;" ~ (!";" ~ !")" ~ any)* ~ ";)"
+}
+newline = _{ "\n" | "\r\n" }
+whitespace = _{ " " | "\t" | newline }
+file = { soi ~ module* ~ eoi }

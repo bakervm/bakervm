@@ -1,4 +1,5 @@
 use basm;
+use beast;
 use clap::ArgMatches;
 use core::error::*;
 use std::env;
@@ -14,7 +15,7 @@ pub fn compile(matches: &ArgMatches) -> Result<()> {
 
     let start_dir = env::current_dir().chain_err(|| "unable to get current directory")?;
 
-    if matches.is_present("basm") {
+    if matches.value_of("lang") == Some("basm") {
         let program = basm::compile(input_file_name.to_owned())
             .chain_err(|| "unable to compile file")?;
 
@@ -31,6 +32,15 @@ pub fn compile(matches: &ArgMatches) -> Result<()> {
         file.write_all(&program[..]).chain_err(|| "unable to write program data")?;
 
         file.sync_all().chain_err(|| "unable to sync output file to file system")?;
+    } else {
+        let program = beast::compile(input_file_name.to_owned())
+            .chain_err(|| "unable to compile file")?;
+
+        let output_file_name = if let Some(file_name) = matches.value_of("output") {
+            file_name.to_owned()
+        } else {
+            format!("{}.img", input_file_name)
+        };
     }
 
     Ok(())

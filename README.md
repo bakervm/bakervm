@@ -44,9 +44,9 @@ cargo install bakervm -f
 
 After the installation, you should have the following binaries installed: `bakervm` and `hudson`.
 
-`hudson` is the bakervm toolkit. It is currently only able to compile `*.basm` files.
+`hudson` is the bakervm toolkit. It is currently only able to *compile* `*.basm` files.
 ```
-hudson compile --basm path/to/main.basm
+hudson compile -l basm path/to/main.basm
 ```
 `bakervm` is the VM itself. On startup it loads the stock image by default. But you can specify any bakerVM image:
 ```shell
