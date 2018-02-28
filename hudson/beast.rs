@@ -26,7 +26,7 @@ pub fn compile(file_name: String) -> Result<ImageData> {
     let parser_res = BeastParser::parse(Rule::file, &buf);
 
     if let Err(err) = parser_res {
-        bail!("{:?}", err);
+        bail!("{}", err);
     }
 
     bail!("Beast compiler is not implemented yet!")
