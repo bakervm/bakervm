@@ -2,6 +2,8 @@
 
 use typedef::*;
 
+pub const DEFAULT_SCALE: f64 = 4.0;
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DisplayConfig {
     #[serde(default)]
@@ -15,7 +17,7 @@ impl Default for DisplayConfig {
     fn default() -> Self {
         DisplayConfig {
             resolution: Default::default(),
-            default_scale: 4.0,
+            default_scale: DEFAULT_SCALE,
             hide_cursor: true,
         }
     }
