@@ -16,7 +16,6 @@ mod basm;
 mod beast;
 mod mnemonic;
 
-// use clap::{App, AppSettings, Arg, SubCommand};
 use commands::{Lang, PackingType};
 use core::error::*;
 use std::path::PathBuf;

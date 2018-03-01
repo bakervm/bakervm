@@ -1,18 +1,18 @@
-extern crate rmp_serde;
-extern crate clap;
+extern crate core;
 #[macro_use]
 extern crate error_chain;
-extern crate core;
-extern crate sdl2;
 extern crate rand;
+extern crate rmp_serde;
+extern crate sdl2;
+extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde;
+#[macro_use]
+extern crate structopt;
 
 mod vm;
 mod io;
 
-use clap::{App, Arg};
 use core::Program;
 use core::error::*;
 use core::typedef::*;
@@ -20,7 +20,9 @@ use rmp_serde::Deserializer;
 use serde::Deserialize;
 use std::fs::File;
 use std::io::Read;
-use std::sync::{Arc, Barrier, mpsc};
+use std::path::PathBuf;
+use std::sync::{mpsc, Arc, Barrier};
+use structopt::StructOpt;
 
 fn main() {
     if let Err(ref e) = run() {
@@ -40,29 +42,22 @@ fn main() {
     }
 }
 
-fn run() -> Result<()> {
-    let matches = App::new("bakerVM")
-        .version(env!("CARGO_PKG_VERSION"))
-        .author("Julian Laubstein <contact@julianlaubstein.de>")
-        .about("A virtual machine for building and running retro games")
-        .arg(
-            Arg::with_name("input")
-                .index(1)
-                .help("Sets the image file to use. Uses a standard image if nothing is specified.")
-        )
-        .arg(
-            Arg::with_name("scale")
-                .short("s")
-                .long("scale")
-                .takes_value(true)
-                .value_name("SCALE")
-                .help("Sets the scale for the display. If not specified, the default scale set by the image will be used."))
-        .get_matches();
+#[derive(StructOpt, Debug)]
+struct Opt {
+    #[structopt(parse(from_os_str), help = "Sets the image file to use. Uses a standard image if nothing is specified.")]
+    input: Option<PathBuf>,
+    #[structopt(help = "Sets the scale for the display. If not specified, the default scale set by the image will be used.")]
+    scale: Option<f64>,
+}
 
-    let program: Program = if let Some(input) = matches.value_of("input") {
+fn run() -> Result<()> {
+    let opt = Opt::from_args();
+
+    let program: Program = if let Some(input) = opt.input {
         let mut file = File::open(input).chain_err(|| "unable to open file")?;
         let mut buf: ImageData = ImageData::new();
-        file.read_to_end(&mut buf).chain_err(|| "unable to read from file")?;
+        file.read_to_end(&mut buf)
+            .chain_err(|| "unable to read from file")?;
 
         let mut de = Deserializer::new(&buf[..]);
 
@@ -77,9 +72,7 @@ fn run() -> Result<()> {
 
     let mut config = program.config.clone();
 
-    if let Some(scale) = matches.value_of("scale") {
-        config.display.default_scale = scale.parse().chain_err(|| "unable to parse scale")?;
-    }
+    config.display.default_scale = opt.scale.unwrap_or(core::DEFAULT_SCALE);
 
     if config.display.default_scale < 1.0 {
         bail!("Display scale can't be less than 1");
