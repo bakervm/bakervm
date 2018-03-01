@@ -209,4 +209,4 @@ multiline_comment = {
 }
 newline = _{ "\n" | "\r\n" }
 whitespace = _{ " " | "\t" | newline }
-file = { soi ~ module* ~ eoi }
+file = _{ soi ~ module* ~ eoi }
