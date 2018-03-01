@@ -22,7 +22,7 @@ pub fn compile(path: PathBuf) -> Result<ImageData> {
     let parser_res = BeastParser::parse(Rule::file, &buf);
 
     if let Err(err) = parser_res {
-        bail!("{}", err);
+        bail!("\nError parsing file:\n{}\n", err);
     }
 
     bail!("Beast compiler is not implemented yet!")
@@ -32,8 +32,6 @@ pub fn compile(path: PathBuf) -> Result<ImageData> {
 mod tests {
     use super::*;
     use pest::Parser;
-    use pest::Token;
-    use pest::iterators::Pairs;
 
     #[test]
     fn simple() {

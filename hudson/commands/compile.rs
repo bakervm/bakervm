@@ -1,6 +1,5 @@
 use basm;
 use beast;
-// use clap::ArgMatches;
 use core::error::*;
 use std::env;
 use std::fs::File;
