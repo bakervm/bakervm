@@ -164,7 +164,7 @@ if_cond = { opening_brace ~ if_cond_keyword ~ condition ~ instr* ~ (opening_brac
 
 // condition
 condition = { opening_brace ~ conditional_func ~ target ~ comma ~ (literal | target) ~ closing_brace }
-conditional_func = { equal | greater | less | greater_or_equal | less_or_equal }
+conditional_func = { greater_or_equal | less_or_equal | greater | equal | less }
 equal = @{ "eq" }
 greater = @{ "gt" }
 less = @{ "lt" }

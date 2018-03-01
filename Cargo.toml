@@ -12,7 +12,6 @@ license = "MIT"
 travis-ci = { repository = "bakervm/bakervm" }
 
 [dependencies]
-clap = "^2.24.2"
 structopt = "0.2"
 error-chain = "^0.11.0"
 serde_derive = "^1.0.6"

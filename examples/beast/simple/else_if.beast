@@ -7,6 +7,11 @@
     (else
       (push %st, 2.0)
       (call $add_some_values))))
+  (func $some_func
+    (if (gte %st, %st)
+      (call $something)
+    (else (if (lt %st, %st)
+      (push %st, 20)))))
   (export $add_some_values))
 
 (; This is a multiline comment,
