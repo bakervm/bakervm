@@ -41,7 +41,7 @@ fn main() {
 }
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "hudson", about = "The bakervm toolkit")]
+#[structopt(name = "hudson", about = "The bakerVM toolkit")]
 enum Opt {
     #[structopt(name = "compile",
                 about = "compiles a compatible source file into a bakerVM image", alias = "c")]
