@@ -4,6 +4,11 @@ use typedef::*;
 
 pub const DEFAULT_SCALE: f64 = 4.0;
 
+pub const DEFAULT_SCREEN_WIDTH: usize = 160;
+pub const DEFAULT_SCREEN_HEIGHT: usize = 100;
+
+pub const DEFAULT_WINDOW_TITLE: &str = "bakerVM";
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct DisplayConfig {
     #[serde(default)]
@@ -32,8 +37,8 @@ pub struct DisplayResolution {
 impl Default for DisplayResolution {
     fn default() -> Self {
         DisplayResolution {
-            width: 160,
-            height: 100,
+            width: DEFAULT_SCREEN_WIDTH,
+            height: DEFAULT_SCREEN_HEIGHT,
         }
     }
 }
@@ -51,7 +56,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Config {
-            title: "bakerVM".into(),
+            title: DEFAULT_WINDOW_TITLE.into(),
             display: Default::default(),
             input_enabled: true,
         }
