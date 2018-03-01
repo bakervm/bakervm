@@ -8,7 +8,7 @@ use std::env;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::prelude::*;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 lazy_static! {
     static ref LABELED_MNEMONIC_RE: Regex = Regex::new(r"^\.(.+?) +?(.+)$").unwrap();
@@ -30,7 +30,9 @@ impl BASMCompiler {
         if self.label_addr_map.contains_key(&label) {
             bail!("label {:?} already exists", label)
         } else {
-            self.label_addr_map.entry(label).or_insert(self.mnemonics.len());
+            self.label_addr_map
+                .entry(label)
+                .or_insert(self.mnemonics.len());
 
             Ok(())
         }
@@ -77,9 +79,9 @@ impl BASMCompiler {
                 }
 
                 let first_half: String = if LABELED_MNEMONIC_RE.is_match(first_half) {
-                    let captures = if let Some(captures) = LABELED_MNEMONIC_RE
-                           .captures_iter(first_half)
-                           .next() {
+                    let captures = if let Some(captures) =
+                        LABELED_MNEMONIC_RE.captures_iter(first_half).next()
+                    {
                         captures
                     } else {
                         bail!("no label capture found")
@@ -91,12 +93,12 @@ impl BASMCompiler {
 
                     captures[2].trim().to_owned()
                 } else if LABEL_RE.is_match(first_half) {
-                    let captures =
-                        if let Some(captures) = LABEL_RE.captures_iter(first_half).next() {
-                            captures
-                        } else {
-                            bail!("no label capture found")
-                        };
+                    let captures = if let Some(captures) = LABEL_RE.captures_iter(first_half).next()
+                    {
+                        captures
+                    } else {
+                        bail!("no label capture found")
+                    };
 
                     let label = captures[1].trim();
 
@@ -139,7 +141,6 @@ impl BASMCompiler {
 
                 if let Some(opcode) = first_half_split.next() {
                     let opcode = opcode.trim().to_lowercase();
-
 
                     let args: Vec<String> = if let Some(args) = first_half_split.next() {
                         args.split(',').map(|arg| arg.trim().to_owned()).collect()
@@ -223,9 +224,8 @@ impl BASMCompiler {
         }
     }
 
-    pub fn compile(&mut self, file_name: String) -> Result<ImageData> {
-        let path =
-            Path::new(&file_name).canonicalize().chain_err(|| "unable to canonicalize path")?;
+    pub fn compile(&mut self, path: PathBuf) -> Result<ImageData> {
+        ensure!(path.is_absolute(), "file name must be absolute");
 
         let parent = if let Some(ref parent) = path.parent() {
             parent.to_path_buf().clone()
@@ -280,8 +280,8 @@ fn text_to_mnemonic(opcode: String, args: Vec<String>) -> Result<Mnemonic> {
     }
 }
 
-pub fn compile(file_name: String) -> Result<ImageData> {
-    BASMCompiler::default().compile(file_name)
+pub fn compile(path: PathBuf) -> Result<ImageData> {
+    BASMCompiler::default().compile(path)
 }
 
 #[cfg(test)]

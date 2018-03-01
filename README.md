@@ -46,7 +46,7 @@ After the installation, you should have the following binaries installed: `baker
 
 `hudson` is the bakervm toolkit. It is currently only able to *compile* `*.basm` files.
 ```
-hudson compile -l basm path/to/main.basm
+hudson compile path/to/source.basm
 ```
 `bakervm` is the VM itself. On startup it loads the stock image by default. But you can specify any bakerVM image:
 ```shell

@@ -3,7 +3,7 @@ use core::typedef::*;
 use pest::Parser;
 use std::fs::File;
 use std::io::Read;
-use std::path::Path;
+use std::path::PathBuf;
 
 const _GRAMMAR: &str = include_str!("../src/beast.pest");
 
@@ -11,12 +11,8 @@ const _GRAMMAR: &str = include_str!("../src/beast.pest");
 #[grammar = "beast.pest"]
 pub struct BeastParser;
 
-pub fn compile(file_name: String) -> Result<ImageData> {
-    let orig_path = Path::new(&file_name)
-        .canonicalize()
-        .chain_err(|| "unable to canonicalize path")?;
-
-    let mut file = File::open(orig_path).chain_err(|| "unable to open file")?;
+pub fn compile(path: PathBuf) -> Result<ImageData> {
+    let mut file = File::open(path).chain_err(|| "unable to open file")?;
 
     let mut buf = String::new();
 
