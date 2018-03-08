@@ -1,6 +1,5 @@
-use basm;
-use beast;
 use core::error::*;
+use language::{basm, beast};
 use std::env;
 use std::fs::File;
 use std::io::Write;

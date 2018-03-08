@@ -53,6 +53,14 @@ hudson compile path/to/source.basm
 bakervm path/to/my/image/game.img
 ```
 
+## Roadmap
+
+The bakerVM is currently undergoing massive changes. Here is an exerpt of planned ones:
+
+- [ ] Relative jumps
+- [ ] Remove RPG colors and move to 255 color display with exchangable palettes
+
+
 [deps-image]:https://deps.rs/repo/github/bakervm/bakervm/status.svg
 [deps-link]: https://deps.rs/repo/github/bakervm/bakervm
 [crate-image]: https://img.shields.io/crates/v/bakervm.svg

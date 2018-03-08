@@ -44,31 +44,32 @@ fn main() {
 
 #[derive(StructOpt, Debug)]
 struct Opt {
-    #[structopt(parse(from_os_str), help = "Sets the image file to use. Uses a standard image if nothing is specified.")]
+    #[structopt(parse(from_os_str), help = "Sets the image file to use. Uses a default image if nothing is specified.")]
     input: Option<PathBuf>,
-    #[structopt(help = "Sets the scale for the display. If not specified, the default scale set by the image will be used.")]
+    #[structopt(short = "s", help = "Sets the scale for the display. If not specified, the default scale set by the image will be used.")]
     scale: Option<f64>,
 }
 
 fn run() -> Result<()> {
     let opt = Opt::from_args();
 
-    let program: Program = if let Some(input) = opt.input {
+    let buffer = if let Some(input) = opt.input {
         let mut file = File::open(input).chain_err(|| "unable to open file")?;
         let mut buf: ImageData = ImageData::new();
         file.read_to_end(&mut buf)
             .chain_err(|| "unable to read from file")?;
 
-        let mut de = Deserializer::new(&buf[..]);
-
-        Deserialize::deserialize(&mut de).chain_err(|| "unable to decode image file")?
+        buf
     } else {
         let program_data = include_bytes!("stock.img");
 
-        let mut de = Deserializer::new(&program_data[..]);
-
-        Deserialize::deserialize(&mut de).chain_err(|| "unable to decode image file")?
+        program_data.to_vec()
     };
+
+    let mut de = Deserializer::new(&buffer[..]);
+
+    let program: Program =
+        Deserialize::deserialize(&mut de).chain_err(|| "unable to decode image file")?;
 
     let mut config = program.config.clone();
 
