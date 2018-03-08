@@ -89,7 +89,7 @@ func = { opening_brace ~ func_keyword ~ id ~ instr* ~ closing_brace }
 start_func = { opening_brace ~ start_keyword ~ id ~ closing_brace }
 
 /// Import/Export
-import = { opening_brace ~ import_keyword ~ func_id ~ (as_keyword ~ func_id)? ~ from_keyword ~ module_id ~ closing_brace }
+import = { opening_brace ~ import_keyword ~ func_id ~ (as_keyword ~ func_id)? ~ from_keyword ~ (module_id ~ in_keyword)? ~ string ~ closing_brace }
 export = { opening_brace ~ export_keyword ~ func_id ~ (as_keyword ~ func_id)? ~ closing_brace }
 
 /// Instructions
@@ -115,34 +115,34 @@ plain_instr = {
 }
 
 add_instr_keyword = _{ "add" }
-add_instr = { add_instr_keyword ~ target ~ comma ~ (literal | target) }
+add_instr = { add_instr_keyword ~ target ~ (literal | target) }
 
 sub_instr_keyword = _{ "sub" }
-sub_instr = { sub_instr_keyword ~ target ~ comma ~ (literal | target) }
+sub_instr = { sub_instr_keyword ~ target ~ (literal | target) }
 
 mul_instr_keyword = _{ "mul" }
-mul_instr = { mul_instr_keyword ~ target ~ comma ~ (literal | target) }
+mul_instr = { mul_instr_keyword ~ target ~ (literal | target) }
 
 div_instr_keyword = _{ "div" }
-div_instr = { div_instr_keyword ~ target ~ comma ~ (literal | target) }
+div_instr = { div_instr_keyword ~ target ~ (literal | target) }
 
 rem_instr_keyword = _{ "rem" }
-rem_instr = { rem_instr_keyword ~ target ~ comma ~ (literal | target) }
+rem_instr = { rem_instr_keyword ~ target ~ (literal | target) }
 
 cast_instr_keyword = _{ "cast" }
-cast_instr = { cast_instr_keyword ~ target ~ comma ~ type_t }
+cast_instr = { cast_instr_keyword ~ target ~ type_t }
 
 sig_instr_keyword = _{ "sig" }
 sig_instr = { sig_instr_keyword ~ atom }
 
 push_instr_keyword = _{ "push" }
-push_instr = { push_instr_keyword ~ target ~ comma ~ literal }
+push_instr = { push_instr_keyword ~ target ~ literal }
 
 mov_instr_keyword = _{ "mov" }
-mov_instr = { mov_instr_keyword ~ target ~ comma ~ target }
+mov_instr = { mov_instr_keyword ~ target ~ target }
 
 swp_instr_keyword = _{ "swp" }
-swp_instr = { swp_instr_keyword ~ target ~ comma ~ target }
+swp_instr = { swp_instr_keyword ~ target ~ target }
 
 dup_instr_keyword = _{ "dup" }
 dup_instr = { dup_instr_keyword ~ (literal | target) }
@@ -163,7 +163,7 @@ else_cond_keyword = _{ "else" }
 if_cond = { opening_brace ~ if_cond_keyword ~ condition ~ instr* ~ (opening_brace ~ else_cond_keyword ~ instr* ~ closing_brace)? ~ closing_brace }
 
 // condition
-condition = { opening_brace ~ conditional_func ~ target ~ comma ~ (literal | target) ~ closing_brace }
+condition = { opening_brace ~ conditional_func ~ target ~ (literal | target) ~ closing_brace }
 conditional_func = { greater_or_equal | less_or_equal | greater | equal | less }
 equal = @{ "eq" }
 greater = @{ "gt" }
@@ -196,16 +196,16 @@ start_keyword = _{ "start" }
 import_keyword = _{ "import" }
 export_keyword = _{ "export" }
 from_keyword = _{ "from" }
+in_keyword = _{ "in" }
 as_keyword = _{ "as" }
 
 /// Misc
-comma = _{ "," }
 opening_brace = _{ "(" }
 closing_brace = _{ ")" }
 
 comment = _{ multiline_comment | (";;" ~ (!newline ~ any)*) }
 multiline_comment = {
-    "(;" ~ (!";" ~ !")" ~ any)* ~ ";)"
+    "(;" ~ (!";)" ~ any)* ~ ";)"
 }
 newline = _{ "\n" | "\r\n" }
 whitespace = _{ " " | "\t" | newline }

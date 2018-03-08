@@ -12,8 +12,7 @@ extern crate regex;
 extern crate structopt;
 
 mod commands;
-mod basm;
-mod beast;
+mod language;
 mod mnemonic;
 
 use commands::{Lang, PackingType};

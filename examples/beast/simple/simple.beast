@@ -3,10 +3,10 @@
 (module $math
   (func $add_some_values
     ;; This is another line comment
-    (while (gt %st, %vi(23))
-      (add %st, %st))
-    (if (gt %st, %vi(23))
-      (sub %st, 12)))
+    (while (gt %st %vi(23))
+      (add %st %st))
+    (if (gt %st %vi(23))
+      (sub %st 12)))
   (export $add_some_values))
 
 (; This is a multi-line multiline comment,

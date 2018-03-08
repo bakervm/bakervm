@@ -1,17 +1,24 @@
 ;; This is a simple test file for the beast programming language
 
-(module $math
+(module $fancy_math
+  (import $sqrt as $native_sqrt from "math")
+
+  (func $sqrt
+    (call $native_sqrt))
+
   (func $add_some_values
-    (if (gt %st, %st)
-      (push %st, 1.0)
+    (if (gt %st %st)
+      (push %st 1.0)
     (else
-      (push %st, 2.0)
+      (push %st 2.0)
       (call $add_some_values))))
+
   (func $some_func
-    (if (gte %st, %st)
+    (if (gte %st %st)
       (call $something)
-    (else (if (lt %st, %st)
-      (push %st, 20)))))
+    (else (if (lt %st %st)
+      (push %st 20)))))
+
   (export $add_some_values))
 
 (; This is a multiline comment,
